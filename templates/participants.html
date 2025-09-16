@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teilnehmer in {{ group_name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+    </style>
+</head>
+<body class="p-6">
+    <div class="container mx-auto max-w-4xl bg-white p-8 rounded-lg shadow-xl mt-10">
+        <a href="{{ url_for('home') }}" class="text-blue-500 hover:underline mb-4 block">← Zurück zur Gruppenübersicht</a>
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Gruppe: {{ group_name }}</h1>
+        <h2 class="text-2xl font-bold text-gray-700 mb-4">Teilnehmer</h2>
+
+        <div class="mb-8 p-4 bg-gray-100 rounded-lg">
+            <h3 class="text-xl font-semibold mb-2">Neuen Teilnehmer hinzufügen</h3>
+            <form action="{{ url_for('add_participant', group_name=group_name) }}" method="post" class="flex items-center space-x-4">
+                <input type="text" name="participant_name" placeholder="Teilnehmername eingeben" class="flex-grow p-2 border rounded-md" required>
+                <button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">Teilnehmer hinzufügen</button>
+            </form>
+        </div>
+
+        {% if participants %}
+        <div class="space-y-4">
+            {% for participant in participants %}
+            <div class="p-4 border rounded-lg bg-gray-50 flex flex-col sm:flex-row sm:justify-between sm:items-center">
+                <h3 class="text-lg font-medium text-gray-800 mb-2 sm:mb-0" id="participant-name-{{ participant.id }}">{{ participant.name }}</h3>
+                <div class="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0">
+                    <a href="{{ url_for('show_report', group_name=group_name, participant_id=participant.id) }}" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">Bericht bearbeiten</a>
+                    
+                    <button class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700" onclick="editParticipant('{{ group_name }}', '{{ participant.id }}')">Bearbeiten</button>
+                    
+                    <form action="{{ url_for('delete_participant', group_name=group_name, participant_id=participant.id) }}" method="post" onsubmit="return confirm('Möchten Sie den Teilnehmer \'{{ participant.name }}\' wirklich löschen?');">
+                        <button type="submit" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700">Löschen</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500 italic">Es wurden noch keine Teilnehmer in dieser Gruppe angelegt.</p>
+        {% endif %}
+    </div>
+
+    <script>
+        function editParticipant(groupName, participantId) {
+            const participantElement = document.getElementById(`participant-name-${participantId}`);
+            const originalName = participantElement.textContent;
+
+            participantElement.innerHTML = `
+                <form action="/edit_participant/${groupName}/${participantId}" method="post" class="flex items-center space-x-2">
+                    <input type="text" name="new_name" value="${originalName.trim()}" class="p-1 text-sm border rounded-md w-40" required>
+                    <button type="submit" class="bg-green-600 text-white py-1 px-2 text-sm rounded-lg hover:bg-green-700">Speichern</button>
+                    <button type="button" class="bg-gray-400 text-white py-1 px-2 text-sm rounded-lg hover:bg-gray-500" onclick="cancelEditParticipant('${participantId}', '${originalName}')">Abbrechen</button>
+                </form>
+            `;
+        }
+        function cancelEditParticipant(participantId, originalName) {
+            const participantElement = document.getElementById(`participant-name-${participantId}`);
+            participantElement.textContent = originalName;
+        }
+    </script>
+</body>
+</html>

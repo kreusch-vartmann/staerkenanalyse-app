@@ -1,0 +1,39 @@
+{
+  "Haltern25": [
+    {
+      "id": "a349f4ca-1e9b-416d-8c0b-69c01e02e504",
+      "name": "TestingTimo",
+      "general_data": {
+        "date": "",
+        "location": "",
+        "observers": ""
+      },
+      "observations": {
+        "social": "",
+        "verbal": ""
+      },
+      "sk_ratings": {
+        "flexibility": 0.0,
+        "team_orientation": 0.0,
+        "process_orientation": 0.0,
+        "results_orientation": 0.0
+      },
+      "vk_ratings": {
+        "flexibility": 0.0,
+        "consulting": 0.0,
+        "objectivity": 0.0,
+        "goal_orientation": 0.0
+      },
+      "ki_texts": {
+        "social_text": "",
+        "verbal_text": "",
+        "summary_text": ""
+      },
+      "footer_data": {
+        "name": "",
+        "location": "",
+        "date": ""
+      }
+    }
+  ]
+}

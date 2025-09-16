@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gruppenverwaltung</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+    </style>
+</head>
+<body class="p-6">
+    <div class="container mx-auto max-w-4xl bg-white p-8 rounded-lg shadow-xl mt-10">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Timo's Stärkenanalysetool</h1>
+        <h2 class="text-2xl font-bold text-gray-700 mb-4">Gruppenübersicht</h2>
+
+        <div class="mb-8 p-4 bg-gray-100 rounded-lg">
+            <h3 class="text-xl font-semibold mb-2">Neue Gruppe hinzufügen</h3>
+            <form action="{{ url_for('add_group') }}" method="post" class="flex items-center space-x-4">
+                <input type="text" name="group_name" placeholder="Gruppenname eingeben" class="flex-grow p-2 border rounded-md" required>
+                <button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">Gruppe hinzufügen</button>
+            </form>
+        </div>
+
+        {% if data %}
+        <div class="space-y-4">
+            {% for group_name, participants in data.items() %}
+            <div class="p-4 border rounded-lg bg-gray-50 flex flex-col sm:flex-row sm:justify-between sm:items-center">
+                <h3 class="text-lg font-medium text-gray-800 mb-2 sm:mb-0" id="group-name-{{ loop.index }}">{{ group_name }} ({{ participants|length }} Teilnehmer)</h3>
+                
+                <div class="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0">
+                    <a href="{{ url_for('show_group', group_name=group_name) }}" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">Details anzeigen</a>
+                    
+                    <button class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700" onclick="editGroup('{{ group_name }}', '{{ loop.index }}')">Bearbeiten</button>
+                    
+                    <form action="{{ url_for('delete_group', group_name=group_name) }}" method="post" onsubmit="return confirm('Möchten Sie die Gruppe \'{{ group_name }}\' wirklich löschen?');">
+                        <button type="submit" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700">Löschen</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500 italic">Es wurden noch keine Gruppen angelegt.</p>
+        {% endif %}
+    </div>
+
+    <script>
+        function editGroup(oldName, index) {
+            const groupElement = document.getElementById(`group-name-${index}`);
+            const originalHtml = groupElement.innerHTML;
+
+            // Erstelle ein Formular für die Bearbeitung
+            groupElement.innerHTML = `
+                <form action="/edit_group/${oldName}" method="post" class="flex items-center space-x-2">
+                    <input type="text" name="new_name" value="${oldName}" class="p-1 text-sm border rounded-md w-40" required>
+                    <button type="submit" class="bg-green-600 text-white py-1 px-2 text-sm rounded-lg hover:bg-green-700">Speichern</button>
+                    <button type="button" class="bg-gray-400 text-white py-1 px-2 text-sm rounded-lg hover:bg-gray-500" onclick="cancelEdit('${index}', '${originalHtml}')">Abbrechen</button>
+                </form>
+            `;
+        }
+
+        function cancelEdit(index, originalHtml) {
+            const groupElement = document.getElementById(`group-name-${index}`);
+            groupElement.innerHTML = originalHtml;
+        }
+    </script>
+</body>
+</html>
