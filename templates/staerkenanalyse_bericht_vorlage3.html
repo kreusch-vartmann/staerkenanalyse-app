@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stärkenanalyse Assessment Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        /* Styles for printing */
+        @media print {
+            @page {
+                margin: 0; /* This removes the browser's default header and footer */
+            }
+            body {
+                margin: 0; /* Ensure body has no margin in print */
+                background-image: none;
+            }
+            body * {
+                visibility: hidden;
+            }
+            #report-preview, #report-preview * {
+                visibility: visible;
+            }
+            #report-preview {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 2.5cm; /* Add a margin inside the printable area */
+                border: none;
+                box-shadow: none;
+                box-sizing: border-box;
+            }
+            .no-print {
+                display: none;
+            }
+            /* Page break to ensure the layout is clean */
+            .page-break {
+                page-break-after: always;
+            }
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="text-center mb-8 no-print">
+            <h1 class="text-3xl font-bold text-gray-800">Tool zur Stärkenanalyse</h1>
+            <p class="text-gray-600 mt-2">Geben Sie die Daten ein, um den Bericht für das Assessment Center zu generieren.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="bg-white p-6 rounded-xl shadow-lg no-print">
+                <h2 class="text-2xl font-semibold text-gray-700 border-b pb-3 mb-6">Eingabedaten</h2>
+                
+                <h3 class="text-lg font-semibold text-gray-700">Allgemeine Berichtsdaten (Kopfzeile)</h3>
+                <div class="space-y-4 mt-2">
+                    <div>
+                        <label for="candidateName" class="block text-sm font-medium text-gray-700">Teilnehmer*in</label>
+                        <input type="text" id="candidateName" value="Mustermensch" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+                    </div>
+                    <div>
+                        <label for="assessmentDate" class="block text-sm font-medium text-gray-700">Datum der Durchführung</label>
+                        <input type="date" id="assessmentDate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+                    </div>
+                    <div>
+                        <label for="location" class="block text-sm font-medium text-gray-700">Ort der Durchführung</label>
+                        <input type="text" id="location" value="Lingen (Ems)" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+                    </div>
+                     <div>
+                        <label for="observers" class="block text-sm font-medium text-gray-700">Beobachter*innen</label>
+                        <input type="text" id="observers" value="Max Mustermann, AC Trainer" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+                    </div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t">
+                    <h3 class="text-lg font-semibold text-gray-700">Soziale Kompetenz</h3>
+                    <div class="mt-4 space-y-4">
+                        <div>
+                            <label for="sk-flex" class="block text-sm font-medium text-gray-600">Flexibilität (<span id="sk-flex-val">0</span>)</label>
+                            <input type="range" id="sk-flex" min="0" max="10" value="0" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div>
+                            <label for="sk-team" class="block text-sm font-medium text-gray-600">Teamorientierung (<span id="sk-team-val">0</span>)</label>
+                            <input type="range" id="sk-team" min="0" max="10" value="0" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div>
+                            <label for="sk-prozess" class="block text-sm font-medium text-gray-600">Prozessorientierung (<span id="sk-prozess-val">0</span>)</label>
+                            <input type="range" id="sk-prozess" min="0" max="10" value="0" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div>
+                            <label for="sk-ergebnis" class="block text-sm font-medium text-gray-600">Ergebnisorientierung (<span id="sk-ergebnis-val">0</span>)</label>
+                            <input type="range" id="sk-ergebnis" min="0" max="10" value="0" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div>
+                            <label for="sk-text" class="block text-sm font-medium text-gray-700 mt-2">Textblock Soziale Kompetenz</label>
+                            <textarea id="sk-text" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t">
+                    <h3 class="text-lg font-semibold text-gray-700">Verbale Kompetenz</h3>
+                    <div class="mt-4 space-y-4">
+                         <div>
+                            <label for="vk-flex" class="block text-sm font-medium text-gray-600">Flexibilität (<span id="vk-flex-val">0</span>)</label>
+                            <input type="range" id="vk-flex" min="0" max="10" value="0" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div>
+                            <label for="vk-beratung" class="block text-sm font-medium text-gray-600">Beratung (<span id="vk-beratung-val">0</span>)</label>
+                            <input type="range" id="vk-beratung" min="0" max="10" value="0" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div>
+                            <label for="vk-sachlich" class="block text-sm font-medium text-gray-600">Sachlichkeit (<span id="vk-sachlich-val">0</span>)</label>
+                            <input type="range" id="vk-sachlich" min="0" max="10" value="0" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div>
+                            <label for="vk-ziel" class="block text-sm font-medium text-gray-600">Zielorientierung (<span id="vk-ziel-val">0</span>)</label>
+                            <input type="range" id="vk-ziel" min="0" max="10" value="0" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                         <div>
+                            <label for="vk-text" class="block text-sm font-medium text-gray-700 mt-2">Textblock Verbale Kompetenz</label>
+                            <textarea id="vk-text" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                 <div class="mt-8 pt-6 border-t">
+                    <h3 class="text-lg font-semibold text-gray-700">Zusammenfassung & Fusszeile</h3>
+                     <div class="mt-4 space-y-4">
+                        <div>
+                            <label for="summary-text" class="block text-sm font-medium text-gray-700">Zusammenfassung</label>
+                            <textarea id="summary-text" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"></textarea>
+                        </div>
+                        <div>
+                            <label for="footerName" class="block text-sm font-medium text-gray-700">Name (für Fusszeile)</label>
+                            <input type="text" id="footerName" value="Max Mustermann, AC Trainer" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+                        </div>
+                        <div>
+                            <label for="footerLocation" class="block text-sm font-medium text-gray-700">Ort (für Fusszeile)</label>
+                            <input type="text" id="footerLocation" value="Lingen (Ems)" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+                        </div>
+                        <div>
+                            <label for="footerDate" class="block text-sm font-medium text-gray-700">Datum (für Fusszeile)</label>
+                            <input type="date" id="footerDate" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 pt-6 border-t">
+                     <button id="save-button" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-300 mb-4">
+                        Eingaben speichern
+                    </button>
+                     <button id="print-button" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-300">
+                        Bericht drucken / Als PDF speichern
+                    </button>
+                </div>
+            </div>
+
+            <div id="report-container" class="bg-gray-200 p-4 rounded-xl shadow-inner">
+                <div id="report-preview" class="bg-white p-12 shadow-lg aspect-[1/1.414] mx-auto" style="width: 100%; max-width: 800px;">
+                    <header class="border-b-4 border-indigo-500 pb-4 mb-8">
+                        <h1 class="text-3xl font-bold text-indigo-800 mb-2">Stärkenanalyse</h1>
+                        <h2 class="text-lg font-semibold text-gray-600">Fremdeinschätzung: Soziale und Verbale Kompetenzen</h2>
+                         <div class="text-sm text-gray-600 mt-6 space-y-1">
+                            <div class="flex"><p class="font-semibold text-gray-700 w-48 shrink-0">Teilnehmer*in:</p><p id="preview-candidateName">Mustermensch</p></div>
+                            <div class="flex"><p class="font-semibold text-gray-700 w-48 shrink-0">Datum der Durchführung:</p><p id="preview-assessmentDate"></p></div>
+                            <div class="flex"><p class="font-semibold text-gray-700 w-48 shrink-0">Ort der Durchführung:</p><p id="preview-location"></p></div>
+                            <div class="flex"><p class="font-semibold text-gray-700 w-48 shrink-0">Beobachter*innen:</p><p id="preview-observers"></p></div>
+                        </div>
+                    </header>
+                    
+                    <main>
+                        <section id="sk-section" class="mb-12 page-break">
+                            <h2 class="text-xl font-bold text-indigo-700 mb-4 border-b-2 border-indigo-100 pb-2">Soziale Kompetenzen</h2>
+                             <div>
+                                <div class="w-full h-auto mx-auto mb-4" style="max-width: 400px;">
+                                    <canvas id="social-chart" width="400" height="300"></canvas>
+                                </div>
+                                <p id="preview-sk-text" class="text-gray-700 text-sm leading-relaxed">
+                                    </p>
+                            </div>
+                        </section>
+
+                        <section id="vk-section" class="mb-12 print:pt-16">
+                             <h2 class="text-xl font-bold text-indigo-700 mb-4 border-b-2 border-indigo-100 pb-2">Verbale Kompetenz</h2>
+                             <div>
+                                <div class="w-full h-auto mx-auto mb-4" style="max-width: 400px;">
+                                     <canvas id="verbal-chart" width="400" height="300"></canvas>
+                                </div>
+                                 <p id="preview-vk-text" class="text-gray-700 text-sm leading-relaxed">
+                                    </p>
+                            </div>
+                        </section>
+
+                        <section id="summary-section" class="mb-16">
+                            <h2 class="text-xl font-bold text-indigo-700 mb-4 border-b-2 border-indigo-100 pb-2">Zusammenfassung</h2>
+                            <p id="preview-summary-text" class="text-gray-700 text-sm leading-relaxed">
+                                </p>
+                        </section>
+                    </main>
+
+                    <footer class="pt-4 mt-auto text-sm text-gray-600 flex justify-between border-t-2 border-indigo-500">
+                        <p id="preview-footer-name"></p>
+                        <p id="preview-footer-location-date"></p>
+                    </footer>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Elements ---
+            const inputs = document.querySelectorAll('input, textarea');
+            
+            const candidateName = document.getElementById('candidateName');
+            const assessmentDate = document.getElementById('assessmentDate');
+            const locationInput = document.getElementById('location');
+            const observers = document.getElementById('observers');
+
+            const skFlex = document.getElementById('sk-flex');
+            const skTeam = document.getElementById('sk-team');
+            const skProzess = document.getElementById('sk-prozess');
+            const skErgebnis = document.getElementById('sk-ergebnis');
+            const skText = document.getElementById('sk-text');
+            
+            const vkFlex = document.getElementById('vk-flex');
+            const vkBeratung = document.getElementById('vk-beratung');
+            const vkSachlich = document.getElementById('vk-sachlich');
+            const vkZiel = document.getElementById('vk-ziel');
+            const vkText = document.getElementById('vk-text');
+
+            const summaryText = document.getElementById('summary-text');
+            const footerName = document.getElementById('footerName');
+            const footerLocation = document.getElementById('footerLocation');
+            const footerDate = document.getElementById('footerDate');
+
+            const saveButton = document.getElementById('save-button');
+            
+            // --- Preview Elements ---
+            const previewCandidateName = document.getElementById('preview-candidateName');
+            const previewAssessmentDate = document.getElementById('preview-assessmentDate');
+            const previewLocation = document.getElementById('preview-location');
+            const previewObservers = document.getElementById('preview-observers');
+            const previewSkText = document.getElementById('preview-sk-text');
+            const previewVkText = document.getElementById('preview-vk-text');
+            const previewSummaryText = document.getElementById('preview-summary-text');
+            const previewFooterName = document.getElementById('preview-footer-name');
+            const previewFooterLocationDate = document.getElementById('preview-footer-location-date');
+            
+            const socialChartCtx = document.getElementById('social-chart').getContext('2d');
+            const verbalChartCtx = document.getElementById('verbal-chart').getContext('2d');
+            
+            // Set today's date for date inputs as a default
+            const today = new Date().toISOString().split('T')[0];
+            assessmentDate.value = today;
+            footerDate.value = today;
+
+
+            // --- Chart Drawing Function ---
+            function drawRadarChart(ctx, labels, data) {
+                const { width, height } = ctx.canvas;
+                const centerX = width / 2;
+                const centerY = height / 2;
+                const radius = Math.min(width, height) / 2 * 0.7;
+                const maxVal = 10;
+
+                ctx.clearRect(0, 0, width, height);
+
+                // --- Draw Grid ---
+                ctx.strokeStyle = '#e0e0e0';
+                ctx.lineWidth = 1;
+                ctx.font = '12px Inter';
+                ctx.fillStyle = '#6b7280';
+                
+                for (let i = 0.25; i <= 1; i += 0.25) {
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY - radius * i);
+                    ctx.lineTo(centerX + radius * i, centerY);
+                    ctx.lineTo(centerX, centerY + radius * i);
+                    ctx.lineTo(centerX - radius * i, centerY);
+                    ctx.closePath();
+                    ctx.stroke();
+                }
+
+                // --- Draw Axes ---
+                ctx.strokeStyle = '#a0a0e0';
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY - radius);
+                ctx.lineTo(centerX, centerY + radius);
+                ctx.moveTo(centerX - radius, centerY);
+                ctx.lineTo(centerX + radius, centerY);
+                ctx.stroke();
+
+                // --- Draw Labels ---
+                const lineHeight = 14; 
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(labels[0], centerX, centerY - radius - 5);
+                
+                ctx.textBaseline = 'middle';
+                ctx.textAlign = 'left';
+                const labelRightLines = labels[1].split('\n');
+                const startYRight = centerY - (lineHeight * (labelRightLines.length - 1)) / 2;
+                labelRightLines.forEach((line, i) => {
+                    ctx.fillText(line.trim(), centerX + radius + 10, startYRight + (i * lineHeight));
+                });
+                
+                ctx.textBaseline = 'top';
+                ctx.textAlign = 'center';
+                ctx.fillText(labels[2], centerX, centerY + radius + 5);
+                
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                const labelLeftLines = labels[3].split('\n');
+                const startYLeft = centerY - (lineHeight * (labelLeftLines.length - 1)) / 2;
+                labelLeftLines.forEach((line, i) => {
+                     ctx.fillText(line.trim(), centerX - radius - 10, startYLeft + (i * lineHeight));
+                });
+
+
+                // --- Draw Data Polygon ---
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY - (data[0] / maxVal) * radius);
+                ctx.lineTo(centerX + (data[1] / maxVal) * radius, centerY);
+                ctx.lineTo(centerX, centerY + (data[2] / maxVal) * radius);
+                ctx.lineTo(centerX - (data[3] / maxVal) * radius, centerY);
+                ctx.closePath();
+                
+                ctx.strokeStyle = '#4338ca';
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+                
+                ctx.fillStyle = 'rgba(99, 102, 241, 0.25)';
+                ctx.fill();
+            }
+
+            // --- Save Function ---
+            function saveInputs() {
+                const dataToSave = {
+                    candidateName: candidateName.value,
+                    assessmentDate: assessmentDate.value,
+                    location: locationInput.value,
+                    observers: observers.value,
+                    skFlex: skFlex.value,
+                    skTeam: skTeam.value,
+                    skProzess: skProzess.value,
+                    skErgebnis: skErgebnis.value,
+                    skText: skText.value,
+                    vkFlex: vkFlex.value,
+                    vkBeratung: vkBeratung.value,
+                    vkSachlich: vkSachlich.value,
+                    vkZiel: vkZiel.value,
+                    vkText: vkText.value,
+                    summaryText: summaryText.value,
+                    footerName: footerName.value,
+                    footerLocation: footerLocation.value,
+                    footerDate: footerDate.value
+                };
+
+                const jsonString = JSON.stringify(dataToSave, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                
+                const safeName = candidateName.value.replace(/\s+/g, '_') || 'teilnehmer';
+                const safeDate = assessmentDate.value || 'datum';
+                a.download = `staerkenanalyse_${safeName}_${safeDate}.json`;
+                
+                document.body.appendChild(a);
+                a.click();
+                
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+
+            // --- Main Update Function ---
+            function updateReport() {
+                // Date for the header (from input)
+                const assessmentDateFormatted = new Date(assessmentDate.value).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                
+                // Date for the footer (from its own input)
+                const footerDateFormatted = new Date(footerDate.value).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+                // Update header text fields
+                previewCandidateName.textContent = candidateName.value;
+                previewAssessmentDate.textContent = assessmentDateFormatted;
+                previewLocation.textContent = locationInput.value;
+                previewObservers.textContent = observers.value;
+                
+                // Update main text fields
+                previewSkText.textContent = skText.value;
+                previewVkText.textContent = vkText.value;
+                previewSummaryText.textContent = summaryText.value;
+                
+                // Update footer text fields
+                previewFooterName.textContent = footerName.value;
+                previewFooterLocationDate.textContent = `${footerLocation.value}, ${footerDateFormatted}`;
+
+                // Update slider value displays
+                document.getElementById('sk-flex-val').textContent = skFlex.value;
+                document.getElementById('sk-team-val').textContent = skTeam.value;
+                document.getElementById('sk-prozess-val').textContent = skProzess.value;
+                document.getElementById('sk-ergebnis-val').textContent = skErgebnis.value;
+                
+                document.getElementById('vk-flex-val').textContent = vkFlex.value;
+                document.getElementById('vk-beratung-val').textContent = vkBeratung.value;
+                document.getElementById('vk-sachlich-val').textContent = vkSachlich.value;
+                document.getElementById('vk-ziel-val').textContent = vkZiel.value;
+
+                // Prepare data and draw charts
+                const socialData = [
+                    parseFloat(skFlex.value), 
+                    parseFloat(skTeam.value),
+                    parseFloat(skProzess.value),
+                    parseFloat(skErgebnis.value)
+                ];
+                const socialLabels = ['Flexibilität', 'Team-\norientierung', 'Prozessorientierung', 'Ergebnis-\norientierung'];
+                drawRadarChart(socialChartCtx, socialLabels, socialData);
+                
+                const verbalData = [
+                    parseFloat(vkFlex.value),
+                    parseFloat(vkBeratung.value),
+                    parseFloat(vkSachlich.value),
+                    parseFloat(vkZiel.value)
+                ];
+                const verbalLabels = ['Flexibilität', 'Beratung', 'Sachlichkeit', 'Ziel-\norientierung'];
+                drawRadarChart(verbalChartCtx, verbalLabels, verbalData);
+            }
+            
+            // --- Event Listeners ---
+            inputs.forEach(input => input.addEventListener('input', updateReport));
+            
+            saveButton.addEventListener('click', saveInputs);
+            
+            document.getElementById('print-button').addEventListener('click', () => {
+                window.print();
+            });
+
+            // --- Initial Call ---
+            updateReport();
+        });
+    </script>
+</body>
+</html>
