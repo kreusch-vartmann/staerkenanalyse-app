@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Über das Tool{% endblock %}
+
+{% block content %}
+    <header class="mb-6">
+        <h1 class="text-3xl font-bold text-center text-indigo-600">Über das Stärkenanalysetool</h1>
+    </header>
+    
+    <main class="space-y-6">
+        <div class="prose max-w-none">
+            <p>
+                Dieses Programm wurde entwickelt, um den Prozess der **Stärkenanalyse** in Assessment-Centern zu vereinfachen und zu automatisieren. Es dient als digitale Unterstützung für Beobachter und Trainer, indem es qualitative Beobachtungsdaten systematisch aufnimmt und mithilfe von künstlicher Intelligenz in strukturierte, professionelle Berichte umwandelt.
+            </p>
+            <p>
+                Der Hauptzweck des Tools ist es, eine **konsistente und stärkebasierte Rückmeldung** zu gewährleisten, die sich auf beobachtetes Verhalten und nicht auf subjektive Eindrücke stützt. Es hilft, den Zeitaufwand für die Berichterstellung zu reduzieren und stellt sicher, dass die Auswertung den hohen Qualitätsstandards der Assessment-Center-Methodik entspricht.
+            </p>
+            <p></br>
+                <center>Das Tool existiert, weil wir ohne es immer so ausgesehen haben... </center>
+                <br><center>😉</center>
+            </p>
+        </div>
+        
+        <div class="flex justify-center my-8">
+            <img src="{{ url_for('static', filename='images/info.png') }}" alt="Was wir bisher ohne dieses Tool gemacht haben..." class="rounded-lg shadow-md max-w-full h-auto">
+        </div>
+
+        <div class="prose max-w-none">
+            <h2 class="text-2xl font-semibold mt-6 text-indigo-500">Wichtige Hinweise</h2>
+            <ul class="list-disc list-inside space-y-2">
+                <li>Alle Daten werden lokal in der Datei `data.json` gespeichert.</li>
+                <li>Das Tool befindet sich in der aktiven Entwicklung und dient als Prototyp.</li>
+                <li>Für die korrekte Funktion der KI-Analyse benötigen Sie gültige API-Schlüssel in der `.env`-Datei.</li>
+                <li>Das Programm ist optimiert für die Verwendung mit modernen Browsern.</li>
+            </ul>
+        </div>
+    </main>
+{% endblock %}
