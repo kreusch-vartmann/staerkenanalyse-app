@@ -525,8 +525,11 @@ def run_ki_analysis(group_name, participant_id):
             "cleaned_response": cleaned_response if 'cleaned_response' in locals() else None
         })
 
-# Weitere Routen...
-# ...
+# Zusätzliche Route für die Info-Seite
+@app.route('/info')
+def show_info():
+    return render_template('info.html')
+
 # Starte die Anwendung
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5001)
