@@ -1,39 +1,85 @@
 {
-  "Haltern25": [
-    {
-      "id": "a349f4ca-1e9b-416d-8c0b-69c01e02e504",
-      "name": "TestingTimo",
-      "general_data": {
-        "date": "",
-        "location": "",
-        "observers": ""
-      },
-      "observations": {
-        "social": "",
-        "verbal": ""
-      },
-      "sk_ratings": {
-        "flexibility": 0.0,
-        "team_orientation": 0.0,
-        "process_orientation": 0.0,
-        "results_orientation": 0.0
-      },
-      "vk_ratings": {
-        "flexibility": 0.0,
-        "consulting": 0.0,
-        "objectivity": 0.0,
-        "goal_orientation": 0.0
-      },
-      "ki_texts": {
-        "social_text": "",
-        "verbal_text": "",
-        "summary_text": ""
-      },
-      "footer_data": {
-        "name": "",
-        "location": "",
-        "date": ""
+  "Testgruppe": {
+    "date": "2025-09-04",
+    "location": "Hannover",
+    "participants": [
+      {
+        "id": "faa8e838-a4f5-443b-8a4b-7041b9224699",
+        "name": "Karl Meyer",
+        "general_data": {
+          "date": "",
+          "location": "",
+          "observers": ""
+        },
+        "observations": {
+          "social": "",
+          "verbal": ""
+        },
+        "sk_ratings": {
+          "flexibility": 0.0,
+          "team_orientation": 0.0,
+          "process_orientation": 0.0,
+          "results_orientation": 0.0
+        },
+        "vk_ratings": {
+          "flexibility": 0.0,
+          "consulting": 0.0,
+          "objectivity": 0.0,
+          "goal_orientation": 0.0
+        },
+        "ki_texts": {
+          "social_text": "",
+          "verbal_text": "",
+          "summary_text": ""
+        },
+        "footer_data": {
+          "name": "",
+          "location": "",
+          "date": ""
+        }
       }
-    }
-  ]
+    ]
+  },
+  "Testgruppe2": {
+    "date": "2025-09-10",
+    "location": "M\u00fcnchen",
+    "participants": [
+      {
+        "id": "eeeba5dd-d391-45d6-aa2e-c5d3e85b887f",
+        "name": "Karlchen M\u00fcller",
+        "general_data": {
+          "date": "2025-09-10",
+          "location": "M\u00fcnchen",
+          "observers": "M\u00fcnchen"
+        },
+        "observations": {
+          "social": "\u2013\tMutter an Nr. 1 \u201eMuss sein Nr. 1\u201c (Person ist nicht Deutsch Muttersprachlerin)\r\n\u2013\tWG schlie\u00dft sie aus, weil man keinen L\u00e4rm will.\r\n\u2013\tEhepaar 6 schlie\u00dft sie aus, weil Konflikte vorprogrammiert sind.\r\n\u2013\t\u201eWir m\u00fcssen nehmen, was wir haben\u201c (Soll hei\u00dfen, wir k\u00f6nnen nur aus den 6 gegebenen M\u00f6glichkeiten ausw\u00e4hlen)\r\n\u2013\tWohlhabende Rentner, schlie\u00dft sie aus. Argumentiert mit eigener Erfahrung, dass die n\u00f6rgelig sind, immer was wollen sich eigentlich auch was anderes leisten wollen.\r\n\u2013\tMacht sich beim Durchlesen direkt Notizen auf dem Infoblatt, sie hat Nummern neben die Parteien geschrieben und damit eine Reihenfolge festgelegt.\r\n\u2013\tAlleinerziehende Mutter, \u201eweil die selten die Wohnung bekommt\u201c\r\n\u2013\t\u201eWir sind die Bl\u00f6den dann!\u201c (in Bezug auf die Renter, die immer was wollen). \u201eDas haben wir bei uns im Haus gehabt.\u201c\r\n\u2013\tInitiiert Abstimmung \u201eWer ist daf\u00fcr?\u201c \r\n\u2013\t\u201eBin ich strikt dagegen!\u201c (Bezug auf Rentner)\r\n",
+          "verbal": "Flexibilit\u00e4t:\r\n - Probiert aus, verwirft Ideen, wenn das nicht passt. Reflektiert, leitet neue Handlungen  draus ab. Bsp.: Schneidet Sonnenblume aus, ist ihr zu klein auf dem Plakat. Sucht dann  gr\u00f6\u00dfere Bilder.\r\n - Probleml\u00f6sungskompetenz (Kreativit\u00e4t): Frage: \u201eWas schreiben wir aufs Plakat\u201c. Sie sagt: \u201eGib mir die Liste, die du geschrieben hast.\u201c \u2014> Hatten sich schon drauf geeinigt, was da drauf soll.\r\n - Macht gestalterische Vorschl\u00e4ge (Uhrzeit)\r\nTeam:\r\n\u2013\tReagiert auf vorgeschlagenen Slogan \u201eGemeinsam statt einsam\u201c (v. Micha) und entwickelt ihn zusammen mit anderen weiter. \u201eGemeinsam sind wir stark\u201c\r\n\u2013\tDurchsetzungsf\u00e4higkeit st\u00fctzt auch ein Team\r\n\r\nProzess:\r\n\u2013\t\u201eK\u00f6nnen wir erstmal...\u201c -> macht Vorschl\u00e4ge zum Prozess\r\nErgebnis:\r\n\u2013\tR\u00e4umt den eigenen Arbeitsplatz auf, obwohl Micha noch pr\u00e4sentiert.\r\n\u2013\tFertigt zun\u00e4chst ne Skizze an. / Reicht Micha den Block: \u201eIch schreibe immer mit Fehler.\u201c \u2014> Ergebnis f\u00fcr Sie wichtig.\r\n\u2013\tMacht die Skizze, l\u00e4sst von den anderen dabei nicht beirren. -> eigene Vorstellungen, Zielorientierung.\r\n\u2013\t\u201egemeinsam sind wir stark\u201c setzt sich durch \u2014> Ergebnis\r\n\r\nSelbsteinsch\u00e4tzung:\r\n\u2013\tSuper in der kurzen Zeit ein Ergebnis erreicht. Gruppe hat ein gutes Ergebnis erreicht. In einer halben Stunde... Daf\u00fcr braucht man sonst 1-2 Tg (legt Wert auf Team, Schwerpunkt liegt auf dem Ergebnis)\r\n\r\n"
+        },
+        "sk_ratings": {
+          "flexibility": 7,
+          "team_orientation": 8,
+          "process_orientation": 9,
+          "results_orientation": 10
+        },
+        "vk_ratings": {
+          "flexibility": 7,
+          "consulting": 8,
+          "objectivity": 8,
+          "goal_orientation": 9
+        },
+        "ki_texts": {
+          "social_text": "Karlchen zeigte in der Gruppen\u00fcbung eine **herausragende Ergebnisorientierung** (10/10), indem sie zielstrebig eine klare Priorisierung der Mietinteressenten vornahm \u2013 unterst\u00fctzt durch strukturierte Notizen und eine fr\u00fchzeitige Abstimmungsinitiative (*\u201aWer ist daf\u00fcr?\u2018*). Ihre **Prozessorientierung** (9/10) wurde durch pragmatische Vorschl\u00e4ge (*\u201aK\u00f6nnen wir erstmal\u2026\u2018*) und die konsequente Fokussierung auf Umsetzbarkeit deutlich, etwa beim Ausschluss konflikttr\u00e4chtiger Parteien (*Rentner, WG*). Trotz ihrer **deutlichen Meinungs\u00e4u\u00dferung** (*\u201aBin ich strikt dagegen!\u2018*) bewies sie **Teamorientierung** (8/10) durch die Integration externer Impulse (*Weiterentwicklung des Slogans \u201aGemeinsam statt einsam\u2018*) und die Betonung kollektiver Erfolge (*\u201aGruppe hat ein gutes Ergebnis erreicht\u2018*). Ihre **Flexibilit\u00e4t** (7/10) zeigte sich in der Anpassung an Gruppenmeinungen, ohne dabei ihre Kernziele aus den Augen zu verlieren \u2013 ein Riemann-Profil mit **starker Extraversion (Ergebnis/Prozess) bei moderater Introversion (Team/Flexibilit\u00e4t)**.",
+          "verbal_text": "In den Gespr\u00e4chen \u00fcberzeugte Karlchen durch **zielorientierte Gespr\u00e4chsf\u00fchrung** (9/10), etwa beim strukturierten Vorstellen ihrer Priorit\u00e4tenliste (*\u201aMuss sein Nr. 1\u2018*) oder der Fokussierung auf machbare L\u00f6sungen (*\u201aWir m\u00fcssen nehmen, was wir haben\u2018*). Ihre **Beratungskompetenz** (8/10) kam durch l\u00f6sungsorientierte Impulse zum Tragen \u2013 wie die Weiterentwicklung des Slogans *\u201aGemeinsam sind wir stark\u2018* \u2013 und die Einbindung anderer Perspektiven. **Sachlichkeit** (8/10) pr\u00e4gte ihre Argumentation, die auf konkreten Erfahrungen basierte (*\u201aDas haben wir bei uns im Haus gehabt\u2018*), w\u00e4hrend ihre **kommunikative Flexibilit\u00e4t** (7/10) sich in der Anpassung an Teamdynamiken zeigte: Sie verwarf eigene Ideen (*zu kleine Sonnenblume*), wenn sie dem Gruppenergebnis dienten, ohne dabei ihre klare Haltung (*\u201aDurchsetzungsf\u00e4higkeit st\u00fctzt das Team\u2018*) aufzugeben. Besonders wirksam war ihr **direkter, ergebnisbetonter Stil**, der Effizienz und Verbundenheit verband.",
+          "summary_text": "Karlchens St\u00e4rken liegen in ihrer **ausgepr\u00e4gten Ergebnis- und Prozessorientierung**, die sie durch strukturiertes Vorgehen (*Notizen, Abstimmungen*), klare Priorisierung (*Ausschluss konflikttr\u00e4chtiger Mieter*) und zielstrebige Kommunikation (*\u201aGemeinsam sind wir stark\u2018*) unter Beweis stellte. Ihre **pragmatische Sachlichkeit** und **integrative Teamf\u00e4higkeit** \u2013 trotz deutlicher Meinungs\u00e4u\u00dferung \u2013 machen sie zu einer **effizienten Vermittlerin zwischen Zielsetzung und Gruppenkoh\u00e4sion**. Das Riemann-Profil zeigt eine **dominante Extraversion (Ergebnis/Prozess) mit ausgewogener sozialer Responsivit\u00e4t (Team/Flexibilit\u00e4t)** \u2013 ideal f\u00fcr umsetzungsstarke, kollaborative Kontexte.",
+          "ki_prompt": "You are a highly skilled and empathetic expert in conducting strength-based assessment centers. Your task is to analyze observations of a participant's social and verbal competence and provide a structured report in JSON format.\r\n\r\nRULES AND CONTEXT:\r\n- The focus of the report must be exclusively on strengths and potential. Do not mention weaknesses.\r\n- The language must be positive, respectful, and motivating, as the report is intended for the participant's professional development.\r\n- All descriptions should be based on the provided observations and be as specific as possible.\r\n- When referring to the participant, use only their first name and gender-neutral language unless the gender is explicitly mentioned in the observations.\r\n- Only the provided first name of the participant should be used. Do not use a last name.\r\n- Use the Riemann Cross model for evaluating social and verbal competence. The core dimensions of the model are Process Orientation, Results Orientation, Flexibility, and Team Orientation. Map the observed behaviors to these dimensions.\r\n- The output must be only a single, valid JSON object. Do not include any introductory text, explanations, or code blocks like ```json.\r\n\r\nThe JSON object must contain the following keys and values:\r\n- \"social_text\": A concise, strength-based summary of the participant's social competence, based on the observations and mapped to the Riemann Cross dimensions.\r\n- \"verbal_text\": A concise, strength-based summary of the participant's verbal competence, also mapped to the Riemann Cross dimensions.\r\n- \"summary_text\": A brief, overall summary of the participant's key strengths.\r\n- \"sk_ratings\": An object with numerical ratings from 0.0 to 10.0 for:\r\n  - \"flexibility\"\r\n  - \"team_orientation\"\r\n  - \"process_orientation\"\r\n  - \"results_orientation\"\r\n- \"vk_ratings\": An object with numerical ratings from 0.0 to 10.0 for:\r\n  - \"flexibility\"\r\n  - \"consulting\"\r\n  - \"objectivity\"\r\n  - \"goal_orientation\"\r\n\r\nADDITIONAL CONTEXT AND DOCUMENTS:\r\n{{additional_content}}\r\n\r\nOBSERVATIONS:\r\nParticipant's First Name: {{first_name}}\r\nSocial Competence Observations: {{social_observations}}\r\nVerbal Competence Observations: {{verbal_observations}}\r\n"
+        },
+        "footer_data": {
+          "name": "",
+          "location": "",
+          "date": ""
+        }
+      }
+    ]
+  }
 }

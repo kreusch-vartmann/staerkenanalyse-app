@@ -65,19 +65,19 @@
                 <div class="space-y-4 mt-2">
                     <div>
                         <label for="candidateName" class="block text-sm font-medium text-gray-700">Teilnehmer*in</label>
-                        <input type="text" id="candidateName" value="{{ data.Beispielgruppe[0].name }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+                        <input type="text" id="candidateName" value="{{ participant.name }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
                     </div>
                     <div>
                         <label for="assessmentDate" class="block text-sm font-medium text-gray-700">Datum der Durchführung</label>
-                        <input type="date" id="assessmentDate" value="{{ data.Beispielgruppe[0].general_data.date }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+                        <input type="date" id="assessmentDate" value="{{ participant.general_data.date }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
                     </div>
                     <div>
                         <label for="location" class="block text-sm font-medium text-gray-700">Ort der Durchführung</label>
-                        <input type="text" id="location" value="{{ data.Beispielgruppe[0].general_data.location }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+                        <input type="text" id="location" value="{{ participant.general_data.location }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
                     </div>
                      <div>
                         <label for="observers" class="block text-sm font-medium text-gray-700">Beobachter*innen</label>
-                        <input type="text" id="observers" value="{{ data.Beispielgruppe[0].general_data.observers }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+                        <input type="text" id="observers" value="{{ participant.general_data.observers }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
                     </div>
                 </div>
 
@@ -85,24 +85,24 @@
                     <h3 class="text-lg font-semibold text-gray-700">Soziale Kompetenz</h3>
                     <div class="mt-4 space-y-4">
                         <div>
-                            <label for="sk-flex" class="block text-sm font-medium text-gray-600">Flexibilität (<span id="sk-flex-val">{{ data.Beispielgruppe[0].sk_ratings.flexibility }}</span>)</label>
-                            <input type="range" id="sk-flex" min="0" max="10" value="{{ data.Beispielgruppe[0].sk_ratings.flexibility }}" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <label for="sk-flex" class="block text-sm font-medium text-gray-600">Flexibilität (<span id="sk-flex-val">{{ participant.sk_ratings.flexibility }}</span>)</label>
+                            <input type="range" id="sk-flex" min="0" max="10" value="{{ participant.sk_ratings.flexibility }}" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
                         </div>
                         <div>
-                            <label for="sk-team" class="block text-sm font-medium text-gray-600">Teamorientierung (<span id="sk-team-val">{{ data.Beispielgruppe[0].sk_ratings.team_orientation }}</span>)</label>
-                            <input type="range" id="sk-team" min="0" max="10" value="{{ data.Beispielgruppe[0].sk_ratings.team_orientation }}" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <label for="sk-team" class="block text-sm font-medium text-gray-600">Teamorientierung (<span id="sk-team-val">{{ participant.sk_ratings.team_orientation }}</span>)</label>
+                            <input type="range" id="sk-team" min="0" max="10" value="{{ participant.sk_ratings.team_orientation }}" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
                         </div>
                         <div>
-                            <label for="sk-prozess" class="block text-sm font-medium text-gray-600">Prozessorientierung (<span id="sk-prozess-val">{{ data.Beispielgruppe[0].sk_ratings.process_orientation }}</span>)</label>
-                            <input type="range" id="sk-prozess" min="0" max="10" value="{{ data.Beispielgruppe[0].sk_ratings.process_orientation }}" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <label for="sk-prozess" class="block text-sm font-medium text-gray-600">Prozessorientierung (<span id="sk-prozess-val">{{ participant.sk_ratings.process_orientation }}</span>)</label>
+                            <input type="range" id="sk-prozess" min="0" max="10" value="{{ participant.sk_ratings.process_orientation }}" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
                         </div>
                         <div>
-                            <label for="sk-ergebnis" class="block text-sm font-medium text-gray-600">Ergebnisorientierung (<span id="sk-ergebnis-val">{{ data.Beispielgruppe[0].sk_ratings.results_orientation }}</span>)</label>
-                            <input type="range" id="sk-ergebnis" min="0" max="10" value="{{ data.Beispielgruppe[0].sk_ratings.results_orientation }}" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <label for="sk-ergebnis" class="block text-sm font-medium text-gray-600">Ergebnisorientierung (<span id="sk-ergebnis-val">{{ participant.sk_ratings.results_orientation }}</span>)</label>
+                            <input type="range" id="sk-ergebnis" min="0" max="10" value="{{ participant.sk_ratings.results_orientation }}" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
                         </div>
                         <div>
                             <label for="sk-text" class="block text-sm font-medium text-gray-700 mt-2">Textblock Soziale Kompetenz</label>
-                            <textarea id="sk-text" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"></textarea>
+                            <textarea id="sk-text" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">{{ participant.ki_texts.social_text }}</textarea>
                         </div>
                     </div>
                 </div>
@@ -111,24 +111,24 @@
                     <h3 class="text-lg font-semibold text-gray-700">Verbale Kompetenz</h3>
                     <div class="mt-4 space-y-4">
                          <div>
-                            <label for="vk-flex" class="block text-sm font-medium text-gray-600">Flexibilität (<span id="vk-flex-val">{{ data.Beispielgruppe[0].vk_ratings.flexibility }}</span>)</label>
-                            <input type="range" id="vk-flex" min="0" max="10" value="{{ data.Beispielgruppe[0].vk_ratings.flexibility }}" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <label for="vk-flex" class="block text-sm font-medium text-gray-600">Flexibilität (<span id="vk-flex-val">{{ participant.vk_ratings.flexibility }}</span>)</label>
+                            <input type="range" id="vk-flex" min="0" max="10" value="{{ participant.vk_ratings.flexibility }}" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
                         </div>
                         <div>
-                            <label for="vk-beratung" class="block text-sm font-medium text-gray-600">Beratung (<span id="vk-beratung-val">{{ data.Beispielgruppe[0].vk_ratings.consulting }}</span>)</label>
-                            <input type="range" id="vk-beratung" min="0" max="10" value="{{ data.Beispielgruppe[0].vk_ratings.consulting }}" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <label for="vk-beratung" class="block text-sm font-medium text-gray-600">Beratung (<span id="vk-beratung-val">{{ participant.vk_ratings.consulting }}</span>)</label>
+                            <input type="range" id="vk-beratung" min="0" max="10" value="{{ participant.vk_ratings.consulting }}" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
                         </div>
                         <div>
-                            <label for="vk-sachlich" class="block text-sm font-medium text-gray-600">Sachlichkeit (<span id="vk-sachlich-val">{{ data.Beispielgruppe[0].vk_ratings.objectivity }}</span>)</label>
-                            <input type="range" id="vk-sachlich" min="0" max="10" value="{{ data.Beispielgruppe[0].vk_ratings.objectivity }}" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <label for="vk-sachlich" class="block text-sm font-medium text-gray-600">Sachlichkeit (<span id="vk-sachlich-val">{{ participant.vk_ratings.objectivity }}</span>)</label>
+                            <input type="range" id="vk-sachlich" min="0" max="10" value="{{ participant.vk_ratings.objectivity }}" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
                         </div>
                         <div>
-                            <label for="vk-ziel" class="block text-sm font-medium text-gray-600">Zielorientierung (<span id="vk-ziel-val">{{ data.Beispielgruppe[0].vk_ratings.goal_orientation }}</span>)</label>
-                            <input type="range" id="vk-ziel" min="0" max="10" value="{{ data.Beispielgruppe[0].vk_ratings.goal_orientation }}" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <label for="vk-ziel" class="block text-sm font-medium text-gray-600">Zielorientierung (<span id="vk-ziel-val">{{ participant.vk_ratings.goal_orientation }}</span>)</label>
+                            <input type="range" id="vk-ziel" min="0" max="10" value="{{ participant.vk_ratings.goal_orientation }}" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
                         </div>
                          <div>
                             <label for="vk-text" class="block text-sm font-medium text-gray-700 mt-2">Textblock Verbale Kompetenz</label>
-                            <textarea id="vk-text" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"></textarea>
+                            <textarea id="vk-text" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">{{ participant.ki_texts.verbal_text }}</textarea>
                         </div>
                     </div>
                 </div>
@@ -138,19 +138,19 @@
                      <div class="mt-4 space-y-4">
                         <div>
                             <label for="summary-text" class="block text-sm font-medium text-gray-700">Zusammenfassung</label>
-                            <textarea id="summary-text" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"></textarea>
+                            <textarea id="summary-text" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">{{ participant.ki_texts.summary_text }}</textarea>
                         </div>
                         <div>
                             <label for="footerName" class="block text-sm font-medium text-gray-700">Name (für Fusszeile)</label>
-                            <input type="text" id="footerName" value="{{ data.Beispielgruppe[0].footer_data.name }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+                            <input type="text" id="footerName" value="{{ participant.footer_data.name }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
                         </div>
                         <div>
                             <label for="footerLocation" class="block text-sm font-medium text-gray-700">Ort (für Fusszeile)</label>
-                            <input type="text" id="footerLocation" value="{{ data.Beispielgruppe[0].footer_data.location }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+                            <input type="text" id="footerLocation" value="{{ participant.footer_data.location }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
                         </div>
                         <div>
                             <label for="footerDate" class="block text-sm font-medium text-gray-700">Datum (für Fusszeile)</label>
-                            <input type="date" id="footerDate" value="{{ data.Beispielgruppe[0].footer_data.date }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+                            <input type="date" id="footerDate" value="{{ participant.footer_data.date }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
                         </div>
                     </div>
                 </div>
@@ -171,7 +171,7 @@
                         <h1 class="text-3xl font-bold text-indigo-800 mb-2">Stärkenanalyse</h1>
                         <h2 class="text-lg font-semibold text-gray-600">Fremdeinschätzung: Soziale und Verbale Kompetenzen</h2>
                          <div class="text-sm text-gray-600 mt-6 space-y-1">
-                            <div class="flex"><p class="font-semibold text-gray-700 w-48 shrink-0">Teilnehmer*in:</p><p id="preview-candidateName">Mustermensch</p></div>
+                            <div class="flex"><p class="font-semibold text-gray-700 w-48 shrink-0">Teilnehmer*in:</p><p id="preview-candidateName">{{ participant.name }}</p></div>
                             <div class="flex"><p class="font-semibold text-gray-700 w-48 shrink-0">Datum der Durchführung:</p><p id="preview-assessmentDate"></p></div>
                             <div class="flex"><p class="font-semibold text-gray-700 w-48 shrink-0">Ort der Durchführung:</p><p id="preview-location"></p></div>
                             <div class="flex"><p class="font-semibold text-gray-700 w-48 shrink-0">Beobachter*innen:</p><p id="preview-observers"></p></div>
@@ -186,7 +186,8 @@
                                     <canvas id="social-chart" width="400" height="300"></canvas>
                                 </div>
                                 <p id="preview-sk-text" class="text-gray-700 text-sm leading-relaxed">
-                                    </p>
+                                    {{ participant.ki_texts.social_text }}
+                                </p>
                             </div>
                         </section>
 
@@ -197,20 +198,22 @@
                                      <canvas id="verbal-chart" width="400" height="300"></canvas>
                                 </div>
                                  <p id="preview-vk-text" class="text-gray-700 text-sm leading-relaxed">
-                                    </p>
+                                    {{ participant.ki_texts.verbal_text }}
+                                </p>
                             </div>
                         </section>
 
                         <section id="summary-section" class="mb-16">
                             <h2 class="text-xl font-bold text-indigo-700 mb-4 border-b-2 border-indigo-100 pb-2">Zusammenfassung</h2>
                             <p id="preview-summary-text" class="text-gray-700 text-sm leading-relaxed">
-                                </p>
+                                {{ participant.ki_texts.summary_text }}
+                            </p>
                         </section>
                     </main>
 
                     <footer class="pt-4 mt-auto text-sm text-gray-600 flex justify-between border-t-2 border-indigo-500">
-                        <p id="preview-footer-name">{{ data.Beispielgruppe[0].footer_data.name }}</p>
-                        <p id="preview-footer-location-date">{{ data.Beispielgruppe[0].footer_data.location }}, {{ data.Beispielgruppe[0].footer_data.date }}</p>
+                        <p id="preview-footer-name">{{ participant.footer_data.name }}</p>
+                        <p id="preview-footer-location-date">{{ participant.footer_data.location }}, {{ participant.footer_data.date }}</p>
                     </footer>
                 </div>
             </div>
@@ -219,7 +222,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- DOM Elements ---
             const inputs = document.querySelectorAll('input, textarea');
             
             const candidateName = document.getElementById('candidateName');
@@ -259,12 +261,6 @@
             
             const socialChartCtx = document.getElementById('social-chart').getContext('2d');
             const verbalChartCtx = document.getElementById('verbal-chart').getContext('2d');
-            
-            // Set today's date for date inputs as a default
-            const today = new Date().toISOString().split('T')[0];
-            assessmentDate.value = today;
-            footerDate.value = today;
-
 
             // --- Chart Drawing Function ---
             function drawRadarChart(ctx, labels, data) {
@@ -347,64 +343,42 @@
             // --- Save Function ---
             function saveInputs() {
                 const dataToSave = {
-                    "Beispielgruppe": [
-                        {
-                            "id": "abc12345", // Beispiel-ID, muss später dynamisch sein
-                            "name": candidateName.value,
-                            "general_data": {
-                                "date": assessmentDate.value,
-                                "location": locationInput.value,
-                                "observers": observers.value
-                            },
-                            "observations": {
-                                "social": "", // Hier fügen wir später die Beobachtungen hinzu
-                                "verbal": ""
-                            },
-                            "sk_ratings": {
-                                "flexibility": parseFloat(skFlex.value),
-                                "team_orientation": parseFloat(skTeam.value),
-                                "process_orientation": parseFloat(skProzess.value),
-                                "results_orientation": parseFloat(skErgebnis.value)
-                            },
-                            "vk_ratings": {
-                                "flexibility": parseFloat(vkFlex.value),
-                                "consulting": parseFloat(vkBeratung.value),
-                                "objectivity": parseFloat(vkSachlich.value),
-                                "goal_orientation": parseFloat(vkZiel.value)
-                            },
-                            "ki_texts": {
-                                "social_text": skText.value,
-                                "verbal_text": vkText.value,
-                                "summary_text": summaryText.value
-                            },
-                            "footer_data": {
-                                "name": footerName.value,
-                                "location": footerLocation.value,
-                                "date": footerDate.value
-                            }
-                        }
-                    ]
+                    candidateName: candidateName.value,
+                    assessmentDate: assessmentDate.value,
+                    location: locationInput.value,
+                    observers: observers.value,
+                    skFlex: skFlex.value,
+                    skTeam: skTeam.value,
+                    skProzess: skProzess.value,
+                    skErgebnis: skErgebnis.value,
+                    skText: skText.value,
+                    vkFlex: vkFlex.value,
+                    vkBeratung: vkBeratung.value,
+                    vkSachlich: vkSachlich.value,
+                    vkZiel: vkZiel.value,
+                    vkText: vkText.value,
+                    summaryText: summaryText.value,
+                    footerName: footerName.value,
+                    footerLocation: footerLocation.value,
+                    footerDate: footerDate.value
                 };
 
-                fetch('/save_data', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(dataToSave)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === "success") {
-                        alert(data.message);
-                    } else {
-                        alert("Fehler: " + data.message);
-                    }
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                    alert('Ein Fehler ist aufgetreten: ' + error);
-                });
+                const jsonString = JSON.stringify(dataToSave, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                
+                const safeName = candidateName.value.replace(/\s+/g, '_') || 'teilnehmer';
+                const safeDate = assessmentDate.value || 'datum';
+                a.download = `staerkenanalyse_${safeName}_${safeDate}.json`;
+                
+                document.body.appendChild(a);
+                a.click();
+                
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
             }
 
 
@@ -449,7 +423,7 @@
                     parseFloat(skProzess.value),
                     parseFloat(skErgebnis.value)
                 ];
-                const socialLabels = ['Flexibilität', 'Team-\norientierung', 'Prozessorientierung', 'Ergebnis-\norientierung'];
+                const socialLabels = ['Flexibilität', 'Team-\\norientierung', 'Prozessorientierung', 'Ergebnis-\\norientierung'];
                 drawRadarChart(socialChartCtx, socialLabels, socialData);
                 
                 const verbalData = [
@@ -458,7 +432,7 @@
                     parseFloat(vkSachlich.value),
                     parseFloat(vkZiel.value)
                 ];
-                const verbalLabels = ['Flexibilität', 'Beratung', 'Sachlichkeit', 'Ziel-\norientierung'];
+                const verbalLabels = ['Flexibilität', 'Beratung', 'Sachlichkeit', 'Ziel-\\norientierung'];
                 drawRadarChart(verbalChartCtx, verbalLabels, verbalData);
             }
             
