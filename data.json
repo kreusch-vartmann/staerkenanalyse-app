@@ -37,52 +37,164 @@
           "location": "",
           "date": ""
         }
+      },
+      {
+        "id": "09e5adbd-8588-4ef5-8612-baa5d339b5a8",
+        "name": "Lisa Müller",
+        "general_data": {
+          "date": "",
+          "location": "",
+          "observers": ""
+        },
+        "observations": {
+          "social": "",
+          "verbal": ""
+        },
+        "sk_ratings": {
+          "flexibility": 0.0,
+          "team_orientation": 0.0,
+          "process_orientation": 0.0,
+          "results_orientation": 0.0
+        },
+        "vk_ratings": {
+          "flexibility": 0.0,
+          "consulting": 0.0,
+          "objectivity": 0.0,
+          "goal_orientation": 0.0
+        },
+        "ki_texts": {
+          "social_text": "",
+          "verbal_text": "",
+          "summary_text": ""
+        },
+        "footer_data": {
+          "name": "",
+          "location": "",
+          "date": ""
+        }
       }
     ]
   },
   "Testgruppe2": {
     "date": "2025-09-10",
-    "location": "M\u00fcnchen",
+    "location": "München",
     "participants": [
       {
         "id": "eeeba5dd-d391-45d6-aa2e-c5d3e85b887f",
-        "name": "Karlchen M\u00fcller",
+        "name": "Karlchen Müller",
         "general_data": {
           "date": "2025-09-10",
-          "location": "M\u00fcnchen",
-          "observers": "M\u00fcnchen"
+          "location": "München",
+          "observers": "München"
         },
         "observations": {
-          "social": "\u2013\tMutter an Nr. 1 \u201eMuss sein Nr. 1\u201c (Person ist nicht Deutsch Muttersprachlerin)\r\n\u2013\tWG schlie\u00dft sie aus, weil man keinen L\u00e4rm will.\r\n\u2013\tEhepaar 6 schlie\u00dft sie aus, weil Konflikte vorprogrammiert sind.\r\n\u2013\t\u201eWir m\u00fcssen nehmen, was wir haben\u201c (Soll hei\u00dfen, wir k\u00f6nnen nur aus den 6 gegebenen M\u00f6glichkeiten ausw\u00e4hlen)\r\n\u2013\tWohlhabende Rentner, schlie\u00dft sie aus. Argumentiert mit eigener Erfahrung, dass die n\u00f6rgelig sind, immer was wollen sich eigentlich auch was anderes leisten wollen.\r\n\u2013\tMacht sich beim Durchlesen direkt Notizen auf dem Infoblatt, sie hat Nummern neben die Parteien geschrieben und damit eine Reihenfolge festgelegt.\r\n\u2013\tAlleinerziehende Mutter, \u201eweil die selten die Wohnung bekommt\u201c\r\n\u2013\t\u201eWir sind die Bl\u00f6den dann!\u201c (in Bezug auf die Renter, die immer was wollen). \u201eDas haben wir bei uns im Haus gehabt.\u201c\r\n\u2013\tInitiiert Abstimmung \u201eWer ist daf\u00fcr?\u201c \r\n\u2013\t\u201eBin ich strikt dagegen!\u201c (Bezug auf Rentner)\r\n",
-          "verbal": "Flexibilit\u00e4t:\r\n - Probiert aus, verwirft Ideen, wenn das nicht passt. Reflektiert, leitet neue Handlungen  draus ab. Bsp.: Schneidet Sonnenblume aus, ist ihr zu klein auf dem Plakat. Sucht dann  gr\u00f6\u00dfere Bilder.\r\n - Probleml\u00f6sungskompetenz (Kreativit\u00e4t): Frage: \u201eWas schreiben wir aufs Plakat\u201c. Sie sagt: \u201eGib mir die Liste, die du geschrieben hast.\u201c \u2014> Hatten sich schon drauf geeinigt, was da drauf soll.\r\n - Macht gestalterische Vorschl\u00e4ge (Uhrzeit)\r\nTeam:\r\n\u2013\tReagiert auf vorgeschlagenen Slogan \u201eGemeinsam statt einsam\u201c (v. Micha) und entwickelt ihn zusammen mit anderen weiter. \u201eGemeinsam sind wir stark\u201c\r\n\u2013\tDurchsetzungsf\u00e4higkeit st\u00fctzt auch ein Team\r\n\r\nProzess:\r\n\u2013\t\u201eK\u00f6nnen wir erstmal...\u201c -> macht Vorschl\u00e4ge zum Prozess\r\nErgebnis:\r\n\u2013\tR\u00e4umt den eigenen Arbeitsplatz auf, obwohl Micha noch pr\u00e4sentiert.\r\n\u2013\tFertigt zun\u00e4chst ne Skizze an. / Reicht Micha den Block: \u201eIch schreibe immer mit Fehler.\u201c \u2014> Ergebnis f\u00fcr Sie wichtig.\r\n\u2013\tMacht die Skizze, l\u00e4sst von den anderen dabei nicht beirren. -> eigene Vorstellungen, Zielorientierung.\r\n\u2013\t\u201egemeinsam sind wir stark\u201c setzt sich durch \u2014> Ergebnis\r\n\r\nSelbsteinsch\u00e4tzung:\r\n\u2013\tSuper in der kurzen Zeit ein Ergebnis erreicht. Gruppe hat ein gutes Ergebnis erreicht. In einer halben Stunde... Daf\u00fcr braucht man sonst 1-2 Tg (legt Wert auf Team, Schwerpunkt liegt auf dem Ergebnis)\r\n\r\n"
+          "social": "–\tMutter an Nr. 1 „Muss sein Nr. 1“ (Person ist nicht Deutsch Muttersprachlerin)\r\n–\tWG schließt sie aus, weil man keinen Lärm will.\r\n–\tEhepaar 6 schließt sie aus, weil Konflikte vorprogrammiert sind.\r\n–\t„Wir müssen nehmen, was wir haben“ (Soll heißen, wir können nur aus den 6 gegebenen Möglichkeiten auswählen)\r\n–\tWohlhabende Rentner, schließt sie aus. Argumentiert mit eigener Erfahrung, dass die nörgelig sind, immer was wollen sich eigentlich auch was anderes leisten wollen.\r\n–\tMacht sich beim Durchlesen direkt Notizen auf dem Infoblatt, sie hat Nummern neben die Parteien geschrieben und damit eine Reihenfolge festgelegt.\r\n–\tAlleinerziehende Mutter, „weil die selten die Wohnung bekommt“\r\n–\t„Wir sind die Blöden dann!“ (in Bezug auf die Renter, die immer was wollen). „Das haben wir bei uns im Haus gehabt.“\r\n–\tInitiiert Abstimmung „Wer ist dafür?“ \r\n–\t„Bin ich strikt dagegen!“ (Bezug auf Rentner)\r\n",
+          "verbal": "Flexibilität:\r\n - Probiert aus, verwirft Ideen, wenn das nicht passt. Reflektiert, leitet neue Handlungen  draus ab. Bsp.: Schneidet Sonnenblume aus, ist ihr zu klein auf dem Plakat. Sucht dann  größere Bilder.\r\n - Problemlösungskompetenz (Kreativität): Frage: „Was schreiben wir aufs Plakat“. Sie sagt: „Gib mir die Liste, die du geschrieben hast.“ —> Hatten sich schon drauf geeinigt, was da drauf soll.\r\n - Macht gestalterische Vorschläge (Uhrzeit)\r\nTeam:\r\n–\tReagiert auf vorgeschlagenen Slogan „Gemeinsam statt einsam“ (v. Micha) und entwickelt ihn zusammen mit anderen weiter. „Gemeinsam sind wir stark“\r\n–\tDurchsetzungsfähigkeit stützt auch ein Team\r\n\r\nProzess:\r\n–\t„Können wir erstmal...“ -> macht Vorschläge zum Prozess\r\nErgebnis:\r\n–\tRäumt den eigenen Arbeitsplatz auf, obwohl Micha noch präsentiert.\r\n–\tFertigt zunächst ne Skizze an. / Reicht Micha den Block: „Ich schreibe immer mit Fehler.“ —> Ergebnis für Sie wichtig.\r\n–\tMacht die Skizze, lässt von den anderen dabei nicht beirren. -> eigene Vorstellungen, Zielorientierung.\r\n–\t„gemeinsam sind wir stark“ setzt sich durch —> Ergebnis\r\n\r\nSelbsteinschätzung:\r\n–\tSuper in der kurzen Zeit ein Ergebnis erreicht. Gruppe hat ein gutes Ergebnis erreicht. In einer halben Stunde... Dafür braucht man sonst 1-2 Tg (legt Wert auf Team, Schwerpunkt liegt auf dem Ergebnis)\r\n\r\n"
         },
         "sk_ratings": {
-          "flexibility": 9.0,
-          "team_orientation": 9.5,
-          "process_orientation": 9.7,
-          "results_orientation": 9.8
+          "flexibility": 7,
+          "team_orientation": 6,
+          "process_orientation": 8,
+          "results_orientation": 9
         },
         "vk_ratings": {
-          "flexibility": 9.2,
-          "consulting": 9.0,
-          "objectivity": 9.5,
-          "goal_orientation": 9.7
+          "flexibility": 7,
+          "consulting": 8,
+          "objectivity": 7,
+          "goal_orientation": 9
         },
         "ki_texts": {
-          "social_text": {
-            "process_orientation": "Karlchen zeigt eine ausgepr\u00e4gte **Prozessorientierung**, indem sie strukturiert und zielgerichtet an Aufgaben herangeht. Dies wird besonders deutlich, als sie w\u00e4hrend der Erbengemeinschafts-Diskussion **direkt Notizen auf dem Infoblatt anfertigt**, die Interessenten mit einer klaren Reihenfolge versieht und so den Entscheidungsprozess f\u00fcr das Team transparent und nachvollziehbar gestaltet. Ihre Initiative, eine **Abstimmung einzuleiten** (\u201eWer ist daf\u00fcr?\u201c), unterstreicht ihre F\u00e4higkeit, Gruppenprozesse aktiv zu steuern und zu beschleunigen, ohne die Qualit\u00e4t der Entscheidung zu gef\u00e4hrden. Diese proaktive Herangehensweise schafft Klarheit und hilft dem Team, sich auf Wesentliches zu konzentrieren.",
-            "results_orientation": "Karlchens **Ergebnisorientierung** ist bemerkenswert: Sie setzt sich **klar und entschlossen f\u00fcr L\u00f6sungen ein**, die sie f\u00fcr sinnvoll erachtet \u2013 etwa beim Ausschluss bestimmter Mietinteressenten aufgrund ihrer **praktischen Erfahrungen und logischen Abw\u00e4gungen** (\u201eWir m\u00fcssen nehmen, was wir haben\u201c / \u201eWir sind die Bl\u00f6den dann!\u201c). Ihre Argumentation ist stets **zweckgerichtet** und zielt darauf ab, das bestm\u00f6gliche Ergebnis f\u00fcr die Gruppe zu erzielen. Besonders hervorzuheben ist ihr **durchsetzungsstarker Einsatz f\u00fcr die alleinerziehende Mutter** (\u201eweil die selten die Wohnung bekommt\u201c), was zeigt, dass sie nicht nur effizient, sondern auch **sozial verantwortungsbewusst** handelt.",
-            "flexibility": "Karlchen demonstriert **Flexibilit\u00e4t im Denken und Handeln**, indem sie **schnell zwischen verschiedenen Perspektiven wechselt** und ihre Meinungen anpasst, wenn neue Argumente auftauchen. Obwohl sie zun\u00e4chst zur\u00fcckhaltend wirkt, zeigt sie in der Diskussion eine **dynamische Anpassungsf\u00e4higkeit**, etwa beim **Verwerfen von Optionen** (z. B. Rentnerehepaar aufgrund eigener negativer Erfahrungen) oder beim **Weiterentwickeln von Ideen** im Team. Diese F\u00e4higkeit, **reflektiert umzudenken** und gleichzeitig standhaft bei wichtigen Punkten zu bleiben (\u201eBin ich strikt dagegen!\u201c), macht sie zu einer **br\u00fcckenbauenden Kraft** in der Gruppe.",
-            "team_orientation": "Karlchens **Teamorientierung** ist ein zentraler St\u00e4rkenbereich: Sie **unterst\u00fctzt das Team aktiv**, indem sie **unbeliebte Aufgaben \u00fcbernimmt** (z. B. das Strukturieren der Mietinteressenten) und durch **klare Positionierung** (\u201estrikt dagegen\u201c) Raum f\u00fcr konstruktive Diskussionen schafft. Ihre **offene Gestik** (h\u00e4ufiges Nicken) signalisiert Zugeh\u00f6rigkeit und f\u00f6rdert eine **vertrauensvolle Atmosph\u00e4re**. Zudem zeigt sie **Empathie**, etwa beim Einsatz f\u00fcr die alleinerziehende Mutter, und bindet andere ein, indem sie deren Vorschl\u00e4ge aufgreift und weiterentwickelt (z. B. Slogan \u201eGemeinsam sind wir stark\u201c). Ihr Verhalten st\u00e4rkt den **Zusammenhalt** und die **Handlungsf\u00e4higkeit** des Teams."
-          },
-          "verbal_text": {
-            "flexibility": "Karlchens **verbale Flexibilit\u00e4t** ist herausragend: Sie **passt ihre Sprache dynamisch an die Situation an**, etwa beim **spontanen Weiterentwickeln von Ideen** (\u201eGemeinsam statt einsam\u201c \u2192 \u201eGemeinsam sind wir stark\u201c) oder beim **l\u00f6sungsorientierten Umformulieren** von Herausforderungen (\u201eWas schreiben wir aufs Plakat\u201c \u2192 \u201eGib mir die Liste, die du geschrieben hast\u201c). Ihre **spontane Kreativit\u00e4t** (z. B. gestalterische Vorschl\u00e4ge wie die Uhrzeit auf dem Plakat) und ihre **Bereitschaft, eigene Ans\u00e4tze zu hinterfragen** (Sonnenblume zu klein \u2192 Suche nach gr\u00f6\u00dferen Bildern) zeigen, dass sie **kommunikativ agil** ist und **Innovationen vorantreibt**.",
-            "consulting": "Karlchen \u00fcberzeugt durch eine **beratende und einbindende Sprachkompetenz**. Sie **fragt gezielt nach** (\u201eK\u00f6nnen wir erstmal\u2026\u201c), um Prozesse zu kl\u00e4ren, und **bezieht andere aktiv ein**, indem sie deren Input aufgreift und wertsch\u00e4tzend weiterf\u00fchrt. Ihre **direkte, aber respektvolle Art** (\u201eMuss sein Nr. 1\u201c) schafft Klarheit und **ermutigt andere, sich zu beteiligen**. Besonders stark ist ihre F\u00e4higkeit, **komplexe Inhalte verst\u00e4ndlich zu vermitteln** \u2013 etwa beim Begr\u00fcnden ihrer Mietinteressenten-Auswahl \u2013 was sie zu einer **\u00fcberzeugenden Vermittlerin** zwischen unterschiedlichen Standpunkten macht.",
-            "objectivity": "Karlchens **objektive und faktenbasierte Argumentation** ist eine ihrer gr\u00f6\u00dften St\u00e4rken. Sie **st\u00fctzt ihre Aussagen auf konkrete Erfahrungen** (\u201eDas haben wir bei uns im Haus gehabt\u201c) und **logische Schl\u00fcsse** (\u201eKonflikte vorprogrammiert\u201c), was ihre Positionierungen **nachvollziehbar und \u00fcberzeugend** macht. Selbst in emotional aufgeladenen Themen (z. B. alleinerziehende Mutter) bleibt ihre Sprache **sachlich und zielgerichtet**. Diese **klare, unaufgeregte Art** strahlt Kompetenz aus und **f\u00f6rdert rationalen Diskurs** im Team.",
-            "goal_orientation": "Karlchens **zielorientierte Verbalkompetenz** ist pr\u00e4gnant: Sie **formuliert klar und unmissverst\u00e4ndlich**, was erreicht werden soll (\u201eWir m\u00fcssen nehmen, was wir haben\u201c), und **h\u00e4lt den Fokus auf das Ergebnis**. Ihre Sprache ist **gradlinig und handlungsleitend**, etwa beim Initiieren der Abstimmung oder beim **priorisierten Vorbringen ihrer Argumente**. Auch in der Plakatgestaltung zeigt sich ihre **Ergebnisfokussierung** (\u201eSuper in der kurzen Zeit ein Ergebnis erreicht\u201c), die sie durch **motivierende Aussagen** (\u201eGemeinsam sind wir stark\u201c) mit dem Team teilt. Diese **energievolle und zielstrebige Kommunikation** treibt Gruppenprozesse voran."
-          },
-          "summary_text": "Karlchen ist eine **strukturierte, zielstrebige und sozial engagierte Pers\u00f6nlichkeit**, die durch ihre **klare Kommunikation**, **prozessuale Weitsicht** und **teamorientierte Haltung** \u00fcberzeugt. Ihre St\u00e4rken liegen in der **F\u00e4higkeit, komplexe Aufgaben zu analysieren und l\u00f6sungsorientiert zu steuern**, ohne dabei den menschlichen Aspekt aus den Augen zu verlieren \u2013 wie ihr Einsatz f\u00fcr die alleinerziehende Mutter zeigt. Gleichzeitig ist sie **flexibel genug, um Ideen anzupassen**, und **durchsetzungsstark genug, um Standpunkte zu vertreten**, was sie zu einer **wertvollen Bereicherung f\u00fcr jedes Team** macht. Ihr **pragmatischer Sprachstil** und ihre **\u00fcberzeugende Argumentationsweise** machen sie zu einer **nat\u00fcrlichen F\u00fchrungspers\u00f6nlichkeit**, die sowohl Prozesse als auch Menschen zusammenbringt.",
+          "social_text": "Karlchen zeigte in der Gruppenübung eine **herausragende Ergebnisorientierung (9/10)**, indem sie zielstrebig Prioritäten setzte (z. B. Notizen mit Nummern zur Auswahl der Mieter:innen) und klare Entscheidungen traf – etwa beim Ausschluss der Rentner:innen aufgrund negativer Vorerfahrungen. Ihre **Prozessorientierung (8/10)** wurde durch strukturierte Vorschläge („Können wir erstmal…“) und die Initiierung einer Abstimmung („Wer ist dafür?“) deutlich. Besonders auffällig war ihre **pragmatische Flexibilität (7/10)**, mit der sie Lösungen anpasste (z. B. bei der Plakatgestaltung), ohne Kompromisse bei ihren Zielen einzugehen. Die **Teamorientierung (6/10)** zeigte sich in der Weiterentwicklung des Slogans mit anderen, wobei sie stets die Gruppeneffizienz im Blick behielt – etwa durch die Betonung des gemeinsamen Erfolgs in der kurzen Zeit.",
+          "verbal_text": "In den Gesprächen überzeugte Karlchen durch **hohe Zielorientierung (9/10)**, indem sie Gespräche fokussiert auf Lösungen lenkte – etwa durch die direkte Aufforderung *„Gib mir die Liste, die du geschrieben hast“* zur Plakatgestaltung. Ihre **Beratungskompetenz (8/10)** zeigte sich in konstruktiven Impulsen wie der Weiterentwicklung des Slogans *„Gemeinsam sind wir stark“* oder gestalterischen Vorschlägen (Uhrzeit). Besonders wirksam war ihre **Sachlichkeit (7/10)**, mit der sie Erfahrungen (z. B. zu nörgelnden Rentner:innen) faktenbasiert einbrachte. Die **verbale Flexibilität (7/10)** wurde durch schnelles Reflektieren und Anpassen sichtbar, z. B. beim Verwerfen zu kleiner Sonnenblumen-Bilder – stets mit dem Ziel, das Ergebnis zu optimieren.",
+          "summary_text": "Karlchens Stärken liegen in ihrer **ausgeprägten Ergebnis- und Zielorientierung** (je 9/10), die sie durch strukturiertes Vorgehen (Prozessorientierung: 8/10) und faktenbasierte Argumentation untermauert. Sie kombiniert **pragmatische Flexibilität** (7/10) – etwa beim Anpassen von Lösungen – mit einer **lösungsfokussierten Beratungshaltung** (8/10). Besonders hervorzuheben ist ihr **strategisches Denken**, das Teamarbeit effizient auf gemeinsame Ziele ausrichtet, ohne dabei die eigene Überzeugung (z. B. bei Mieter:innen-Auswahl) aus den Augen zu verlieren. Ihr Profil eignet sich ideal für **umsetzungsstarke, zielgerichtete Rollen** mit hohem Gestaltungsanspruch.",
           "ki_prompt": "You are a highly skilled and empathetic expert in conducting strength-based assessment centers. Your task is to analyze observations of a participant's social and verbal competence and provide a structured report in JSON format.\r\n\r\nRULES AND CONTEXT:\r\n- The focus of the report must be exclusively on strengths and potential. Do not mention weaknesses.\r\n- The language must be positive, respectful, and motivating, as the report is intended for the participant's professional development.\r\n- All descriptions should be based on the provided observations and be as specific as possible.\r\n- When referring to the participant, use only their first name and gender-neutral language unless the gender is explicitly mentioned in the observations.\r\n- Only the provided first name of the participant should be used. Do not use a last name.\r\n- Use the Riemann Cross model for evaluating social and verbal competence. The core dimensions of the model are Process Orientation, Results Orientation, Flexibility, and Team Orientation. Map the observed behaviors to these dimensions.\r\n- The output must be only a single, valid JSON object. Do not include any introductory text, explanations, or code blocks like ```json.\r\n\r\nThe JSON object must contain the following keys and values:\r\n- \"social_text\": A concise, strength-based summary of the participant's social competence, based on the observations and mapped to the Riemann Cross dimensions.\r\n- \"verbal_text\": A concise, strength-based summary of the participant's verbal competence, also mapped to the Riemann Cross dimensions.\r\n- \"summary_text\": A brief, overall summary of the participant's key strengths.\r\n- \"sk_ratings\": An object with numerical ratings from 0.0 to 10.0 for:\r\n  - \"flexibility\"\r\n  - \"team_orientation\"\r\n  - \"process_orientation\"\r\n  - \"results_orientation\"\r\n- \"vk_ratings\": An object with numerical ratings from 0.0 to 10.0 for:\r\n  - \"flexibility\"\r\n  - \"consulting\"\r\n  - \"objectivity\"\r\n  - \"goal_orientation\"\r\n\r\nADDITIONAL CONTEXT AND DOCUMENTS:\r\n{{additional_content}}\r\n\r\nOBSERVATIONS:\r\nParticipant's First Name: {{first_name}}\r\nSocial Competence Observations: {{social_observations}}\r\nVerbal Competence Observations: {{verbal_observations}}\r\n"
+        },
+        "footer_data": {
+          "name": "",
+          "location": "",
+          "date": ""
+        }
+      }
+    ]
+  },
+  "KellerLingen": {
+    "date": "2025-09-01",
+    "location": "Hannover",
+    "leitung": "Timo Kreusch-Vartmann, Learning Manager",
+    "beobachter1": "Timo Kreusch-Vartmann",
+    "beobachter2": "Jana Weber",
+    "participants": [
+      {
+        "id": "eb3b029f-fd1c-4401-8e83-6d28e6de2d56",
+        "name": "Maria Magdalena",
+        "general_data": {
+          "date": "2025-09-01",
+          "location": "Hannover",
+          "observers": ""
+        },
+        "observations": {
+          "social": "Sehr fleißig, hilft allen, spricht mit jedem, \"Willst du das machen?\", oft Körperkontakt",
+          "verbal": "benutzt beschreibende, blumige Sprache\nspricht leise\nspricht in langen Sätzen mit vielen Beispielen.\nfindet immer Argumente, wenn ein anderer etwas sagt."
+        },
+        "sk_ratings": {
+          "flexibility": 9,
+          "team_orientation": 10,
+          "process_orientation": 6,
+          "results_orientation": 7
+        },
+        "vk_ratings": {
+          "flexibility": 8,
+          "consulting": 9,
+          "objectivity": 8,
+          "goal_orientation": 7
+        },
+        "ki_texts": {
+          "social_text": "Maria zeigte in der Gruppenübung eine herausragende Teamorientierung, indem sie allen Teilnehmern aktiv Unterstützung anbot und durch ihre offene Art eine positive Gruppendynamik förderte. Besonders auffällig war ihre Hilfsbereitschaft, die sie durch Fragen wie 'Willst du das machen?' und häufigen Körperkontakt ausdrückte. Ihre Flexibilität war ebenfalls stark ausgeprägt, da sie sich mühelos auf verschiedene Gesprächspartner einstellte und eine verbindende Rolle im Team übernahm.",
+          "verbal_text": "In den Gesprächen überzeugte Maria durch ihre Flexibilität in der Kommunikation, indem sie eine beschreibende und blumige Sprache nutzte, die auf ihre Gesprächspartner abgestimmt war. Ihre Beratungskompetenz zeigte sich in ihrer Fähigkeit, auf Aussagen anderer mit fundierten Argumenten zu reagieren und diese mit Beispielen zu untermauern. Besonders hervorzuheben ist ihre sachliche und detaillierte Argumentationsweise, die durch lange, gut strukturierte Sätze geprägt war.",
+          "summary_text": "Marias Stärken liegen in ihrer Teamorientierung und Flexibilität, was sich in ihrer hilfsbereiten und verbindenden Art zeigte. Besonders hervorzuheben ist ihre Fähigkeit, auf andere einzugehen und eine positive Gruppendynamik zu fördern. In verbalen Situationen überzeugt sie durch ihre anpassungsfähige und sachliche Kommunikation."
+        },
+        "footer_data": {
+          "name": "",
+          "location": "",
+          "date": ""
+        }
+      }
+    ]
+  },
+  "Lernwelten": {
+    "date": "2025-09-25",
+    "location": "Gescher",
+    "leitung": "Timo Kreusch-Vartmann, Learning Manager",
+    "beobachter1": "Hinz",
+    "beobachter2": "Kunz",
+    "participants": [
+      {
+        "id": "0da97ea3-db4f-46a9-aba9-4bdfc09c1893",
+        "name": "Manfred Köster",
+        "general_data": {
+          "date": "2025-09-25",
+          "location": "Gescher"
+        },
+        "observations": {
+          "social": "",
+          "verbal": ""
+        },
+        "sk_ratings": {
+          "flexibility": 6,
+          "team_orientation": 9,
+          "process_orientation": 7,
+          "results_orientation": 6
+        },
+        "vk_ratings": {
+          "flexibility": 5,
+          "consulting": 6,
+          "objectivity": 8,
+          "goal_orientation": 7
+        },
+        "ki_texts": {
+          "social_text": "Manfred zeigte in der Gruppenübung eine herausragende Teamorientierung, indem er durch kooperatives Verhalten und regelmäßige Mitarbeit das Team unterstützte. Besonders auffällig war seine Bereitschaft, auch unliebsame Aufgaben zu übernehmen, was die Gruppenharmonie und Effizienz deutlich stärkte. Seine ruhige und ausgeglichene Art trug maßgeblich zu einer positiven Arbeitsatmosphäre bei.",
+          "verbal_text": "In den Gesprächen überzeugte Manfred durch seine Zielorientierung, indem er sich auf die wesentlichen Punkte konzentrierte und diese klar kommunizierte. Besonders auffällig war seine sachliche und direkte Sprache, die dazu beitrug, dass die Diskussionen fokussiert und ergebnisorientiert verliefen. Seine klare Positionierung und deutliche Argumentation halfen der Gruppe, Entscheidungen effizient zu treffen.",
+          "summary_text": "Manfreds Stärken liegen in seiner Teamorientierung und Sachlichkeit, was sich in seiner kooperativen und ruhigen Art zeigte. Besonders hervorzuheben ist seine Fähigkeit, durch klare Kommunikation und Bereitschaft zur Übernahme unliebsamer Aufgaben, die Gruppenarbeit positiv zu gestalten. Seine ausgeglichene und zielorientierte Herangehensweise macht ihn zu einem wertvollen Teammitglied."
         },
         "footer_data": {
           "name": "",

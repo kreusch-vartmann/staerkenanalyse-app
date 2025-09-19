@@ -1,55 +1,27 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daten für {{ participant.name }} - {{ group_name }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-        }
-        .hidden {
-            display: none;
-        }
-    </style>
-</head>
-<body class="bg-gray-100 min-h-screen">
-    <div class="max-w-4xl mx-auto p-8 bg-white shadow-lg rounded-lg mt-8">
-        <div class="flex items-center justify-between mb-6">
-            <h1 class="text-2xl font-bold text-gray-800">Daten für {{ participant.name }}</h1>
-            <a href="{{ url_for('show_group', group_name=group_name) }}" class="text-indigo-600 hover:text-indigo-800 transition-colors duration-300">
-                &larr; Zurück zur Gruppe
-            </a>
+{% extends 'base.html' %}
+
+{% block title %}Daten für {{ participant.name }} - {{ group_name }}{% endblock %}
+
+{% block content %}
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold text-gray-700">Daten für {{ participant.name }}</h1>
+        <a href="{{ url_for('show_group', group_name=group_name) }}" class="text-indigo-600 hover:text-indigo-800 transition-colors duration-300">
+            &larr; Zurück zur Gruppe
+        </a>
+    </div>
+
+    <form id="data-entry-form" class="space-y-6">
+        <div class="mb-6 p-4 bg-gray-100 rounded-lg">
+            <h2 class="text-xl font-semibold mb-2">Allgemeine Daten</h2>
+            <div>
+                <label for="participant-name" class="block text-sm font-medium text-gray-700">Teilnehmername</label>
+                <input type="text" id="participant-name" value="{{ participant.name }}" readonly class="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-200 cursor-not-allowed p-2">
+            </div>
         </div>
 
-        <form id="data-entry-form" class="space-y-6">
-            <div class="bg-gray-50 p-6 rounded-lg shadow-inner">
-                <h2 class="text-xl font-semibold text-gray-700 mb-4">Allgemeine Daten</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="participant-name" class="block text-sm font-medium text-gray-700">Teilnehmername</label>
-                        <input type="text" id="participant-name" value="{{ participant.name }}" readonly class="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-200 cursor-not-allowed p-2">
-                    </div>
-                    <div>
-                        <label for="assessment-date" class="block text-sm font-medium text-gray-700">Datum der Durchführung</label>
-                        <input type="date" id="assessment-date" value="{{ participant.general_data.date }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
-                    </div>
-                    <div>
-                        <label for="assessment-location" class="block text-sm font-medium text-gray-700">Ort der Durchführung</label>
-                        <input type="text" id="assessment-location" value="{{ participant.general_data.location }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
-                    </div>
-                    <div>
-                        <label for="observers" class="block text-sm font-medium text-gray-700">Beobachter</label>
-                        <input type="text" id="observers" value="{{ participant.general_data.observers }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-gray-50 p-6 rounded-lg shadow-inner">
-                <h2 class="text-xl font-semibold text-gray-700 mb-4">Beobachtungen</h2>
+        <div class="mb-6 p-4 bg-gray-100 rounded-lg">
+            <h2 class="text-xl font-semibold mb-2">Beobachtungen</h2>
+            <div class="space-y-4">
                 <div>
                     <label for="social-observations" class="block text-sm font-medium text-gray-700">Soziale Kompetenzen</label>
                     <textarea id="social-observations" rows="6" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">{{ participant.observations.social }}</textarea>
@@ -59,165 +31,204 @@
                     <textarea id="verbal-observations" rows="6" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">{{ participant.observations.verbal }}</textarea>
                 </div>
             </div>
+        </div>
 
-            <div class="bg-gray-50 p-6 rounded-lg shadow-inner">
-                <h2 class="text-xl font-semibold text-gray-700 mb-4">KI-Analyse</h2>
-                <div class="space-y-4">
-                    <div>
-                        <label for="ki-model" class="block text-sm font-medium text-gray-700">KI-Modell auswählen</label>
-                        <select id="ki-model" name="ki-model" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
-                            <option value="google">Google Gemini-1.5-pro</option>
-                            <option value="mistral">Mistral-large-latest</option>
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label for="prompt_file_input" class="block text-sm font-medium text-gray-700">Prompt-Datei auswählen</label>
-                        <input type="file" id="prompt_file_input" name="prompt_file_input" accept=".txt,.html" class="mt-1 block w-full">
-                    </div>
-
-                    <div>
-                        <label for="additional-files" class="block text-sm font-medium text-gray-700">Zusätzliche Dateien hochladen (optional, nur Text)</label>
-                        <input type="file" id="additional-files" name="additional-files" multiple class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100">
-                    </div>
-
-                    <div>
-                        <label for="ki-prompt" class="block text-sm font-medium text-gray-700">KI-Prompt</label>
-                        <textarea id="ki-prompt" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2" placeholder="Gib hier den Prompt für die KI-Analyse ein.">{{ participant.ki_texts.ki_prompt }}</textarea>
+        <div class="mb-6 p-4 bg-gray-100 rounded-lg">
+            <h2 class="text-xl font-semibold mb-2">KI-Analyse</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="ki-model" class="block text-sm font-medium text-gray-700">KI-Modell auswählen</label>
+                    <select id="ki-model" name="ki-model" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                        <option value="google">Google Gemini-1.5-pro</option>
+                        <option value="mistral">Mistral-large-latest</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Prompt-Datei auswählen</label>
+                    <div class="mt-1 flex items-center">
+                        <label for="prompt_file_input" class="cursor-pointer bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">
+                            Datei auswählen
+                        </label>
+                        <input type="file" id="prompt_file_input" name="prompt_file_input" accept=".txt,.html" class="hidden">
+                        <span id="prompt-file-name" class="ml-3 text-sm text-gray-500">Keine Datei ausgewählt</span>
                     </div>
                 </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Zusätzliche Dateien hochladen (optional)</label>
+                    <div class="mt-1 flex items-center">
+                        <label for="additional-files" class="cursor-pointer bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">
+                            Dateien auswählen
+                        </label>
+                        <input type="file" id="additional-files" name="additional-files" multiple class="hidden">
+                        <span id="additional-files-name" class="ml-3 text-sm text-gray-500">Keine Dateien ausgewählt</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="ki-prompt" class="block text-sm font-medium text-gray-700">KI-Prompt</label>
+                    <textarea id="ki-prompt" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2" placeholder="Gib hier den Prompt für die KI-Analyse ein.">{{ participant.ki_texts.ki_prompt }}</textarea>
+                </div>
             </div>
-            
-            <div class="flex justify-between items-center mt-8">
-                <button type="button" id="save-observations-button" class="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-300">
-                    Beobachtungsdaten speichern
-                </button>
-                <button type="button" id="start-analysis-button" class="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-300">
-                    KI-Analyse starten
-                </button>
-            </div>
-            <div id="loading-spinner" class="hidden text-center mt-4">
-                <svg class="animate-spin h-8 w-8 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <p class="mt-2 text-gray-600">Die KI erstellt den Bericht, das kann einen Moment dauern...</p>
-            </div>
-        </form>
-    </div>
+        </div>
+        
+        <div class="flex justify-between items-center mt-8">
+            <button type="button" id="save-observations-button" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">
+                Beobachtungsdaten speichern
+            </button>
+            <button type="button" id="start-analysis-button" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700">
+                KI-Analyse starten
+            </button>
+        </div>
+        <div id="loading-spinner" class="hidden text-center mt-4">
+            <svg class="animate-spin h-8 w-8 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="mt-2 text-gray-600">Die KI erstellt den Bericht, das kann einen Moment dauern...</p>
+        </div>
+    </form>
 
     <script>
-        const form = document.getElementById('data-entry-form');
-        const saveObservationsButton = document.getElementById('save-observations-button');
-        const startAnalysisButton = document.getElementById('start-analysis-button');
-        const loadingSpinner = document.getElementById('loading-spinner');
-        const promptFileInput = document.getElementById('prompt_file_input');
-        const kiPromptTextarea = document.getElementById('ki-prompt');
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('data-entry-form');
+            const saveObservationsButton = document.getElementById('save-observations-button');
+            const startAnalysisButton = document.getElementById('start-analysis-button');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const promptFileInput = document.getElementById('prompt_file_input');
+            const kiPromptTextarea = document.getElementById('ki-prompt');
+            const promptFileName = document.getElementById('prompt-file-name');
+            const additionalFilesName = document.getElementById('additional-files-name');
+            const additionalFilesInput = document.getElementById('additional-files');
 
-        // Funktion zum Lesen und Laden der Prompt-Datei
-        promptFileInput.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    kiPromptTextarea.value = e.target.result;
-                };
-                reader.readAsText(file);
-            }
-        });
-
-        // Event-Listener für den "Beobachtungsdaten speichern" Button
-        saveObservationsButton.addEventListener('click', async () => {
-            const urlParts = window.location.pathname.split('/');
-            const groupName = urlParts[2];
-            const participantId = urlParts[3];
-
-            const observationsData = {
-                general_data: {
-                    date: document.getElementById('assessment-date').value,
-                    location: document.getElementById('assessment-location').value,
-                    observers: document.getElementById('observers').value
-                },
-                observations: {
-                    social: document.getElementById('social-observations').value,
-                    verbal: document.getElementById('verbal-observations').value
+            // --- NEU: Lade den Zustand aus dem sessionStorage beim Seitenaufruf ---
+            function loadStateFromSessionStorage() {
+                // Lade den gespeicherten Prompt-Inhalt und Namen
+                const savedPromptContent = sessionStorage.getItem('savedPromptContent');
+                const savedPromptName = sessionStorage.getItem('savedPromptName');
+                if (savedPromptContent && savedPromptName) {
+                    kiPromptTextarea.value = savedPromptContent;
+                    promptFileName.textContent = savedPromptName;
                 }
-            };
-            
-            try {
-                const response = await fetch(`/save_observations/${groupName}/${participantId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(observationsData)
-                });
 
-                const result = await response.json();
-                
-                if (result.status === "success") {
-                    alert(result.message);
+                // Lade die Namen der gespeicherten optionalen Dateien
+                const savedAdditionalFiles = sessionStorage.getItem('savedAdditionalFiles');
+                if (savedAdditionalFiles) {
+                    const fileNames = JSON.parse(savedAdditionalFiles);
+                    if (fileNames.length > 0) {
+                        additionalFilesName.textContent = `Zuletzt verwendet: ${fileNames.join(', ')}`;
+                    }
+                }
+            }
+
+            loadStateFromSessionStorage(); // Führe die Funktion direkt beim Laden aus
+
+            // --- Event Listeners für Datei-Uploads ---
+            promptFileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    promptFileName.textContent = file.name;
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        kiPromptTextarea.value = e.target.result;
+                        // NEU: Speichere den Zustand im sessionStorage
+                        sessionStorage.setItem('savedPromptContent', e.target.result);
+                        sessionStorage.setItem('savedPromptName', file.name);
+                    };
+                    reader.readAsText(file);
                 } else {
-                    alert("Fehler beim Speichern: " + result.message);
+                    promptFileName.textContent = 'Keine Datei ausgewählt';
+                    sessionStorage.removeItem('savedPromptContent');
+                    sessionStorage.removeItem('savedPromptName');
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Ein Fehler ist aufgetreten: ' + error);
-            }
-        });
+            });
 
-        // Event-Listener für den "KI-Analyse starten" Button
-        startAnalysisButton.addEventListener('click', async () => {
-            loadingSpinner.classList.remove('hidden');
-            startAnalysisButton.disabled = true;
-            saveObservationsButton.disabled = true;
-
-            const urlParts = window.location.pathname.split('/');
-            const groupName = urlParts[2];
-            const participantId = urlParts[3];
-
-            // Daten für das Speichern der Beobachtungen und den Start der KI-Analyse
-            const formData = new FormData();
-            formData.append('ki_model', document.getElementById('ki-model').value);
-            formData.append('ki_prompt', kiPromptTextarea.value);
-            formData.append('social_observations', document.getElementById('social-observations').value);
-            formData.append('verbal_observations', document.getElementById('verbal-observations').value);
+            additionalFilesInput.addEventListener('change', (event) => {
+                const files = event.target.files;
+                if (files.length > 0) {
+                    let fileNames = Array.from(files).map(file => file.name);
+                    additionalFilesName.textContent = `${files.length} Datei(en) ausgewählt`;
+                    // NEU: Speichere die Dateinamen im sessionStorage
+                    sessionStorage.setItem('savedAdditionalFiles', JSON.stringify(fileNames));
+                } else {
+                    additionalFilesName.textContent = 'Keine Dateien ausgewählt';
+                    sessionStorage.removeItem('savedAdditionalFiles');
+                }
+            });
             
-            const additionalFiles = document.getElementById('additional-files').files;
-            for (let i = 0; i < additionalFiles.length; i++) {
-                formData.append('additional_files', additionalFiles[i]);
-            }
-            
-            try {
-                const response = await fetch(`/run_ki_analysis/${groupName}/${participantId}`, {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                // Überprüfe den Content-Type, bevor du .json() aufrufst
-                const contentType = response.headers.get("content-type");
-                if (contentType && contentType.indexOf("application/json") !== -1) {
+            // --- Bestehende Event Listeners für Buttons (unverändert) ---
+            saveObservationsButton.addEventListener('click', async () => {
+                const urlParts = window.location.pathname.split('/');
+                const groupName = urlParts[2];
+                const participantId = urlParts[3];
+                const observationsData = {
+                    observations: {
+                        social: document.getElementById('social-observations').value,
+                        verbal: document.getElementById('verbal-observations').value
+                    }
+                };
+                try {
+                    const response = await fetch(`/save_observations/${groupName}/${participantId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(observationsData)
+                    });
                     const result = await response.json();
                     if (result.status === "success") {
                         alert(result.message);
-                        window.location.href = result.redirect_url;
                     } else {
-                        alert("Fehler bei der KI-Analyse: " + result.message);
+                        alert("Fehler beim Speichern: " + result.message);
                     }
-                } else {
-                    // Wenn es keine JSON-Antwort ist, lese den Text und zeige ihn an
-                    const text = await response.text();
-                    alert("Unerwartete Antwort vom Server: " + text);
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Ein Fehler ist aufgetreten: ' + error);
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Ein Fehler ist aufgetreten: ' + error);
-            } finally {
-                loadingSpinner.classList.add('hidden');
-                startAnalysisButton.disabled = false;
-                saveObservationsButton.disabled = false;
-            }
+            });
+
+            startAnalysisButton.addEventListener('click', async () => {
+                loadingSpinner.classList.remove('hidden');
+                startAnalysisButton.disabled = true;
+                saveObservationsButton.disabled = true;
+                const urlParts = window.location.pathname.split('/');
+                const groupName = urlParts[2];
+                const participantId = urlParts[3];
+                const formData = new FormData();
+                formData.append('ki_model', document.getElementById('ki-model').value);
+                formData.append('ki_prompt', kiPromptTextarea.value);
+                formData.append('social_observations', document.getElementById('social-observations').value);
+                formData.append('verbal_observations', document.getElementById('verbal-observations').value);
+                const additionalFiles = document.getElementById('additional-files').files;
+                for (let i = 0; i < additionalFiles.length; i++) {
+                    formData.append('additional_files', additionalFiles[i]);
+                }
+                try {
+                    const response = await fetch(`/run_ki_analysis/${groupName}/${participantId}`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const contentType = response.headers.get("content-type");
+                    if (contentType && contentType.indexOf("application/json") !== -1) {
+                        const result = await response.json();
+                        if (result.status === "success") {
+                            alert(result.message);
+                            window.location.href = result.redirect_url;
+                        } else {
+                            alert("Fehler bei der KI-Analyse: " + result.message);
+                        }
+                    } else {
+                        const text = await response.text();
+                        alert("Unerwartete Antwort vom Server: " + text);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Ein Fehler ist aufgetreten: ' + error);
+                } finally {
+                    loadingSpinner.classList.add('hidden');
+                    startAnalysisButton.disabled = false;
+                    saveObservationsButton.disabled = false;
+                }
+            });
         });
     </script>
-</body>
-</html>
+{% endblock %}
