@@ -11,7 +11,7 @@
         color: #333;
     }
 
-    /* Stile für den Druck / PDF-Export */
+    /* Stile für den Druck / PDF-Export - DIESER BEREICH IST FINAL */
     @media print {
         body * {
             visibility: hidden;
@@ -25,23 +25,35 @@
             top: 0;
             width: 100%;
             margin: 0;
-            padding: 0;
             border: none;
             box-shadow: none;
+            padding: 2cm; /* Seitenränder für den Druck */
         }
-        .no-print {
-            display: none;
+        .no-print, .no-print * {
+            display: none !important;
         }
-        /* Seitenlayout für den Druck optimieren */
+        .toast {
+            display: none !important;
+        }
+        .chart-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
         @page {
             size: A4;
-            margin: 2cm;
+            margin: 0; /* Browser-Ränder entfernen */
         }
         h1, h2, h3 {
             page-break-after: avoid;
         }
         section {
             page-break-inside: avoid;
+            margin-top: 1.5cm;
+        }
+        /* Verhindert doppelten Abstand auf der ersten Seite */
+        #print-section > header + section {
+            margin-top: 0;
         }
     }
 </style>
@@ -49,8 +61,8 @@
 
 {% block content %}
 <div class="no-print mb-6 flex justify-between items-center">
-    <a href="{{ url_for('show_group_participants', group_id=group.id) }}" class="py-2 px-4 text-sm rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold">
-        ← Zurück zur Gruppenübersicht
+    <a href="{{ url_for('show_data_entry', participant_id=participant.id) }}" class="py-2 px-4 text-sm rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold">
+        ← Zurück zur Dateneingabe
     </a>
     <div>
         <button onclick="saveReport()" class="py-2 px-4 text-sm rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700">Bericht speichern</button>
@@ -82,30 +94,30 @@
             <div class="prose max-w-none text-gray-700" contenteditable="true" id="social-text">
                 {{ ((participant.ki_texts or {}).social_text or 'Hier Text für soziale Kompetenzen einfügen...')|safe }}
             </div>
-            <div>
+            <div class="chart-container">
                 <canvas id="skChart"></canvas>
-                <!-- Interaktive Schieberegler -->
-                <div class="mt-6 space-y-4 no-print">
-                    <div class="grid grid-cols-6 items-center gap-2">
-                        <label for="sk_flex" class="col-span-2 text-sm font-medium text-gray-700">Flexibilität</label>
-                        <input type="range" id="sk_flex" min="0" max="10" step="0.5" value="{{ (participant.sk_ratings or {}).flexibility or 0 }}" oninput="updateValueAndChart(skChart, 0, this.value, 'sk_flex_val')" class="col-span-3 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                        <span id="sk_flex_val" class="col-span-1 text-center text-sm font-semibold text-gray-800">{{ "%.1f"|format((participant.sk_ratings or {}).flexibility or 0) }}</span>
-                    </div>
-                    <div class="grid grid-cols-6 items-center gap-2">
-                        <label for="sk_team" class="col-span-2 text-sm font-medium text-gray-700">Teamorientierung</label>
-                        <input type="range" id="sk_team" min="0" max="10" step="0.5" value="{{ (participant.sk_ratings or {}).team_orientation or 0 }}" oninput="updateValueAndChart(skChart, 1, this.value, 'sk_team_val')" class="col-span-3 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                        <span id="sk_team_val" class="col-span-1 text-center text-sm font-semibold text-gray-800">{{ "%.1f"|format((participant.sk_ratings or {}).team_orientation or 0) }}</span>
-                    </div>
-                    <div class="grid grid-cols-6 items-center gap-2">
-                        <label for="sk_proc" class="col-span-2 text-sm font-medium text-gray-700">Prozessorient.</label>
-                        <input type="range" id="sk_proc" min="0" max="10" step="0.5" value="{{ (participant.sk_ratings or {}).process_orientation or 0 }}" oninput="updateValueAndChart(skChart, 2, this.value, 'sk_proc_val')" class="col-span-3 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                        <span id="sk_proc_val" class="col-span-1 text-center text-sm font-semibold text-gray-800">{{ "%.1f"|format((participant.sk_ratings or {}).process_orientation or 0) }}</span>
-                    </div>
-                    <div class="grid grid-cols-6 items-center gap-2">
-                        <label for="sk_res" class="col-span-2 text-sm font-medium text-gray-700">Ergebnisorient.</label>
-                        <input type="range" id="sk_res" min="0" max="10" step="0.5" value="{{ (participant.sk_ratings or {}).results_orientation or 0 }}" oninput="updateValueAndChart(skChart, 3, this.value, 'sk_res_val')" class="col-span-3 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                        <span id="sk_res_val" class="col-span-1 text-center text-sm font-semibold text-gray-800">{{ "%.1f"|format((participant.sk_ratings or {}).results_orientation or 0) }}</span>
-                    </div>
+            </div>
+            <!-- Interaktive Schieberegler -->
+            <div class="md:col-span-2 mt-6 space-y-4 no-print">
+                 <div class="grid grid-cols-6 items-center gap-2">
+                    <label for="sk_flex" class="col-span-2 text-sm font-medium text-gray-700">Flexibilität</label>
+                    <input type="range" id="sk_flex" min="0" max="10" step="0.5" value="{{ (participant.sk_ratings or {}).flexibility or 0 }}" oninput="updateValueAndChart(skChart, 0, this.value, 'sk_flex_val')" class="col-span-3 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <span id="sk_flex_val" class="col-span-1 text-center text-sm font-semibold text-gray-800">{{ "%.1f"|format((participant.sk_ratings or {}).flexibility or 0) }}</span>
+                </div>
+                <div class="grid grid-cols-6 items-center gap-2">
+                    <label for="sk_team" class="col-span-2 text-sm font-medium text-gray-700">Teamorientierung</label>
+                    <input type="range" id="sk_team" min="0" max="10" step="0.5" value="{{ (participant.sk_ratings or {}).team_orientation or 0 }}" oninput="updateValueAndChart(skChart, 1, this.value, 'sk_team_val')" class="col-span-3 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <span id="sk_team_val" class="col-span-1 text-center text-sm font-semibold text-gray-800">{{ "%.1f"|format((participant.sk_ratings or {}).team_orientation or 0) }}</span>
+                </div>
+                <div class="grid grid-cols-6 items-center gap-2">
+                    <label for="sk_proc" class="col-span-2 text-sm font-medium text-gray-700">Prozessorient.</label>
+                    <input type="range" id="sk_proc" min="0" max="10" step="0.5" value="{{ (participant.sk_ratings or {}).process_orientation or 0 }}" oninput="updateValueAndChart(skChart, 2, this.value, 'sk_proc_val')" class="col-span-3 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <span id="sk_proc_val" class="col-span-1 text-center text-sm font-semibold text-gray-800">{{ "%.1f"|format((participant.sk_ratings or {}).process_orientation or 0) }}</span>
+                </div>
+                <div class="grid grid-cols-6 items-center gap-2">
+                    <label for="sk_res" class="col-span-2 text-sm font-medium text-gray-700">Ergebnisorient.</label>
+                    <input type="range" id="sk_res" min="0" max="10" step="0.5" value="{{ (participant.sk_ratings or {}).results_orientation or 0 }}" oninput="updateValueAndChart(skChart, 3, this.value, 'sk_res_val')" class="col-span-3 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <span id="sk_res_val" class="col-span-1 text-center text-sm font-semibold text-gray-800">{{ "%.1f"|format((participant.sk_ratings or {}).results_orientation or 0) }}</span>
                 </div>
             </div>
         </div>
@@ -118,30 +130,30 @@
             <div class="prose max-w-none text-gray-700" contenteditable="true" id="verbal-text">
                 {{ ((participant.ki_texts or {}).verbal_text or 'Hier Text für verbale Kompetenzen einfügen...')|safe }}
             </div>
-            <div>
+            <div class="chart-container">
                 <canvas id="vkChart"></canvas>
-                <!-- Interaktive Schieberegler -->
-                <div class="mt-6 space-y-4 no-print">
-                    <div class="grid grid-cols-6 items-center gap-2">
-                        <label for="vk_flex" class="col-span-2 text-sm font-medium text-gray-700">Flexibilität</label>
-                        <input type="range" id="vk_flex" min="0" max="10" step="0.5" value="{{ (participant.vk_ratings or {}).flexibility or 0 }}" oninput="updateValueAndChart(vkChart, 0, this.value, 'vk_flex_val')" class="col-span-3 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                        <span id="vk_flex_val" class="col-span-1 text-center text-sm font-semibold text-gray-800">{{ "%.1f"|format((participant.vk_ratings or {}).flexibility or 0) }}</span>
-                    </div>
-                    <div class="grid grid-cols-6 items-center gap-2">
-                        <label for="vk_cons" class="col-span-2 text-sm font-medium text-gray-700">Beratung</label>
-                        <input type="range" id="vk_cons" min="0" max="10" step="0.5" value="{{ (participant.vk_ratings or {}).consulting or 0 }}" oninput="updateValueAndChart(vkChart, 1, this.value, 'vk_cons_val')" class="col-span-3 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                        <span id="vk_cons_val" class="col-span-1 text-center text-sm font-semibold text-gray-800">{{ "%.1f"|format((participant.vk_ratings or {}).consulting or 0) }}</span>
-                    </div>
-                    <div class="grid grid-cols-6 items-center gap-2">
-                        <label for="vk_obj" class="col-span-2 text-sm font-medium text-gray-700">Objektivität</label>
-                        <input type="range" id="vk_obj" min="0" max="10" step="0.5" value="{{ (participant.vk_ratings or {}).objectivity or 0 }}" oninput="updateValueAndChart(vkChart, 2, this.value, 'vk_obj_val')" class="col-span-3 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                        <span id="vk_obj_val" class="col-span-1 text-center text-sm font-semibold text-gray-800">{{ "%.1f"|format((participant.vk_ratings or {}).objectivity or 0) }}</span>
-                    </div>
-                    <div class="grid grid-cols-6 items-center gap-2">
-                        <label for="vk_goal" class="col-span-2 text-sm font-medium text-gray-700">Zielorientierung</label>
-                        <input type="range" id="vk_goal" min="0" max="10" step="0.5" value="{{ (participant.vk_ratings or {}).goal_orientation or 0 }}" oninput="updateValueAndChart(vkChart, 3, this.value, 'vk_goal_val')" class="col-span-3 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                        <span id="vk_goal_val" class="col-span-1 text-center text-sm font-semibold text-gray-800">{{ "%.1f"|format((participant.vk_ratings or {}).goal_orientation or 0) }}</span>
-                    </div>
+            </div>
+            <!-- Interaktive Schieberegler -->
+            <div class="md:col-span-2 mt-6 space-y-4 no-print">
+                <div class="grid grid-cols-6 items-center gap-2">
+                    <label for="vk_flex" class="col-span-2 text-sm font-medium text-gray-700">Flexibilität</label>
+                    <input type="range" id="vk_flex" min="0" max="10" step="0.5" value="{{ (participant.vk_ratings or {}).flexibility or 0 }}" oninput="updateValueAndChart(vkChart, 0, this.value, 'vk_flex_val')" class="col-span-3 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <span id="vk_flex_val" class="col-span-1 text-center text-sm font-semibold text-gray-800">{{ "%.1f"|format((participant.vk_ratings or {}).flexibility or 0) }}</span>
+                </div>
+                <div class="grid grid-cols-6 items-center gap-2">
+                    <label for="vk_cons" class="col-span-2 text-sm font-medium text-gray-700">Beratung</label>
+                    <input type="range" id="vk_cons" min="0" max="10" step="0.5" value="{{ (participant.vk_ratings or {}).consulting or 0 }}" oninput="updateValueAndChart(vkChart, 1, this.value, 'vk_cons_val')" class="col-span-3 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <span id="vk_cons_val" class="col-span-1 text-center text-sm font-semibold text-gray-800">{{ "%.1f"|format((participant.vk_ratings or {}).consulting or 0) }}</span>
+                </div>
+                <div class="grid grid-cols-6 items-center gap-2">
+                    <label for="vk_obj" class="col-span-2 text-sm font-medium text-gray-700">Sachlichkeit</label>
+                    <input type="range" id="vk_obj" min="0" max="10" step="0.5" value="{{ (participant.vk_ratings or {}).objectivity or 0 }}" oninput="updateValueAndChart(vkChart, 2, this.value, 'vk_obj_val')" class="col-span-3 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <span id="vk_obj_val" class="col-span-1 text-center text-sm font-semibold text-gray-800">{{ "%.1f"|format((participant.vk_ratings or {}).objectivity or 0) }}</span>
+                </div>
+                <div class="grid grid-cols-6 items-center gap-2">
+                    <label for="vk_goal" class="col-span-2 text-sm font-medium text-gray-700">Zielorientierung</label>
+                    <input type="range" id="vk_goal" min="0" max="10" step="0.5" value="{{ (participant.vk_ratings or {}).goal_orientation or 0 }}" oninput="updateValueAndChart(vkChart, 3, this.value, 'vk_goal_val')" class="col-span-3 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <span id="vk_goal_val" class="col-span-1 text-center text-sm font-semibold text-gray-800">{{ "%.1f"|format((participant.vk_ratings or {}).goal_orientation or 0) }}</span>
                 </div>
             </div>
         </div>
@@ -159,7 +171,7 @@
     <footer class="mt-16 pt-6 border-t text-xs text-gray-500">
         <div class="grid grid-cols-3 gap-4">
             <span>{{ group.leitung }}</span>
-            <span class="text-center">Lingen (Ems), den {{ current_date|datetimeformat('%d.%m.%Y') }}</span>
+            <span class="text-center">Lingen (Ems), den <span id="current-date-footer"></span></span>
             <span class="text-right">Stärkenanalyse</span>
         </div>
     </footer>
@@ -167,6 +179,9 @@
 
 <script>
     let skChart, vkChart;
+
+    // Setzt das aktuelle Datum im Footer per JavaScript
+    document.getElementById('current-date-footer').textContent = new Date().toLocaleDateString('de-DE');
 
     const initial_sk_ratings = {{ (participant.sk_ratings or {"flexibility": 0, "team_orientation": 0, "process_orientation": 0, "results_orientation": 0})|tojson|safe }};
     const initial_vk_ratings = {{ (participant.vk_ratings or {"flexibility": 0, "consulting": 0, "objectivity": 0, "goal_orientation": 0})|tojson|safe }};
@@ -181,7 +196,7 @@
                     pointLabels: { font: { size: 12 } },
                     suggestedMin: 0,
                     suggestedMax: 10,
-                    ticks: { stepSize: 2, backdropColor: 'transparent' }
+                    ticks: { display: false } // KORREKTUR: Diese Zeile blendet die Zahlen auf der Achse aus.
                 }
             },
             plugins: {
@@ -195,7 +210,7 @@
         type: 'radar',
         options: chartOptions.options,
         data: {
-            labels: ['Flexibilität', 'Teamorientierung', 'Prozessorientierung', 'Ergebnisorientierung'],
+            labels: ['Flexibilität', 'Teamorientierung', ['Prozess-', 'orientierung'], ['Ergebnis-', 'orientierung']],
             datasets: [{
                 label: 'Soziale Kompetenzen',
                 data: [initial_sk_ratings.flexibility, initial_sk_ratings.team_orientation, initial_sk_ratings.process_orientation, initial_sk_ratings.results_orientation],
@@ -216,7 +231,7 @@
         type: 'radar',
         options: chartOptions.options,
         data: {
-            labels: ['Flexibilität', 'Beratung', 'Objektivität', 'Zielorientierung'],
+            labels: ['Flexibilität', 'Beratung', 'Sachlichkeit', 'Zielorientierung'],
             datasets: [{
                 label: 'Verbale Kompetenzen',
                 data: [initial_vk_ratings.flexibility, initial_vk_ratings.consulting, initial_vk_ratings.objectivity, initial_vk_ratings.goal_orientation],

@@ -303,7 +303,14 @@ def run_ki_analysis(participant_id):
     final_prompt = request.form.get('ki_prompt', '')
     ki_model = request.form.get('ki_model', 'mistral')
 
-    final_prompt = final_prompt.replace('{{name}}', participant.get('name', ''))
+    # Namen extrahieren und alle denkbaren Platzhalter ersetzen
+    full_name = participant.get('name', '')
+    first_name = full_name.split(' ')[0] if full_name else ''
+
+    final_prompt = final_prompt.replace('{{name}}', first_name)
+    final_prompt = final_prompt.replace('{{vorname}}', first_name)
+    final_prompt = final_prompt.replace('{{first_name}}', first_name) # Korrektur: Dieser Platzhalter wurde hinzugefügt
+    final_prompt = final_prompt.replace('{{ganzer_name}}', full_name)
 
     social_obs = request.form.get('social_observations', '')
     verbal_obs = request.form.get('verbal_observations', '')
