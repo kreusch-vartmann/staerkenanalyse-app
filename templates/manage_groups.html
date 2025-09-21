@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}Gruppenverwaltung{% endblock %}
+
+{% block content %}
+    <h2 class="text-3xl font-bold text-gray-800 mb-6">Gruppenverwaltung</h2>
+
+    <!-- Neue Gruppe hinzufügen -->
+    <div class="mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
+        <h3 class="text-xl font-semibold mb-4">Neue Gruppe anlegen</h3>
+        <form action="{{ url_for('add_group') }}" method="post" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+            <!-- linke Spalte -->
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700">Gruppenname</label>
+                <input type="text" id="name" name="name" required class="mt-1 w-full rounded-md border-gray-300 shadow-sm p-2">
+            </div>
+            <div>
+                <label for="date" class="block text-sm font-medium text-gray-700">Datum der Durchführung</label>
+                <input type="date" id="date" name="date" class="mt-1 w-full rounded-md border-gray-300 shadow-sm p-2">
+            </div>
+            <div>
+                <label for="location" class="block text-sm font-medium text-gray-700">Ort der Durchführung</label>
+                <input type="text" id="location" name="location" class="mt-1 w-full rounded-md border-gray-300 shadow-sm p-2">
+            </div>
+
+            <!-- rechte Spalte -->
+            <div>
+                <label for="leitung" class="block text-sm font-medium text-gray-700">Leitung</label>
+                <input type="text" id="leitung" name="leitung" value="Timo Kreusch-Vartmann, Learning Manager" class="mt-1 w-full rounded-md border-gray-300 shadow-sm p-2">
+            </div>
+            <div>
+                <label for="beobachter1" class="block text-sm font-medium text-gray-700">1. Beobachter*in</label>
+                <input type="text" id="beobachter1" name="beobachter1" class="mt-1 w-full rounded-md border-gray-300 shadow-sm p-2">
+            </div>
+            <div>
+                <label for="beobachter2" class="block text-sm font-medium text-gray-700">2. Beobachter*in</label>
+                <input type="text" id="beobachter2" name="beobachter2" class="mt-1 w-full rounded-md border-gray-300 shadow-sm p-2">
+            </div>
+
+            <!-- Button -->
+            <div class="md:col-span-2">
+                <button type="submit" class="w-full mt-2 py-2 px-4 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold">
+                    Gruppe hinzufügen
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Bestehende Gruppen -->
+    <div class="space-y-4">
+        {% for group in groups %}
+        <div class="p-4 border rounded-lg bg-white shadow-sm" id="group-container-{{ group.id }}">
+             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center">
+                <h3 class="text-lg font-medium text-gray-800 mb-2 sm:mb-0">{{ group.name }}</h3>
+                <div class="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0">
+                    <a href="{{ url_for('show_group_participants', group_id=group.id) }}" class="py-2 px-4 text-sm rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 text-center">Details anzeigen</a>
+                    <button onclick="editGroup('{{ group.id }}', '{{ group.name }}', '{{ group.date }}', '{{ group.location }}', '{{ group.leitung }}', '{{ group.beobachter1 }}', '{{ group.beobachter2 }}')" class="py-2 px-4 text-sm rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700">Bearbeiten</button>
+                    <form action="{{ url_for('delete_group', group_id=group.id) }}" method="post" onsubmit="return confirm('Möchten Sie die Gruppe \'{{ group.name }}\' wirklich löschen?');">
+                        <button type="submit" class="w-full py-2 px-4 text-sm rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700">Löschen</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    <div class="mt-8 flex justify-center items-center space-x-2">
+        {% if pagination.has_prev %}
+            <a href="{{ url_for('manage_groups', page=pagination.prev_num) }}" class="py-2 px-4 rounded-md bg-gray-200 hover:bg-gray-300 text-sm font-medium">‹ Vorherige</a>
+        {% endif %}
+        <span class="text-sm text-gray-700">Seite {{ pagination.page }} von {{ pagination.pages }}</span>
+        {% if pagination.has_next %}
+            <a href="{{ url_for('manage_groups', page=pagination.next_num) }}" class="py-2 px-4 rounded-md bg-gray-200 hover:bg-gray-300 text-sm font-medium">Nächste ›</a>
+        {% endif %}
+    </div>
+
+    <script>
+        let originalGroupHtmlStore = {};
+
+        function editGroup(id, name, date, location, leitung, beobachter1, beobachter2) {
+            const container = document.getElementById(`group-container-${id}`);
+            originalGroupHtmlStore[id] = container.innerHTML;
+
+            const finalUrl = `/group/edit/${id}`;
+
+            container.innerHTML = `
+                <form action="${finalUrl}" method="post" class="space-y-3 p-3 bg-blue-50 rounded-lg">
+                    <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+                        <div class="col-span-2"><label class="block text-sm font-medium text-gray-600">Gruppenname:</label><input type="text" name="group_name" value="${name}" class="p-1 mt-1 text-sm border rounded-md w-full" required></div>
+                        <div><label class="block text-sm font-medium text-gray-600">Datum:</label><input type="date" name="group_date" value="${date || ''}" class="p-1 mt-1 text-sm border rounded-md w-full"></div>
+                        <div><label class="block text-sm font-medium text-gray-600">Ort:</label><input type="text" name="group_location" value="${location || ''}" class="p-1 mt-1 text-sm border rounded-md w-full"></div>
+                        <div><label class="block text-sm font-medium text-gray-600">Leitung:</label><input type="text" name="group_leitung" value="${leitung || ''}" class="p-1 mt-1 text-sm border rounded-md w-full"></div>
+                        <div><label class="block text-sm font-medium text-gray-600">1. Beobachter*in:</label><input type="text" name="beobachter1" value="${beobachter1 || ''}" class="p-1 mt-1 text-sm border rounded-md w-full"></div>
+                        <div><label class="block text-sm font-medium text-gray-600">2. Beobachter*in:</label><input type="text" name="beobachter2" value="${beobachter2 || ''}" class="p-1 mt-1 text-sm border rounded-md w-full"></div>
+                    </div>
+                    <div class="flex justify-end space-x-2 pt-3">
+                        <button type="submit" class="py-2 px-4 text-sm rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700">Speichern</button>
+                        <button type="button" class="py-2 px-4 text-sm rounded-lg bg-gray-500 text-white font-semibold hover:bg-gray-600" onclick="cancelEdit(${id})">Abbrechen</button>
+                    </div>
+                </form>
+            `;
+        }
+
+        function cancelEdit(id) {
+            const container = document.getElementById(`group-container-${id}`);
+            if (originalGroupHtmlStore[id]) {
+                container.innerHTML = originalGroupHtmlStore[id];
+                delete originalGroupHtmlStore[id];
+            }
+        }
+    </script>
+{% endblock %}
+

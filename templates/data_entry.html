@@ -1,217 +1,222 @@
 {% extends 'base.html' %}
 
-{% block title %}Daten für {{ participant.name }} - {{ group_name }}{% endblock %}
+{% block title %}Dateneingabe für {{ participant.name }}{% endblock %}
 
 {% block content %}
-    <div class="flex items-center justify-between mb-6">
-        <h1 class="text-3xl font-bold text-gray-800">Daten für {{ participant.name }}</h1>
-        <a href="{{ url_for('show_group', group_name=group_name) }}" class="text-indigo-600 hover:text-indigo-800 transition-colors duration-300">
-            &larr; Zurück zur Gruppe
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h2 class="text-3xl font-bold text-gray-800">Dateneingabe</h2>
+            <p class="text-lg text-gray-600">für <span class="font-semibold">{{ participant.name }}</span> in Gruppe <span class="font-semibold">{{ group.name }}</span></p>
+        </div>
+        <a href="{{ url_for('show_group_participants', group_id=group.id) }}" class="py-2 px-4 text-sm rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold">
+            ← Zurück zur Gruppenübersicht
         </a>
     </div>
 
-    <form id="data-entry-form" class="space-y-6">
-        <div class="mb-8 p-4 bg-gray-100 rounded-lg">
-            <h2 class="text-xl font-semibold mb-4">Beobachtungen</h2>
-            <div class="space-y-4">
-                <div>
-                    <label for="social-observations" class="block text-sm font-medium text-gray-700">Soziale Kompetenzen</label>
-                    <textarea id="social-observations" rows="6" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">{{ participant.observations.social }}</textarea>
-                </div>
-                <div>
-                    <label for="verbal-observations" class="block text-sm font-medium text-gray-700">Verbale Kompetenzen</label>
-                    <textarea id="verbal-observations" rows="6" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">{{ participant.observations.verbal }}</textarea>
-                </div>
+    <!-- Hauptformular -->
+    <div class="bg-white p-8 rounded-lg shadow-md border border-gray-200">
+        <div class="border-b border-gray-200 mb-6">
+            <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                <a href="#" class="border-indigo-500 text-indigo-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" aria-current="page">
+                    Beobachtungen
+                </a>
+            </nav>
+        </div>
+
+        <form id="data-entry-form" class="space-y-8">
+            <div>
+                <h3 class="text-xl font-semibold text-gray-700 mb-3">Soziale Kompetenzen</h3>
+                <textarea id="social-observations" name="social_observations" rows="6" class="w-full rounded-md border-gray-300 shadow-sm p-3 focus:border-indigo-500 focus:ring-indigo-500" placeholder="Beobachtungen zur Gruppenarbeit, Kommunikation, etc. eintragen...">{{ (participant.observations or {}).social or '' }}</textarea>
             </div>
-        </div>
-
-        <div class="mb-8 p-4 bg-gray-100 rounded-lg">
-            <h2 class="text-xl font-semibold mb-4">KI-Analyse</h2>
-            <div class="space-y-4">
-                <div>
-                    <label for="ki-model" class="block text-sm font-medium text-gray-700">KI-Modell auswählen</label>
-                    <select id="ki-model" name="ki-model" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
-                        <option value="google">Google Gemini-1.5-pro</option>
-                        <option value="mistral">Mistral-large-latest</option>
-                    </select>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Prompt-Datei auswählen</label>
-                    <div class="mt-1 flex items-center">
-                        <label for="prompt_file_input" class="cursor-pointer bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">
-                            Datei auswählen
-                        </label>
-                        <input type="file" id="prompt_file_input" name="prompt_file_input" accept=".txt,.html" class="hidden">
-                        <span id="prompt-file-name" class="ml-3 text-sm text-gray-500">Keine Datei ausgewählt</span>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Zusätzliche Dateien hochladen (optional)</label>
-                    <div class="mt-1 flex items-center">
-                        <label for="additional-files" class="cursor-pointer bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">
-                            Dateien auswählen
-                        </label>
-                        <input type="file" id="additional-files" name="additional-files" multiple class="hidden">
-                        <span id="additional-files-name" class="ml-3 text-sm text-gray-500">Keine Dateien ausgewählt</span>
-                    </div>
-                </div>
-
-                <div>
-                    <label for="ki-prompt" class="block text-sm font-medium text-gray-700">KI-Prompt</label>
-                    <textarea id="ki-prompt" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2" placeholder="Gib hier den Prompt für die KI-Analyse ein.">{{ participant.ki_texts.ki_prompt }}</textarea>
-                </div>
+            <div>
+                <h3 class="text-xl font-semibold text-gray-700 mb-3">Verbale Kompetenzen</h3>
+                <textarea id="verbal-observations" name="verbal_observations" rows="6" class="w-full rounded-md border-gray-300 shadow-sm p-3 focus:border-indigo-500 focus:ring-indigo-500" placeholder="Beobachtungen zur Präsentation, Argumentation, etc. eintragen...">{{ (participant.observations or {}).verbal or '' }}</textarea>
             </div>
-        </div>
-        
-        <div class="flex justify-between items-center mt-8">
-            <button type="button" id="save-observations-button" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">
-                Beobachtungsdaten speichern
+            <div class="pt-4 flex justify-end">
+                <button type="button" onclick="saveObservations()" class="py-2 px-6 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold">
+                    Beobachtungen speichern
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- KI-Analyse Sektion -->
+    <div class="mt-10 bg-white p-8 rounded-lg shadow-md border border-gray-200">
+        <h3 class="text-2xl font-bold text-gray-800 mb-4">KI-gestützte Analyse</h3>
+        <form id="ki-analysis-form" class="space-y-6">
+            <div>
+                <label for="ki-model" class="block text-sm font-medium text-gray-700 mb-1">KI-Modell auswählen</label>
+                <select id="ki-model" name="ki_model" class="w-full rounded-md border-gray-300 shadow-sm p-2">
+                    <option value="google">Google Gemini</option>
+                    <option value="mistral" selected>Mistral AI</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="ki-prompt" class="block text-sm font-medium text-gray-700 mb-1">Analyse-Prompt</label>
+                <button type="button" onclick="openPromptModal()" class="py-2 px-4 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold mb-2">
+                    Prompt-Vorlage auswählen
+                </button>
+                <textarea id="ki-prompt" name="ki_prompt" rows="10" class="w-full rounded-md border-gray-300 shadow-sm p-3 font-mono text-sm">{{ participant.prompt_text or 'Analysiere die Stärken von {{name}} basierend auf den folgenden Beobachtungen:\n\nSoziale Kompetenzen:\n{{social_observations}}\n\nVerbale Kompetenzen:\n{{verbal_observations}}\n\nZusätzliche Informationen:\n{{additional_content}}' }}</textarea>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Zusätzliche Dateien (optional)</label>
+                <label class="cursor-pointer py-2 px-4 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold inline-block">
+                    <span>Dateien auswählen</span>
+                    <input type="file" id="additional-files" name="additional_files" multiple class="hidden" onchange="updateFileList()">
+                </label>
+                <span id="file-list" class="ml-3 text-sm text-gray-600">Keine Dateien ausgewählt.</span>
+            </div>
+
+            <div class="pt-4 flex items-center space-x-4">
+                <button type="button" onclick="runKiAnalysis()" id="ki-run-button" class="py-2 px-6 rounded-md text-white bg-green-600 hover:bg-green-700 font-semibold">
+                    Analyse durchführen & Bericht erstellen
+                </button>
+                <div id="loading-spinner" class="hidden animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Prompt Auswahl Modal -->
+    <div id="prompt-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+      <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+          <h3 class="text-lg leading-6 font-medium text-gray-900 text-center mb-4">Prompt-Vorlage auswählen</h3>
+          <div class="mt-2 px-2 py-3 max-h-60 overflow-y-auto">
+            <div class="space-y-2">
+              {% for prompt in prompts %}
+                <button onclick="selectPrompt('{{ prompt }}')" class="w-full text-left p-3 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  {{ prompt }}
+                </button>
+              {% else %}
+                <p class="text-center text-gray-500">Keine Vorlagen im 'prompts'-Ordner gefunden.</p>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="items-center px-4 py-3 mt-4 border-t border-gray-200">
+            <button onclick="closePromptModal()" class="w-full py-2 px-4 rounded-md text-white bg-gray-500 hover:bg-gray-600 font-semibold">
+              Abbrechen
             </button>
-            <button type="button" id="start-analysis-button" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700">
-                KI-Analyse starten
-            </button>
+          </div>
         </div>
-        <div id="loading-spinner" class="hidden text-center mt-4">
-            <svg class="animate-spin h-8 w-8 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <p class="mt-2 text-gray-600">Die KI erstellt den Bericht, das kann einen Moment dauern...</p>
-        </div>
-    </form>
+      </div>
+    </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const saveObservationsButton = document.getElementById('save-observations-button');
-            const startAnalysisButton = document.getElementById('start-analysis-button');
-            const loadingSpinner = document.getElementById('loading-spinner');
-            const promptFileInput = document.getElementById('prompt_file_input');
-            const kiPromptTextarea = document.getElementById('ki-prompt');
-            const promptFileName = document.getElementById('prompt-file-name');
-            const additionalFilesInput = document.getElementById('additional-files');
-            const additionalFilesName = document.getElementById('additional-files-name');
+        const modal = document.getElementById('prompt-modal');
 
-            function loadStateFromSessionStorage() {
-                const savedPromptContent = sessionStorage.getItem('savedPromptContent');
-                const savedPromptName = sessionStorage.getItem('savedPromptName');
-                if (savedPromptContent && savedPromptName) {
-                    kiPromptTextarea.value = savedPromptContent;
-                    promptFileName.textContent = savedPromptName;
-                }
-                const savedAdditionalFiles = sessionStorage.getItem('savedAdditionalFiles');
-                if (savedAdditionalFiles) {
-                    const fileNames = JSON.parse(savedAdditionalFiles);
-                    if (fileNames.length > 0) {
-                        additionalFilesName.textContent = `Zuletzt verwendet: ${fileNames.join(', ')}`;
-                    }
-                }
+        function openPromptModal() { modal.style.display = 'block'; }
+        function closePromptModal() { modal.style.display = 'none'; }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closePromptModal();
             }
+        }
 
-            loadStateFromSessionStorage();
+        async function selectPrompt(filename) {
+            const textarea = document.getElementById('ki-prompt');
+            if (!filename) return;
 
-            promptFileInput.addEventListener('change', (event) => {
-                const file = event.target.files[0];
-                if (file) {
-                    promptFileName.textContent = file.name;
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        kiPromptTextarea.value = e.target.result;
-                        sessionStorage.setItem('savedPromptContent', e.target.result);
-                        sessionStorage.setItem('savedPromptName', file.name);
-                    };
-                    reader.readAsText(file);
-                } else {
-                    promptFileName.textContent = 'Keine Datei ausgewählt';
-                    sessionStorage.removeItem('savedPromptContent');
-                    sessionStorage.removeItem('savedPromptName');
+            try {
+                const response = await fetch(`/prompts/${filename}`);
+                if (!response.ok) {
+                    throw new Error(`Serverfehler: ${response.statusText}`);
                 }
-            });
-
-            additionalFilesInput.addEventListener('change', (event) => {
-                const files = event.target.files;
-                if (files.length > 0) {
-                    let fileNames = Array.from(files).map(file => file.name);
-                    additionalFilesName.textContent = `${files.length} Datei(en) ausgewählt`;
-                    sessionStorage.setItem('savedAdditionalFiles', JSON.stringify(fileNames));
+                const result = await response.json();
+                if (result.content) {
+                    textarea.value = result.content;
+                    showToast(`Vorlage '${filename}' geladen.`, 'success');
                 } else {
-                    additionalFilesName.textContent = 'Keine Dateien ausgewählt';
-                    sessionStorage.removeItem('savedAdditionalFiles');
+                    showToast(result.error || 'Vorlage konnte nicht geladen werden.', 'error');
                 }
-            });
+            } catch (error) {
+                console.error('Fehler beim Laden des Prompts:', error);
+                showToast('Fehler beim Abrufen der Vorlage.', 'error');
+            } finally {
+                closePromptModal();
+            }
+        }
 
-            saveObservationsButton.addEventListener('click', async () => {
-                const urlParts = window.location.pathname.split('/');
-                const groupName = urlParts[2];
-                const participantId = urlParts[3];
-                const observationsData = {
-                    observations: {
-                        social: document.getElementById('social-observations').value,
-                        verbal: document.getElementById('verbal-observations').value
-                    }
+        function updateFileList() {
+            const input = document.getElementById('additional-files');
+            const fileList = document.getElementById('file-list');
+            if (input.files.length > 0) {
+                const fileNames = Array.from(input.files).map(file => file.name).join(', ');
+                fileList.textContent = fileNames;
+            } else {
+                fileList.textContent = 'Keine Dateien ausgewählt.';
+            }
+        }
+
+        async function saveObservations() {
+            try {
+                const socialObs = document.getElementById('social-observations').value;
+                const verbalObs = document.getElementById('verbal-observations').value;
+                
+                // Dies ist die "flache" Datenstruktur, die app.py jetzt erwartet.
+                const dataToSend = {
+                    social: socialObs,
+                    verbal: verbalObs
                 };
-                try {
-                    const response = await fetch(`/save_observations/${groupName}/${participantId}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(observationsData)
-                    });
-                    const result = await response.json();
-                    if (result.status === "success") {
-                        alert(result.message);
-                    } else {
-                        alert("Fehler beim Speichern: " + result.message);
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    alert('Ein Fehler ist aufgetreten: ' + error);
-                }
-            });
 
-            startAnalysisButton.addEventListener('click', async () => {
-                loadingSpinner.classList.remove('hidden');
-                startAnalysisButton.disabled = true;
-                saveObservationsButton.disabled = true;
-                const urlParts = window.location.pathname.split('/');
-                const groupName = urlParts[2];
-                const participantId = urlParts[3];
-                const formData = new FormData();
-                formData.append('ki_model', document.getElementById('ki-model').value);
-                formData.append('ki_prompt', kiPromptTextarea.value);
+                const response = await fetch(`{{ url_for('save_observations', participant_id=participant.id) }}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dataToSend)
+                });
+
+                if (!response.ok) {
+                    // Wirft einen Fehler, wenn die Serverantwort nicht erfolgreich war (z.B. 400, 500)
+                    throw new Error(`HTTP-Fehler! Status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                showToast(result.message, result.status);
+
+            } catch (error) {
+                console.error('Fehler in saveObservations:', error);
+                showToast('Speichern fehlgeschlagen. Prüfen Sie die Browser-Konsole für Details.', 'error');
+            }
+        }
+
+        async function runKiAnalysis() {
+            const form = document.getElementById('ki-analysis-form');
+            const button = document.getElementById('ki-run-button');
+            const spinner = document.getElementById('loading-spinner');
+            
+            button.disabled = true;
+            spinner.classList.remove('hidden');
+
+            try {
+                // Speichert vor der Analyse die neuesten Beobachtungen
+                await saveObservations(); 
+                
+                const formData = new FormData(form);
                 formData.append('social_observations', document.getElementById('social-observations').value);
                 formData.append('verbal_observations', document.getElementById('verbal-observations').value);
-                const additionalFiles = document.getElementById('additional-files').files;
-                for (let i = 0; i < additionalFiles.length; i++) {
-                    formData.append('additional_files', additionalFiles[i]);
+
+                const response = await fetch(`{{ url_for('run_ki_analysis', participant_id=participant.id) }}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                
+                if (result.message) {
+                    showToast(result.message, result.status || 'info');
                 }
-                try {
-                    const response = await fetch(`/run_ki_analysis/${groupName}/${participantId}`, {
-                        method: 'POST',
-                        body: formData
-                    });
-                    const contentType = response.headers.get("content-type");
-                    if (contentType && contentType.indexOf("application/json") !== -1) {
-                        const result = await response.json();
-                        if (result.status === "success") {
-                            alert(result.message);
-                            window.location.href = result.redirect_url;
-                        } else {
-                            alert("Fehler bei der KI-Analyse: " + result.message);
-                        }
-                    } else {
-                        const text = await response.text();
-                        alert("Unerwartete Antwort vom Server: " + text);
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    alert('Ein Fehler ist aufgetreten: ' + error);
-                } finally {
-                    loadingSpinner.classList.add('hidden');
-                    startAnalysisButton.disabled = false;
-                    saveObservationsButton.disabled = false;
+                
+                if (result.status === 'success' && result.redirect_url) {
+                    window.location.href = result.redirect_url;
                 }
-            });
-        });
+            } catch (error) {
+                console.error('Fehler in runKiAnalysis:', error);
+                showToast('Ein schwerwiegender Netzwerk- oder Serverfehler ist aufgetreten.', 'error');
+            } finally {
+                button.disabled = false;
+                spinner.classList.add('hidden');
+            }
+        }
     </script>
 {% endblock %}
