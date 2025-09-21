@@ -1,36 +1,65 @@
 {% extends 'base.html' %}
 
-{% block title %}Teilnehmer in {{ group_name }}{% endblock %}
+{% block title %}Teilnehmer für {{ group.name }}{% endblock %}
 
 {% block content %}
-    <header class="mb-6">
-        <a href="{{ url_for('home') }}" class="text-gray-600 hover:text-indigo-600 font-medium">← Zurück zur Gruppenübersicht</a>
-        <h1 class="text-3xl font-bold text-gray-800 mt-2">Gruppe: {{ group_name }}</h1>
-    </header>
+    <h2 class="text-3xl font-bold text-gray-800 mb-2">Gruppe: {{ group.name }}</h2>
+    <p class="text-gray-600 mb-6">Verwalten Sie hier die Teilnehmer dieser Gruppe.</p>
 
-    <div class="mb-8 p-4 bg-gray-100 rounded-lg">
-        <h2 class="text-xl font-semibold mb-4">Neuen Teilnehmer hinzufügen</h2>
-        <form action="{{ url_for('add_participant', group_name=group_name) }}" method="post" class="flex items-center space-x-4">
-            <input type="text" name="participant_name" placeholder="Teilnehmername eingeben" class="flex-grow p-2 border rounded-md" required>
-            <button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">Teilnehmer hinzufügen</button>
+    <!-- Neuen Teilnehmer hinzufügen -->
+    <div class="mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
+        <h3 class="text-xl font-semibold mb-4">Neuen Teilnehmer hinzufügen</h3>
+        <form action="{{ url_for('add_participant', group_id=group.id) }}" method="post" class="flex items-center space-x-4">
+            <input type="text" name="participant_name" required class="flex-1 rounded-md border-gray-300 shadow-sm p-2" placeholder="Name des Teilnehmers">
+            <button type="submit" class="py-2 px-6 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold">Hinzufügen</button>
         </form>
     </div>
 
-    {% if participants %}
+    <!-- Teilnehmerliste -->
     <div class="space-y-4">
         {% for participant in participants %}
-        <div class="p-4 border rounded-lg bg-gray-50 flex flex-col sm:flex-row sm:justify-between sm:items-center">
-            <h3 class="text-lg font-medium text-gray-800 mb-2 sm:mb-0">{{ participant.name }}</h3>
-            <div class="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0">
-                <a href="{{ url_for('show_data_entry', group_name=group_name, participant_id=participant.id) }}" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">Daten eingeben</a>
-                <a href="{{ url_for('show_report', group_name=group_name, participant_id=participant.id) }}" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700">Bericht anzeigen</a>
-                <button class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700" onclick="...">Bearbeiten</button>
-                <form action="{{ url_for('delete_participant', group_name=group_name, participant_id=participant.id) }}" method="post" onsubmit="return confirm('Möchten Sie den Teilnehmer \'{{ participant.name }}\' wirklich löschen?');">
-                    <button type="submit" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700">Löschen</button>
-                </form>
+        <div class="p-4 border rounded-lg bg-white shadow-sm" id="participant-container-{{ participant.id }}">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center">
+                <h3 class="text-lg font-medium text-gray-800">{{ participant.name }}</h3>
+                <div class="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0 mt-2 sm:mt-0">
+                    <a href="{{ url_for('show_data_entry', participant_id=participant.id) }}" class="py-2 px-4 text-sm rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 text-center">Dateneingabe</a>
+                    <button onclick="editParticipant('{{ participant.id }}', '{{ participant.name }}')" class="py-2 px-4 text-sm rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700">Bearbeiten</button>
+                    <a href="{{ url_for('show_report', participant_id=participant.id) }}" class="py-2 px-4 text-sm rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 text-center">Bericht anzeigen</a>
+                    <form action="{{ url_for('delete_participant', participant_id=participant.id) }}" method="post" onsubmit="return confirm('Möchten Sie den Teilnehmer \'{{ participant.name }}\' wirklich löschen?');">
+                        <input type="hidden" name="group_id" value="{{ group.id }}">
+                        <button type="submit" class="w-full py-2 px-4 text-sm rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700">Löschen</button>
+                    </form>
+                </div>
             </div>
         </div>
+        {% else %}
+        <p class="text-gray-500 italic">Für diese Gruppe wurden noch keine Teilnehmer angelegt.</p>
         {% endfor %}
     </div>
-    {% endif %}
-    {% endblock %}
+
+    <script>
+        let originalParticipantHtmlStore = {};
+        function editParticipant(id, name) {
+            const container = document.getElementById(`participant-container-${id}`);
+            originalParticipantHtmlStore[id] = container.innerHTML;
+            container.innerHTML = `
+                <form action="{{ url_for('edit_participant', participant_id=0) }}`.slice(0, -2) + `/${id}" method="post" class="flex items-center w-full space-x-4">
+                    <input type="hidden" name="group_id" value="{{ group.id }}">
+                    <input type="text" name="new_name" value="${name}" class="flex-1 p-2 border rounded-md" required>
+                    <div class="flex space-x-2">
+                        <button type="submit" class="py-2 px-4 text-sm rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700">Speichern</button>
+                        <button type="button" class="py-2 px-4 text-sm rounded-lg bg-gray-500 text-white font-semibold hover:bg-gray-600" onclick="cancelEdit(${id})">Abbrechen</button>
+                    </div>
+                </form>
+            `;
+        }
+        function cancelEdit(id) {
+            const container = document.getElementById(`participant-container-${id}`);
+            if (originalParticipantHtmlStore[id]) {
+                container.innerHTML = originalParticipantHtmlStore[id];
+                delete originalParticipantHtmlStore[id];
+            }
+        }
+    </script>
+{% endblock %}
+
