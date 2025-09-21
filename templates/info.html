@@ -1,38 +1,47 @@
 {% extends 'base.html' %}
 
-{% block title %}Über das Tool{% endblock %}
+{% block title %}Informationen{% endblock %}
 
 {% block content %}
-    <header class="mb-6">
-        <h1 class="text-3xl font-bold text-center text-indigo-600">Über das Stärkenanalysetool</h1>
-    </header>
-    
-    <main class="space-y-6">
-        <div class="prose max-w-none">
-            <p>
-                Dieses Programm wurde entwickelt, um den Prozess der **Stärkenanalyse** in Assessment-Centern zu vereinfachen und zu automatisieren. Es dient als digitale Unterstützung für Beobachter und Trainer, indem es qualitative Beobachtungsdaten systematisch aufnimmt und mithilfe von künstlicher Intelligenz in strukturierte, professionelle Berichte umwandelt.
-            </p>
-            <p>
-                Der Hauptzweck des Tools ist es, eine **konsistente und stärkebasierte Rückmeldung** zu gewährleisten, die sich auf beobachtetes Verhalten und nicht auf subjektive Eindrücke stützt. Es hilft, den Zeitaufwand für die Berichterstellung zu reduzieren und stellt sicher, dass die Auswertung den hohen Qualitätsstandards der Assessment-Center-Methodik entspricht.
-            </p>
-            <p></br>
-                <center>Das Tool existiert, weil wir ohne es immer so ausgesehen haben... </center>
-                <br><center>😉</center>
-            </p>
-        </div>
-        
-        <div class="flex justify-center my-8">
-            <img src="{{ url_for('static', filename='images/info.png') }}" alt="Was wir bisher ohne dieses Tool gemacht haben..." class="rounded-lg shadow-md max-w-full h-auto">
-        </div>
+    <div class="bg-white p-8 rounded-lg shadow-md border max-w-6xl mx-auto">
+        <div class="flex flex-col md:flex-row items-center md:space-x-12">
+            
+            <!-- Linke Spalte: Bild -->
+            <div class="md:w-2/5 flex-shrink-0 mb-8 md:mb-0">
+                <img src="{{ url_for('static', filename='images/info.png') }}" alt="Info Icon" class="w-full h-auto rounded-lg">
+                <p class="text-center text-sm italic text-gray-500 mt-2">So war es vor diesem Tool immer. Wirklich immer.</p>
+            </div>
 
-        <div class="prose max-w-none">
-            <h2 class="text-2xl font-semibold mt-6 text-indigo-500">Wichtige Hinweise</h2>
-            <ul class="list-disc list-inside space-y-2">
-                <li>Alle Daten werden lokal in der Datei `data.json` gespeichert.</li>
-                <li>Das Tool befindet sich in der aktiven Entwicklung und dient als Prototyp.</li>
-                <li>Für die korrekte Funktion der KI-Analyse benötigen Sie gültige API-Schlüssel in der `.env`-Datei.</li>
-                <li>Das Programm ist optimiert für die Verwendung mit modernen Browsern.</li>
-            </ul>
+            <!-- Rechte Spalte: Text -->
+            <div class="md:w-2/3">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">Über das Stärkenanalyse-Tool</h2>
+                
+                <div class="prose prose-lg max-w-none text-gray-700">
+                    <p>
+                        Willkommen bei Timo's Stärkenanalysetool, einer lokal laufenden Webanwendung, die entwickelt wurde, um den Prozess der Stärkenanalyse auf Basis von Assessment-Center-Beobachtungen zu revolutionieren. Dieses Tool automatisiert die Auswertung und ermöglicht es Ihnen, sich voll und ganz auf die Beobachtung und Interaktion mit den Teilnehmern zu konzentrieren. Vor allem reduziert die Bearbeitung der Daten den Zeitaufwand und den Kaffeeverbrauch im Nachgang der Aufgabendurchführung drastisch.
+                    </p>
+                    
+                    <h3 class="font-semibold text-gray-800">Kernfunktionen</h3>
+                    <ul>
+                        <li><strong>Effiziente Verwaltung:</strong> Legen Sie Gruppen und Teilnehmer mit wenigen Klicks an und behalten Sie stets den Überblick.</li>
+                        <li><strong>KI-gestützte Analyse:</strong> Nutzen Sie die Kraft modernster Sprachmodelle, um qualitative Beobachtungen in strukturierte, aussagekräftige Berichte zu verwandeln. Für die Nutzung der KI-Funktionalität werden API-Schlüssel benötigt. Derzeit ist die KI-Analyse für Mistral AI (funktioniert) und Google Gemini (vorbereitet) implementiert.</li>
+                        <li><strong>Flexible Anpassung:</strong> Passen Sie die Analyse-Prompts an Ihre spezifischen Bedürfnisse an und laden Sie zusätzliche Dokumente hoch, um der KI mehr Kontext zu geben.</li>
+                        <li><strong>Professionelle Berichte:</strong> Erstellen, bearbeiten und exportieren Sie standardisierte PDF-Berichte mit ansprechenden Visualisierungen – bereit für die Präsentation oder das Feedback-Gespräch.</li>
+                        <li><strong>Lokale Datensicherheit:</strong> Alle Ihre Daten werden sicher in einer lokalen SQLite-Datenbank gespeichert. Es werden keine sensiblen Informationen an externe Server gesendet, außer zur direkten Analyse durch die KI.</li>
+                    </ul>
+
+                    <h3 class="font-semibold text-gray-800">Mitwirkung</h3>
+                    <p>
+                        Dieses Programm wurde von Timo Kreusch-Vartmann mit maßgeblicher Unterstützung durch künstliche Intelligenz entwickelt.
+                    </p>
+
+                    <h3 class="font-semibold text-gray-800">WARNUNG</h3>
+                    <p>
+                        Dieses Programm beschleunigt den Auswertungsprozess sowie die finale Berichterstellung erheblich. Für die Korrektheit der Ergebnisse bleiben allerdings die menschlichen Assessoren und Beobachter*innen verantwortlich! Man kann nicht nur Werte per Hand ändern, Verantwortliche sind zur Prüfung und Sorgfalt verpflichtet.
+                    </p>
+                </div>
+            </div>
         </div>
-    </main>
+    </div>
 {% endblock %}
+
