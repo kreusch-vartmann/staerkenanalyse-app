@@ -3,30 +3,25 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-    <div class="text-center">
-        <h1 class="text-4xl font-bold text-gray-800 mb-2">
-            Herzlich Willkommen!
-        </h1>
-        <p class="text-lg text-gray-600">
-            Dies ist das Stärkenanalyse-Tool. Gruppen und Teilnehmer verwalten. Beobachtungsdaten pflegen und Berichte erstellen.
-        </p>
-        <p class="text-lg text-gray-600">
-           🕰️ Analysenerstellung mit KI-Power.💪
-        </p>
-    </div>
+    <h1 class="text-3xl font-bold text-gray-800 mb-2 text-center"> Stärkenanalyse-Tool</h1>
+    <p class="text-gray-600 mb-6 text-center">⏱️ Stärkenanalysen durchführen mit der Power von Künstlicher Intelligenz 💪.</p>
 
-    <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
-        <!-- Link zur Gruppenverwaltung -->
-        <a href="{{ url_for('manage_groups') }}" class="block p-8 bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-2">Gruppen verwalten</h2>
-            <p class="text-gray-600">Legen Sie neue Gruppen an, bearbeiten Sie bestehende und fügen Sie Teilnehmer hinzu.</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <a href="{{ url_for('manage_groups') }}" class="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 transition-colors">
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">👥 Gruppen</h5>
+            <p class="font-normal text-gray-700">Hier können Sie neue Gruppen anlegen, bestehende bearbeiten und Teilnehmer zuordnen.</p>
         </a>
 
-        <!-- Korrigierter Link zur Teilnehmerübersicht -->
-        <a href="{{ url_for('manage_participants') }}" class="block p-8 bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-2">Teilnehmerübersicht</h2>
-            <p class="text-gray-600">Durchsuchen und filtern Sie alle Teilnehmer aus allen Gruppen an einem zentralen Ort.</p>
+        <a href="{{ url_for('manage_participants') }}" class="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 transition-colors">
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">👤 Teilnehmer</h5>
+            <p class="font-normal text-gray-700">Eine Übersicht aller Teilnehmer über alle Gruppen hinweg durchsuchen und verwalten.</p>
         </a>
+        
+        <a href="{{ url_for('data_entry_search') }}" class="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 transition-colors">
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">📝 Beobachtungsdaten</h5>
+            <p class="font-normal text-gray-700">Suchen Sie nach Gruppen oder Teilnehmern, um schnell und nacheinander Beobachtungsdaten zu erfassen.</p>
+        </a>
+
     </div>
 {% endblock %}
-

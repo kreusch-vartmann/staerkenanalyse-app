@@ -136,6 +136,30 @@ def show_group_participants(group_id):
         breadcrumbs=breadcrumbs
     )
 
+
+@app.route('/data_entry_search')
+def data_entry_search():
+    """Zeigt eine Suchseite, um direkt zur Dateneingabe zu springen."""
+    page = request.args.get('page', 1, type=int)
+    search_query = request.args.get('q', '')
+
+    # Wiederverwendung der bestehenden Paginierungs- und Suchfunktion
+    pagination, participants = db.get_paginated_participants(
+        page, search_query, 'name_asc' # Sortierung kann hier fest sein
+    )
+
+    breadcrumbs = [
+        {"link": url_for('dashboard'), "text": "Dashboard"},
+        {"text": "Dateneingabe"}
+    ]
+    return render_template(
+        'data_entry_search.html',
+        participants=participants,
+        pagination=pagination,
+        search_query=search_query,
+        breadcrumbs=breadcrumbs
+    )
+    
 # --- CRUD-Operationen für Gruppen ---
 
 
@@ -178,14 +202,24 @@ def delete_group(group_id):
 
 # --- CRUD-Operationen für Teilnehmer ---
 
-
 @app.route('/group/<int:group_id>/participant/add', methods=['POST'])
 def add_participant(group_id):
-    """Fügt einen neuen Teilnehmer zu einer Gruppe hinzu."""
-    name = request.form['participant_name']
-    if name:
-        db.add_participant_to_group(group_id, name)
-        flash(f'Teilnehmer "{name}" wurde hinzugefügt.', 'success')
+    """Fügt einen oder mehrere neue Teilnehmer zu einer Gruppe hinzu."""
+    names_input = request.form.get('participant_names', '')
+    names = names_input.splitlines()  # Teilt den String an jeder neuen Zeile
+
+    # Entfernt leere Zeilen und führende/nachfolgende Leerzeichen
+    valid_names = [name.strip() for name in names if name.strip()]
+
+    if valid_names:
+        added_count = db.add_multiple_participants_to_group(group_id, valid_names)
+        if added_count == 1:
+            flash(f'Teilnehmer "{valid_names[0]}" wurde hinzugefügt.', 'success')
+        else:
+            flash(f'{added_count} Teilnehmer wurden erfolgreich hinzugefügt.', 'success')
+    else:
+        flash('Es wurden keine gültigen Namen eingegeben.', 'warning')
+
     return redirect(url_for('show_group_participants', group_id=group_id))
 
 

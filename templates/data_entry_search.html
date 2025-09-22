@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Dateneingabe - Suchen{% endblock %}
+
+{% block content %}
+    <h2 class="text-3xl font-bold text-gray-800 mb-2">Teilnehmer für Dateneingabe suchen</h2>
+    <p class="text-gray-600 mb-6">Suchen Sie nach dem Namen eines Teilnehmers oder einer Gruppe, um direkt mit der Eingabe der Beobachtungen zu beginnen.</p>
+
+    <div class="mb-8">
+        <form method="get" action="{{ url_for('data_entry_search') }}">
+            <div class="relative">
+                <input type="search" name="q" value="{{ request.args.get('q', '') }}"
+                       class="block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="Gruppen- oder Teilnehmername...">
+                <button type="submit" class="text-white absolute end-2.5 bottom-2.5 bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2">
+                    Suchen
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="space-y-4">
+        {% if participants %}
+            {% for p in participants %}
+            <div class="p-4 border rounded-lg bg-white shadow-sm">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-800">{{ p.name }}</h3>
+                        <p class="text-sm text-gray-500">Gruppe: {{ p.group_name }}</p>
+                    </div>
+                    <div class="mt-2 sm:mt-0">
+                        <a href="{{ url_for('show_data_entry', participant_id=p.id) }}"
+                           class="py-2 px-5 text-sm rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 text-center transition-colors">
+                           <i class="fas fa-keyboard me-2"></i>Daten eingeben
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% elif request.args.get('q') %}
+            <p class="text-gray-500 italic">Keine Teilnehmer für die Suche nach "{{ request.args.get('q') }}" gefunden.</p>
+        {% else %}
+             <p class="text-gray-500 italic">Bitte geben Sie einen Suchbegriff ein, um Teilnehmer zu finden.</p>
+        {% endif %}
+    </div>
+
+    <div class="mt-8">
+        <nav class="flex items-center justify-between" aria-label="Pagination">
+            <div class="hidden sm:block">
+                <p class="text-sm text-gray-700">
+                    Zeige
+                    <span class="font-medium">{{ (pagination.page - 1) * 10 + 1 }}</span>
+                    bis
+                    <span class="font-medium">{{ [pagination.page * 10, pagination.total_items] | min }}</span>
+                    von
+                    <span class="font-medium">{{ pagination.total_items }}</span>
+                    Ergebnissen
+                </p>
+            </div>
+            <div class="flex flex-1 justify-between sm:justify-end">
+                {% if pagination.has_prev %}
+                    <a href="{{ url_for('data_entry_search', page=pagination.prev_num, q=request.args.get('q', '')) }}" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0">
+                        Zurück
+                    </a>
+                {% endif %}
+                {% if pagination.has_next %}
+                    <a href="{{ url_for('data_entry_search', page=pagination.next_num, q=request.args.get('q', '')) }}" class="relative ml-3 inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0">
+                        Weiter
+                    </a>
+                {% endif %}
+            </div>
+        </nav>
+    </div>
+
+{% endblock %}
