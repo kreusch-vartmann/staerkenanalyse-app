@@ -191,6 +191,39 @@ def add_participant_to_group(group_id, name):
     )
     db_conn.commit()
 
+def add_multiple_participants_to_group(group_id, names):
+    """Fügt eine Liste von neuen Teilnehmern zu einer Gruppe hinzu."""
+    db_conn = get_db()
+    cursor = db_conn.cursor()
+    empty_json = json.dumps({})
+    
+    # Bereite die Daten für das Einfügen vor
+    participants_to_add = []
+    for name in names:
+        # Ignoriere leere Zeilen
+        if name.strip():
+            participants_to_add.append((
+                group_id, name.strip(), empty_json, empty_json,
+                json.dumps({"flexibility": 0.0, "team_orientation": 0.0,
+                            "process_orientation": 0.0, "results_orientation": 0.0}),
+                json.dumps({"flexibility": 0.0, "consulting": 0.0,
+                            "objectivity": 0.0, "goal_orientation": 0.0}),
+                empty_json, "{}", empty_json
+            ))
+
+    # Führe das Einfügen für alle neuen Teilnehmer aus
+    if participants_to_add:
+        cursor.executemany(
+            (
+                'INSERT INTO participants (group_id, name, general_data, observations, '
+                'sk_ratings, vk_ratings, ki_texts, ki_raw_response, footer_data) '
+                'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            ),
+            participants_to_add
+        )
+        db_conn.commit()
+    return len(participants_to_add)
+
 def update_participant_name(participant_id, new_name):
     """Aktualisiert den Namen eines Teilnehmers."""
     db_conn = get_db()
