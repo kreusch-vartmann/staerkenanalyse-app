@@ -2,308 +2,211 @@
 
 {% block title %}Stärkenanalyse für {{ participant.name }}{% endblock %}
 
-{% block head %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-    /* Allgemeine Stile für den Bericht */
-    .report-container {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        color: #333;
-    }
-
-    /* Stile für den Druck / PDF-Export - DIESER BEREICH IST FINAL */
-    @media print {
-        body * {
-            visibility: hidden;
-        }
-        #print-section, #print-section * {
-            visibility: visible;
-        }
-        #print-section {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            margin: 0;
-            border: none;
-            box-shadow: none;
-            padding: 2cm; /* Seitenränder für den Druck */
-        }
-        .no-print, .no-print * {
-            display: none !important;
-        }
-        .toast {
-            display: none !important;
-        }
-        .chart-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        @page {
-            size: A4;
-            margin: 0; /* Browser-Ränder entfernen */
-        }
-        h1, h2, h3 {
-            page-break-after: avoid;
-        }
-        section {
-            page-break-inside: avoid;
-            margin-top: 1.5cm;
-        }
-        /* Verhindert doppelten Abstand auf der ersten Seite */
-        #print-section > header + section {
-            margin-top: 0;
-        }
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="no-print mb-6 flex justify-between items-center">
-    <a href="{{ url_for('show_data_entry', participant_id=participant.id) }}" class="py-2 px-4 text-sm rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold">
-        ← Zurück zur Dateneingabe
-    </a>
-    <div>
-        <button onclick="saveReport()" class="py-2 px-4 text-sm rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700">Bericht speichern</button>
-        <button onclick="window.print()" class="py-2 px-4 text-sm rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700">Drucken / PDF</button>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Source+Serif+Pro:wght@400;700&display=swap" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<div id="report-container">
+    <div class="flex justify-between items-start mb-6 no-print">
+        <div>
+            <h2 class="text-3xl font-bold text-gray-800">Stärkenanalyse-Bericht (Neues Design)</h2>
+            <p class="text-xl text-gray-600 font-semibold">{{ participant.name }}</p>
+        </div>
+        <div>
+            <button onclick="saveReport()" class="py-2 px-5 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold mr-2">
+                <i class="fas fa-save me-2"></i>Änderungen speichern
+            </button>
+            <button onclick="downloadPDF()" class="py-2 px-5 rounded-md text-white bg-red-600 hover:bg-red-700 font-semibold">
+                <i class="fas fa-file-pdf me-2"></i>Als PDF speichern
+            </button>
+        </div>
+    </div>
+
+    <div id="report-content" class="bg-white shadow-md rounded-lg">
+        
+        <div class="pdf-page">
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <div class="logo">🔍</div>
+                    <h1 class="main-title">Stärkenanalyse für<br><span class="participant-name">{{ participant.name }}</span></h1>
+                </div>
+                <div class="sidebar-spacer"></div>
+                <div class="metadata">
+                    <h2 class="metadata-title">RAHMENDATEN</h2>
+                    <p><strong>Durchführungsdatum:</strong> <span contenteditable="true" data-key="date">{{ group.date | datetimeformat }}</span></p>
+                    <p><strong>Durchführungsort:</strong> <span contenteditable="true" data-key="location">{{ group.location }}</span></p>
+                    <p><strong>Leitung:</strong> <span contenteditable="true" data-key="leitung">{{ group.leitung }}</span></p>
+                    <p><strong>Beobachter:</strong> <span contenteditable="true" data-key="beobachter1">{{ group.beobachter1 }}</span>, <span contenteditable="true" data-key="beobachter2">{{ group.beobachter2 }}</span></p>
+                </div>
+                <div class="sidebar-footer">
+                    <p>Seite <span class="page-number">1</span> von 2</p>
+                </div>
+            </aside>
+            <main class="main-content">
+                <h2 class="subtitle">Soziale Kompetenz & Verbale Kompetenz</h2>
+                <section class="content-section">
+                    <h3 class="section-title">Soziale Kompetenzen</h3>
+                    <textarea id="social_text" class="text-area-input">{{ (participant.ki_texts or {}).social_text }}</textarea>
+                    <div class="chart-container">
+                        <canvas id="skRadarChart"></canvas>
+                    </div>
+                    <div id="sk-sliders" class="space-y-3 mt-6 no-print max-w-md mx-auto"></div>
+                </section>
+                <div class="footer-spacer"></div>
+            </main>
+        </div>
+
+        <div class="pdf-page">
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <div class="logo">🔍</div>
+                </div>
+                <div class="sidebar-spacer"></div>
+                 <div class="sidebar-footer">
+                    <p>Seite <span class="page-number">2</span> von 2</p>
+                </div>
+            </aside>
+            <main class="main-content">
+                <section class="content-section">
+                    <h3 class="section-title">Verbale Kompetenzen</h3>
+                    <textarea id="verbal_text" class="text-area-input">{{ (participant.ki_texts or {}).verbal_text }}</textarea>
+                    <div class="chart-container">
+                        <canvas id="vkRadarChart"></canvas>
+                    </div>
+                    <div id="vk-sliders" class="space-y-3 mt-6 no-print max-w-md mx-auto"></div>
+                </section>
+                <section class="content-section">
+                    <h3 class="section-title">Zusammenfassung</h3>
+                    <textarea id="summary_text" class="text-area-input">{{ (participant.ki_texts or {}).summary_text }}</textarea>
+                </section>
+                <div class="footer-spacer"></div>
+                <footer class="main-content-footer">
+                    <span contenteditable="true" data-key="footer_line1">{{ (participant.footer_data or {}).footer_line1 or 'Timo Kreusch-Vartmann' }}</span>
+                    <span>
+                        <span contenteditable="true" data-key="footer_location">{{ (participant.footer_data or {}).footer_location or current_location }}</span>, den
+                        <span contenteditable="true" data-key="footer_date">{{ (participant.footer_data or {}).footer_date or current_date }}</span>
+                    </span>
+                </footer>
+            </main>
+        </div>
     </div>
 </div>
 
-<div id="print-section" class="report-container max-w-4xl mx-auto bg-white p-8 sm:p-12 shadow-lg rounded-lg border">
-    <!-- Header -->
-    <header class="text-center mb-12">
-        <h1 class="text-4xl font-bold text-gray-800">Stärkenanalyse</h1>
-        <p class="text-xl text-gray-600" contenteditable="true" id="participant-name">{{ participant.name }}</p>
-    </header>
-
-    <!-- Allgemeine Daten -->
-    <section class="mb-10 text-sm">
-        <div class="grid grid-cols-2 gap-x-8 gap-y-2">
-            <div><strong>Datum:</strong> <span contenteditable="true" id="general-date">{{ (participant.general_data or {}).date | default(group.date, true) | datetimeformat }}</span></div>
-            <div><strong>Leitung:</strong> <span contenteditable="true" id="general-leitung">{{ group.leitung }}</span></div>
-            <div><strong>Ort:</strong> <span contenteditable="true" id="general-location">{{ (participant.general_data or {}).location | default(group.location, true) }}</span></div>
-            <div><strong>Beobachter:</strong> <span contenteditable="true" id="general-beobachter">{{ group.beobachter1 }}{% if group.beobachter2 %}, {{ group.beobachter2 }}{% endif %}</span></div>
-        </div>
-    </section>
-
-    <!-- Soziale Kompetenzen -->
-    <section class="mb-12">
-        <h2 class="text-2xl font-semibold text-gray-700 border-b-2 border-indigo-500 pb-2 mb-6">Soziale Kompetenzen</h2>
-        <div class="grid md:grid-cols-2 gap-8 items-start">
-            <div class="prose max-w-none text-gray-700" contenteditable="true" id="social-text">
-                {{ ((participant.ki_texts or {}).social_text or 'Hier Text für soziale Kompetenzen einfügen...')|safe }}
-            </div>
-            <div class="chart-container">
-                <canvas id="skChart"></canvas>
-            </div>
-            <!-- Interaktive Schieberegler -->
-            <div class="md:col-span-2 mt-6 space-y-4 no-print">
-                 <div class="grid grid-cols-6 items-center gap-2">
-                    <label for="sk_flex" class="col-span-2 text-sm font-medium text-gray-700">Flexibilität</label>
-                    <input type="range" id="sk_flex" min="0" max="10" step="0.5" value="{{ (participant.sk_ratings or {}).flexibility or 0 }}" oninput="updateValueAndChart(skChart, 0, this.value, 'sk_flex_val')" class="col-span-3 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                    <span id="sk_flex_val" class="col-span-1 text-center text-sm font-semibold text-gray-800">{{ "%.1f"|format((participant.sk_ratings or {}).flexibility or 0) }}</span>
-                </div>
-                <div class="grid grid-cols-6 items-center gap-2">
-                    <label for="sk_team" class="col-span-2 text-sm font-medium text-gray-700">Teamorientierung</label>
-                    <input type="range" id="sk_team" min="0" max="10" step="0.5" value="{{ (participant.sk_ratings or {}).team_orientation or 0 }}" oninput="updateValueAndChart(skChart, 1, this.value, 'sk_team_val')" class="col-span-3 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                    <span id="sk_team_val" class="col-span-1 text-center text-sm font-semibold text-gray-800">{{ "%.1f"|format((participant.sk_ratings or {}).team_orientation or 0) }}</span>
-                </div>
-                <div class="grid grid-cols-6 items-center gap-2">
-                    <label for="sk_proc" class="col-span-2 text-sm font-medium text-gray-700">Prozessorient.</label>
-                    <input type="range" id="sk_proc" min="0" max="10" step="0.5" value="{{ (participant.sk_ratings or {}).process_orientation or 0 }}" oninput="updateValueAndChart(skChart, 2, this.value, 'sk_proc_val')" class="col-span-3 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                    <span id="sk_proc_val" class="col-span-1 text-center text-sm font-semibold text-gray-800">{{ "%.1f"|format((participant.sk_ratings or {}).process_orientation or 0) }}</span>
-                </div>
-                <div class="grid grid-cols-6 items-center gap-2">
-                    <label for="sk_res" class="col-span-2 text-sm font-medium text-gray-700">Ergebnisorient.</label>
-                    <input type="range" id="sk_res" min="0" max="10" step="0.5" value="{{ (participant.sk_ratings or {}).results_orientation or 0 }}" oninput="updateValueAndChart(skChart, 3, this.value, 'sk_res_val')" class="col-span-3 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                    <span id="sk_res_val" class="col-span-1 text-center text-sm font-semibold text-gray-800">{{ "%.1f"|format((participant.sk_ratings or {}).results_orientation or 0) }}</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Verbale Kompetenzen -->
-    <section class="mb-12">
-        <h2 class="text-2xl font-semibold text-gray-700 border-b-2 border-indigo-500 pb-2 mb-6">Verbale Kompetenzen</h2>
-        <div class="grid md:grid-cols-2 gap-8 items-start">
-            <div class="prose max-w-none text-gray-700" contenteditable="true" id="verbal-text">
-                {{ ((participant.ki_texts or {}).verbal_text or 'Hier Text für verbale Kompetenzen einfügen...')|safe }}
-            </div>
-            <div class="chart-container">
-                <canvas id="vkChart"></canvas>
-            </div>
-            <!-- Interaktive Schieberegler -->
-            <div class="md:col-span-2 mt-6 space-y-4 no-print">
-                <div class="grid grid-cols-6 items-center gap-2">
-                    <label for="vk_flex" class="col-span-2 text-sm font-medium text-gray-700">Flexibilität</label>
-                    <input type="range" id="vk_flex" min="0" max="10" step="0.5" value="{{ (participant.vk_ratings or {}).flexibility or 0 }}" oninput="updateValueAndChart(vkChart, 0, this.value, 'vk_flex_val')" class="col-span-3 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                    <span id="vk_flex_val" class="col-span-1 text-center text-sm font-semibold text-gray-800">{{ "%.1f"|format((participant.vk_ratings or {}).flexibility or 0) }}</span>
-                </div>
-                <div class="grid grid-cols-6 items-center gap-2">
-                    <label for="vk_cons" class="col-span-2 text-sm font-medium text-gray-700">Beratung</label>
-                    <input type="range" id="vk_cons" min="0" max="10" step="0.5" value="{{ (participant.vk_ratings or {}).consulting or 0 }}" oninput="updateValueAndChart(vkChart, 1, this.value, 'vk_cons_val')" class="col-span-3 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                    <span id="vk_cons_val" class="col-span-1 text-center text-sm font-semibold text-gray-800">{{ "%.1f"|format((participant.vk_ratings or {}).consulting or 0) }}</span>
-                </div>
-                <div class="grid grid-cols-6 items-center gap-2">
-                    <label for="vk_obj" class="col-span-2 text-sm font-medium text-gray-700">Sachlichkeit</label>
-                    <input type="range" id="vk_obj" min="0" max="10" step="0.5" value="{{ (participant.vk_ratings or {}).objectivity or 0 }}" oninput="updateValueAndChart(vkChart, 2, this.value, 'vk_obj_val')" class="col-span-3 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                    <span id="vk_obj_val" class="col-span-1 text-center text-sm font-semibold text-gray-800">{{ "%.1f"|format((participant.vk_ratings or {}).objectivity or 0) }}</span>
-                </div>
-                <div class="grid grid-cols-6 items-center gap-2">
-                    <label for="vk_goal" class="col-span-2 text-sm font-medium text-gray-700">Zielorientierung</label>
-                    <input type="range" id="vk_goal" min="0" max="10" step="0.5" value="{{ (participant.vk_ratings or {}).goal_orientation or 0 }}" oninput="updateValueAndChart(vkChart, 3, this.value, 'vk_goal_val')" class="col-span-3 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                    <span id="vk_goal_val" class="col-span-1 text-center text-sm font-semibold text-gray-800">{{ "%.1f"|format((participant.vk_ratings or {}).goal_orientation or 0) }}</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Zusammenfassung -->
-    <section class="mb-12">
-        <h2 class="text-2xl font-semibold text-gray-700 border-b-2 border-indigo-500 pb-2 mb-6">Zusammenfassung</h2>
-        <div class="prose max-w-none text-gray-700" contenteditable="true" id="summary-text">
-            {{ ((participant.ki_texts or {}).summary_text or 'Hier Zusammenfassung einfügen...')|safe }}
-        </div>
-    </section>
-    
-    <!-- Footer -->
-    <footer class="mt-16 pt-6 border-t text-xs text-gray-500">
-        <div class="grid grid-cols-3 gap-4">
-            <span>{{ group.leitung }}</span>
-            <span class="text-center">Lingen (Ems), den <span id="current-date-footer"></span></span>
-            <span class="text-right">Stärkenanalyse</span>
-        </div>
-    </footer>
-</div>
-
 <script>
-    let skChart, vkChart;
-
-    // Setzt das aktuelle Datum im Footer per JavaScript
-    document.getElementById('current-date-footer').textContent = new Date().toLocaleDateString('de-DE');
-
-    const initial_sk_ratings = {{ (participant.sk_ratings or {"flexibility": 0, "team_orientation": 0, "process_orientation": 0, "results_orientation": 0})|tojson|safe }};
-    const initial_vk_ratings = {{ (participant.vk_ratings or {"flexibility": 0, "consulting": 0, "objectivity": 0, "goal_orientation": 0})|tojson|safe }};
-
-    const chartOptions = {
-        type: 'radar',
-        options: {
-            scales: {
-                r: {
-                    angleLines: { color: 'rgba(0, 0, 0, 0.1)' },
-                    grid: { color: 'rgba(0, 0, 0, 0.1)' },
-                    pointLabels: { font: { size: 12 } },
-                    suggestedMin: 0,
-                    suggestedMax: 10,
-                    ticks: { display: false } // KORREKTUR: Diese Zeile blendet die Zahlen auf der Achse aus.
-                }
-            },
-            plugins: {
-                legend: { display: false }
-            }
-        }
-    };
-
-    // Chart für Soziale Kompetenzen
-    const skConfig = {
-        type: 'radar',
-        options: chartOptions.options,
-        data: {
-            labels: ['Flexibilität', 'Teamorientierung', ['Prozess-', 'orientierung'], ['Ergebnis-', 'orientierung']],
-            datasets: [{
-                label: 'Soziale Kompetenzen',
-                data: [initial_sk_ratings.flexibility, initial_sk_ratings.team_orientation, initial_sk_ratings.process_orientation, initial_sk_ratings.results_orientation],
-                fill: true,
-                backgroundColor: 'rgba(79, 70, 229, 0.2)',
-                borderColor: 'rgb(79, 70, 229)',
-                pointBackgroundColor: 'rgb(79, 70, 229)',
-                pointBorderColor: '#fff',
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: 'rgb(79, 70, 229)'
-            }]
-        }
-    };
-    skChart = new Chart(document.getElementById('skChart'), skConfig);
-
-    // Chart für Verbale Kompetenzen
-    const vkConfig = {
-        type: 'radar',
-        options: chartOptions.options,
-        data: {
-            labels: ['Flexibilität', 'Beratung', 'Sachlichkeit', 'Zielorientierung'],
-            datasets: [{
-                label: 'Verbale Kompetenzen',
-                data: [initial_vk_ratings.flexibility, initial_vk_ratings.consulting, initial_vk_ratings.objectivity, initial_vk_ratings.goal_orientation],
-                fill: true,
-                backgroundColor: 'rgba(34, 197, 94, 0.2)',
-                borderColor: 'rgb(34, 197, 94)',
-                pointBackgroundColor: 'rgb(34, 197, 94)',
-                pointBorderColor: '#fff',
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: 'rgb(34, 197, 94)'
-            }]
-        }
-    };
-    vkChart = new Chart(document.getElementById('vkChart'), vkConfig);
-
-    function updateValueAndChart(chart, dataIndex, value, spanId) {
-        document.getElementById(spanId).textContent = parseFloat(value).toFixed(1);
-        chart.data.datasets[0].data[dataIndex] = parseFloat(value);
-        chart.update();
-    }
-
-    // Wandelt ein Datum im Format TT.MM.JJJJ in das Format JJJJ-MM-TT um
-    function convertDateToISO(dateString) {
-        const parts = dateString.match(/(\d{2})\.(\d{2})\.(\d{4})/);
-        if (parts) {
-            return `${parts[3]}-${parts[2]}-${parts[1]}`;
-        }
-        return dateString; // Fallback, falls das Format unerwartet ist
-    }
-
-    async function saveReport() {
-        const current_sk_ratings = {
-            flexibility: parseFloat(document.getElementById('sk_flex').value),
-            team_orientation: parseFloat(document.getElementById('sk_team').value),
-            process_orientation: parseFloat(document.getElementById('sk_proc').value),
-            results_orientation: parseFloat(document.getElementById('sk_res').value)
-        };
-        const current_vk_ratings = {
-            flexibility: parseFloat(document.getElementById('vk_flex').value),
-            consulting: parseFloat(document.getElementById('vk_cons').value),
-            objectivity: parseFloat(document.getElementById('vk_obj').value),
-            goal_orientation: parseFloat(document.getElementById('vk_goal').value)
-        };
-
-        const reportData = {
-            name: document.getElementById('participant-name').innerText,
-            general_data: {
-                date: convertDateToISO(document.getElementById('general-date').innerText),
-                location: document.getElementById('general-location').innerText,
-                observers: document.getElementById('general-beobachter').innerText
-            },
-            ki_texts: {
-                social_text: document.getElementById('social-text').innerHTML,
-                verbal_text: document.getElementById('verbal-text').innerHTML,
-                summary_text: document.getElementById('summary-text').innerHTML
-            },
-            sk_ratings: current_sk_ratings,
-            vk_ratings: current_vk_ratings
-        };
-
-        try {
-            const response = await fetch(`{{ url_for('save_report', participant_id=participant.id) }}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(reportData)
+    // Kompletter, funktionierender JavaScript-Block
+    let sk_ratings = {{ participant.sk_ratings | tojson | safe }};
+    let vk_ratings = {{ participant.vk_ratings | tojson | safe }};
+    const sk_labels = ['Flexibilität', 'Teamorientierung', 'Prozessorientierung', 'Ergebnisorientierung'];
+    const vk_labels = ['Flexibilität', 'Beratung', 'Sachlichkeit', 'Zielorientierung'];
+    const sk_keys = ['flexibility', 'team_orientation', 'process_orientation', 'results_orientation'];
+    const vk_keys = ['flexibility', 'consulting', 'objectivity', 'goal_orientation'];
+    const chartOptions = { scales: { r: { suggestedMin: 0, suggestedMax: 10, pointLabels: { font: { size: 12, family: 'Montserrat' } }, ticks: { display: false } } }, plugins: { legend: { display: false } }, maintainAspectRatio: false };
+    const skDataset = { label: 'Bewertung', data: sk_keys.map(k => sk_ratings[k]), fill: true, backgroundColor: 'rgba(90, 125, 124, 0.2)', borderColor: 'rgba(90, 125, 124, 1)', pointRadius: 0 };
+    const vkDataset = { label: 'Bewertung', data: vk_keys.map(k => vk_ratings[k]), fill: true, backgroundColor: 'rgba(47, 79, 79, 0.2)', borderColor: 'rgba(47, 79, 79, 1)', pointRadius: 0 };
+    const skChart = new Chart(document.getElementById('skRadarChart'), { type: 'radar', data: { labels: sk_labels, datasets: [skDataset] }, options: chartOptions });
+    const vkChart = new Chart(document.getElementById('vkRadarChart'), { type: 'radar', data: { labels: vk_labels, datasets: [vkDataset] }, options: chartOptions });
+    function createSliders(containerId, keys, labels, ratings, chartInstance, dataset) {
+        const container = document.getElementById(containerId);
+        keys.forEach((key, index) => {
+            const value = ratings[key] || 0;
+            const sliderDiv = document.createElement('div');
+            sliderDiv.innerHTML = `<label style="font-family: 'Montserrat', sans-serif;" for="${key}-slider" class="block text-sm font-medium text-gray-700">${labels[index]}</label><div class="flex items-center space-x-3"><input type="range" id="${key}-slider" min="0" max="10" value="${value}" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"><span id="${key}-value" class="font-semibold w-10 text-center">${value.toFixed(1)}</span></div>`;
+            container.appendChild(sliderDiv);
+            const slider = document.getElementById(`${key}-slider`);
+            slider.addEventListener('input', (e) => {
+                const newValue = parseFloat(e.target.value);
+                document.getElementById(`${key}-value`).textContent = newValue.toFixed(1);
+                ratings[key] = newValue;
+                dataset.data = keys.map(k => ratings[k]);
+                chartInstance.update();
             });
+        });
+    }
+    createSliders('sk-sliders', sk_keys, sk_labels, sk_ratings, skChart, skDataset);
+    createSliders('vk-sliders', vk_keys, vk_labels, vk_ratings, vkChart, vkDataset);
+    async function saveReport() {
+        const groupDetails = {};
+        document.querySelectorAll('.metadata [data-key]').forEach(el => { groupDetails[el.dataset.key] = el.textContent; });
+        const footerData = {};
+        document.querySelectorAll('.main-content-footer [data-key]').forEach(el => { footerData[el.dataset.key] = el.textContent; });
+        const reportData = {
+            sk_ratings: sk_ratings, vk_ratings: vk_ratings,
+            ki_texts: { social_text: document.getElementById('social_text').value, verbal_text: document.getElementById('verbal_text').value, summary_text: document.getElementById('summary_text').value },
+            group_details: groupDetails, footer_data: footerData
+        };
+        try {
+            const response = await fetch("{{ url_for('save_report', participant_id=participant.id) }}", { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(reportData) });
             const result = await response.json();
-            showToast(result.message, result.status);
-        } catch (error) {
-            showToast('Fehler beim Speichern des Berichts.', 'error');
-        }
+            alert(result.message);
+        } catch (error) { console.error('Save error:', error); alert('Fehler beim Speichern des Berichts.'); }
+    }
+    async function downloadPDF() {
+        const skChartImage = skChart.toBase64Image();
+        const vkChartImage = vkChart.toBase64Image();
+        const printElement = document.getElementById('report-content').cloneNode(true);
+        const skCanvas = printElement.querySelector('#skRadarChart');
+        if (skCanvas) { const skImg = document.createElement('img'); skImg.src = skChartImage; skCanvas.parentNode.replaceChild(skImg, skCanvas); }
+        const vkCanvas = printElement.querySelector('#vkRadarChart');
+        if(vkCanvas) { const vkImg = document.createElement('img'); vkImg.src = vkChartImage; vkCanvas.parentNode.replaceChild(vkImg, vkCanvas); }
+        printElement.querySelectorAll('.no-print').forEach(el => el.remove());
+        printElement.querySelectorAll('textarea').forEach(textarea => {
+            const paragraph = document.createElement('div');
+            paragraph.innerHTML = textarea.value.replace(/\n/g, '<br>');
+            paragraph.className = 'text-content-for-pdf';
+            textarea.parentNode.replaceChild(paragraph, textarea);
+        });
+        const opt = {
+            margin: 0, filename: 'Staerkenanalyse_{{ participant.name | replace(" ", "_") }}.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, logging: false },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        await html2pdf().from(printElement).set(opt).save();
     }
 </script>
-{% endblock %}
 
+<style>
+    :root {
+        --primary-color: #5A7D7C;
+        --text-color: #2F4F4F;
+        --font-heading: 'Montserrat', sans-serif;
+        --font-body: 'Source Serif Pro', serif;
+    }
+    /* KORREKTUR: Feste Seitengröße mit Überlauf-Kontrolle */
+    .pdf-page { 
+        display: flex; 
+        /* Feste A4-Größe, minus ein winziger Puffer, um Rundungsfehler zu vermeiden */
+        width: 210mm;
+        height: 296.9mm; 
+        overflow: hidden; /* Dies ist der entscheidende Befehl: Alles, was überläuft, wird abgeschnitten. */
+    } 
+    .sidebar { width: 30%; background-color: var(--primary-color); color: white; padding: 30px; display: flex; flex-direction: column; }
+    .sidebar-header { flex-shrink: 0; }
+    .sidebar-spacer { flex-grow: 1; }
+    .logo { font-size: 2.5em; font-weight: 700; margin-bottom: 40px; }
+    .main-title { font-family: var(--font-heading); font-size: 1.5em; line-height: 1.2; }
+    .participant-name {
+        font-size: 1.5em; /* Etwas kleiner als vorher */
+        font-weight: 700;
+        word-wrap: break-word;
+        max-width: 180px; /* Passe diesen Wert nach Bedarf an */
+    }
+    .metadata { flex-shrink: 0; margin-bottom: 20px; font-size: 0.85em; line-height: 1.8; }
+    .metadata-title { font-family: var(--font-heading); font-weight: 700; letter-spacing: 1px; opacity: 0.8; margin-bottom: 10px; }
+    .sidebar-footer { flex-shrink: 0; font-family: var(--font-heading); opacity: 0.8; }
+    .main-content { width: 70%; padding: 40px; color: var(--text-color); font-family: var(--font-body); display: flex; flex-direction: column; }
+    .footer-spacer { flex-grow: 1; }
+    .subtitle { font-family: var(--font-heading); color: #888; margin-bottom: 40px; text-align: center; }
+    .content-section { margin-bottom: 40px; }
+    .section-title { font-family: var(--font-heading); font-size: 1.6em; font-weight: 700; color: var(--primary-color); margin-bottom: 15px; }
+    .text-area-input { width: 100%; min-height: 120px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 4px; font-family: var(--font-body); font-size: 11pt; line-height: 1.7; text-align: justify; }
+    .chart-container { width: 100%; max-width: 400px; height: 300px; margin: 25px auto 0 auto; }
+    .main-content-footer { display: flex; justify-content: space-between; border-top: 1px solid #e2e8f0; padding-top: 15px; font-family: var(--font-heading); font-size: 0.9em; flex-shrink: 0; }
+    .text-content-for-pdf { font-family: var(--font-body); font-size: 11pt; line-height: 1.7; text-align: justify; white-space: pre-wrap; }
+    @media print { .no-print { display: none !important; } }
+</style>
+{% endblock %}

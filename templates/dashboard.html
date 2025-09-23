@@ -3,24 +3,31 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-    <h1 class="text-3xl font-bold text-gray-800 mb-2 text-center"> Stärkenanalyse-Tool</h1>
-    <p class="text-gray-600 mb-6 text-center">⏱️ Stärkenanalysen durchführen mit der Power von Künstlicher Intelligenz 💪.</p>
+    <div class="text-center">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Stärkenanalyse-Tool</h1>
+        <p class="text-gray-600 mb-6">⏱️ Stärkenanalysen durchführen mit der Power von Künstlicher Intelligenz 💪.</p>
+    </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
         <a href="{{ url_for('manage_groups') }}" class="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 transition-colors">
-            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">👥 Gruppen</h5>
-            <p class="font-normal text-gray-700">Hier können Sie neue Gruppen anlegen, bestehende bearbeiten und Teilnehmer zuordnen.</p>
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">👥 Gruppen & Teilnehmer</h5>
+            <p class="font-normal text-gray-700">Startpunkt: Legen Sie Gruppen an und fügen Sie die Teilnehmer hinzu.</p>
+        </a>
+
+        <a href="{{ url_for('data_entry_rework') }}" class="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 transition-colors">
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">📝 Beobachtungen eingeben</h5>
+            <p class="font-normal text-gray-700">Geben Sie die gesammelten Beobachtungen für einzelne Teilnehmer ein.</p>
+        </a>
+        
+        <a href="{{ url_for('ai_analysis_select_group') }}" class="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 transition-colors">
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">🤖 KI-Analyse starten</h5>
+            <p class="font-normal text-gray-700">Führen Sie die KI-gestützte Auswertung für mehrere Teilnehmer gleichzeitig durch.</p>
         </a>
 
         <a href="{{ url_for('manage_participants') }}" class="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 transition-colors">
-            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">👤 Teilnehmer</h5>
-            <p class="font-normal text-gray-700">Eine Übersicht aller Teilnehmer über alle Gruppen hinweg durchsuchen und verwalten.</p>
-        </a>
-        
-        <a href="{{ url_for('data_entry_search') }}" class="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 transition-colors">
-            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">📝 Beobachtungsdaten</h5>
-            <p class="font-normal text-gray-700">Suchen Sie nach Gruppen oder Teilnehmern, um schnell und nacheinander Beobachtungsdaten zu erfassen.</p>
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">📄 Berichte ansehen</h5>
+            <p class="font-normal text-gray-700">Sehen Sie sich die fertigen Berichte an, bearbeiten Sie sie und exportieren Sie sie.</p>
         </a>
 
     </div>
