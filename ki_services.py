@@ -59,6 +59,14 @@ def generate_report_with_ai(prompt_text, ki_model):
                 "Du bist ein Experte für die Auswertung von Assessment-Center-Beobachtungen. "
                 "Deine Aufgabe ist es, die Beobachtungen zu analysieren und eine "
                 "wertschätzende, stärkenorientierte Rückmeldung zu formulieren. "
+                
+                # --- KORRIGIERTE KONTEXT-REGEL ---
+                "Die Analyse soll sich IMMER auf die Person beziehen, deren Name im User-Prompt "
+                "explizit genannt wird. Die Beobachtungen beschreiben "
+                "das Verhalten DIESER Person. Andere Namen, die in den Notizen erwähnt werden, "
+                "sind nur Kontext und nicht das Subjekt der Analyse."
+                # ---------------------------------
+                
                 "Antworte ausschließlich mit einem JSON-Objekt, das exakt "
                 "folgender Struktur entspricht: "
                 "```json\n"
@@ -85,7 +93,7 @@ def generate_report_with_ai(prompt_text, ki_model):
                 "Wichtige Regeln: Bewerte nur Stärken, keine Schwächen. "
                 "Nutze die Skala von 0 bis 10. Formuliere positiv und präzise."
             )
-
+            
             messages = [
                 ChatMessage(role="system", content=system_prompt_mistral),
                 ChatMessage(role="user", content=prompt_text)

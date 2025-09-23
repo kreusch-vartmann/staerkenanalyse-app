@@ -99,6 +99,10 @@ def get_paginated_participants(page=1, search_query='', sort_order='name_asc'):
 
 # --- Getter-Funktionen ---
 
+def get_all_groups():
+    """Holt alle Gruppen (nicht paginiert) aus der Datenbank."""
+    return query_db('SELECT id, name FROM groups ORDER BY name ASC')
+
 def get_group_by_id(group_id):
     """Holt eine einzelne Gruppe anhand ihrer ID."""
     return query_db('SELECT * FROM groups WHERE id = ?', (group_id,), one=True)
@@ -265,5 +269,23 @@ def save_ki_raw_response(participant_id, raw_response):
     db_conn.execute(
         'UPDATE participants SET ki_raw_response = ? WHERE id = ?',
         (raw_response, participant_id)
+    )
+    db_conn.commit()
+
+def save_report_details(participant_id, group_details, footer_data):
+    """Speichert aktualisierte Gruppen- und Fußzeilendetails."""
+    db_conn = get_db()
+    # Speichere die Gruppendetails in der 'groups' Tabelle
+    group_id = query_db('SELECT group_id FROM participants WHERE id = ?', (participant_id,), one=True)['group_id']
+    set_clause_group = ", ".join([f"{key} = ?" for key in group_details.keys()])
+    query_group = f"UPDATE groups SET {set_clause_group} WHERE id = ?"
+    values_group = list(group_details.values()) + [group_id]
+    db_conn.execute(query_group, tuple(values_group))
+
+    # Speichere die Fußzeilendaten in der 'participants' Tabelle
+    footer_json = json.dumps(footer_data)
+    db_conn.execute(
+        'UPDATE participants SET footer_data = ? WHERE id = ?',
+        (footer_json, participant_id)
     )
     db_conn.commit()

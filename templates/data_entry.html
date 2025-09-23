@@ -13,152 +13,43 @@
         </a>
     </div>
 
-    <!-- Hauptformular -->
     <div class="bg-white p-8 rounded-lg shadow-md border border-gray-200">
-        <div class="border-b border-gray-200 mb-6">
-            <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-                <a href="#" class="border-indigo-500 text-indigo-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" aria-current="page">
-                    Beobachtungen
-                </a>
-            </nav>
+        <h3 class="text-xl font-semibold text-gray-700 mb-3">Beobachtungen</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label for="social-observations" class="block mb-2 text-sm font-medium text-gray-900">Soziale Kompetenzen</label>
+                <textarea id="social-observations" rows="8" class="w-full rounded-md border-gray-300 shadow-sm p-3">{{ (participant.observations or {}).social or '' }}</textarea>
+            </div>
+            <div>
+                <label for="verbal-observations" class="block mb-2 text-sm font-medium text-gray-900">Verbale Kompetenzen</label>
+                <textarea id="verbal-observations" rows="8" class="w-full rounded-md border-gray-300 shadow-sm p-3">{{ (participant.observations or {}).verbal or '' }}</textarea>
+            </div>
         </div>
-
-        <form id="data-entry-form" class="space-y-8">
-            <div>
-                <h3 class="text-xl font-semibold text-gray-700 mb-3">Soziale Kompetenzen</h3>
-                <textarea id="social-observations" name="social_observations" rows="6" class="w-full rounded-md border-gray-300 shadow-sm p-3 focus:border-indigo-500 focus:ring-indigo-500" placeholder="Beobachtungen zur Gruppenarbeit, Kommunikation, etc. eintragen...">{{ (participant.observations or {}).social or '' }}</textarea>
-            </div>
-            <div>
-                <h3 class="text-xl font-semibold text-gray-700 mb-3">Verbale Kompetenzen</h3>
-                <textarea id="verbal-observations" name="verbal_observations" rows="6" class="w-full rounded-md border-gray-300 shadow-sm p-3 focus:border-indigo-500 focus:ring-indigo-500" placeholder="Beobachtungen zur Präsentation, Argumentation, etc. eintragen...">{{ (participant.observations or {}).verbal or '' }}</textarea>
-            </div>
-            <div class="pt-4 flex justify-end">
-                <button type="button" onclick="saveObservations()" class="py-2 px-6 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold">
-                    Beobachtungen speichern
-                </button>
-            </div>
-        </form>
-    </div>
-
-    <!-- KI-Analyse Sektion -->
-    <div class="mt-10 bg-white p-8 rounded-lg shadow-md border border-gray-200">
-        <h3 class="text-2xl font-bold text-gray-800 mb-4">KI-gestützte Analyse</h3>
-        <form id="ki-analysis-form" class="space-y-6">
-            <div>
-                <label for="ki-model" class="block text-sm font-medium text-gray-700 mb-1">KI-Modell auswählen</label>
-                <select id="ki-model" name="ki_model" class="w-full rounded-md border-gray-300 shadow-sm p-2">
-                    <option value="google">Google Gemini</option>
-                    <option value="mistral" selected>Mistral AI</option>
-                </select>
-            </div>
-
-            <div>
-                <label for="ki-prompt" class="block text-sm font-medium text-gray-700 mb-1">Analyse-Prompt</label>
-                <button type="button" onclick="openPromptModal()" class="py-2 px-4 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold mb-2">
-                    Prompt-Vorlage auswählen
-                </button>
-                <textarea id="ki-prompt" name="ki_prompt" rows="10" class="w-full rounded-md border-gray-300 shadow-sm p-3 font-mono text-sm">{{ participant.prompt_text or 'Analysiere die Stärken von {{name}} basierend auf den folgenden Beobachtungen:\n\nSoziale Kompetenzen:\n{{social_observations}}\n\nVerbale Kompetenzen:\n{{verbal_observations}}\n\nZusätzliche Informationen:\n{{additional_content}}' }}</textarea>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Zusätzliche Dateien (optional)</label>
-                <label class="cursor-pointer py-2 px-4 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold inline-block">
-                    <span>Dateien auswählen</span>
-                    <input type="file" id="additional-files" name="additional_files" multiple class="hidden" onchange="updateFileList()">
-                </label>
-                <span id="file-list" class="ml-3 text-sm text-gray-600">Keine Dateien ausgewählt.</span>
-            </div>
-
-            <div class="pt-4 flex items-center space-x-4">
-                <button type="button" onclick="runKiAnalysis()" id="ki-run-button" class="py-2 px-6 rounded-md text-white bg-green-600 hover:bg-green-700 font-semibold">
-                    Analyse durchführen & Bericht erstellen
-                </button>
-                <div id="loading-spinner" class="hidden animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
-            </div>
-        </form>
-    </div>
-
-    <!-- Prompt Auswahl Modal -->
-    <div id="prompt-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-      <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
-        <div class="mt-3">
-          <h3 class="text-lg leading-6 font-medium text-gray-900 text-center mb-4">Prompt-Vorlage auswählen</h3>
-          <div class="mt-2 px-2 py-3 max-h-60 overflow-y-auto">
-            <div class="space-y-2">
-              {% for prompt in prompts %}
-                <button onclick="selectPrompt('{{ prompt }}')" class="w-full text-left p-3 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                  {{ prompt }}
-                </button>
-              {% else %}
-                <p class="text-center text-gray-500">Keine Vorlagen im 'prompts'-Ordner gefunden.</p>
-              {% endfor %}
-            </div>
-          </div>
-          <div class="items-center px-4 py-3 mt-4 border-t border-gray-200">
-            <button onclick="closePromptModal()" class="w-full py-2 px-4 rounded-md text-white bg-gray-500 hover:bg-gray-600 font-semibold">
-              Abbrechen
+        <div class="pt-6 flex justify-end">
+            <button type="button" onclick="saveObservations()" class="py-2 px-6 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold">
+                Beobachtungen speichern
             </button>
-          </div>
         </div>
-      </div>
+    </div>
+
+    <div class="mt-10 bg-white p-8 rounded-lg shadow-md border border-gray-200">
+        <h3 class="text-2xl font-bold text-gray-800 mb-4">Nächster Schritt</h3>
+        <p class="text-gray-600 mb-4">Nachdem Sie die Beobachtungen gespeichert haben, können Sie die KI-Analyse für diesen Teilnehmer konfigurieren und starten.</p>
+        
+        <form action="{{ url_for('configure_batch_ai_analysis') }}" method="post">
+            <input type="hidden" name="participant_ids" value="{{ participant.id }}">
+            <button type="submit" class="py-2 px-6 rounded-md text-white bg-green-600 hover:bg-green-700 font-semibold">
+                Analyse für {{ participant.name }} starten →
+            </button>
+        </form>
     </div>
 
     <script>
-        const modal = document.getElementById('prompt-modal');
-
-        function openPromptModal() { modal.style.display = 'block'; }
-        function closePromptModal() { modal.style.display = 'none'; }
-
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                closePromptModal();
-            }
-        }
-
-        async function selectPrompt(filename) {
-            const textarea = document.getElementById('ki-prompt');
-            if (!filename) return;
-
-            try {
-                const response = await fetch(`/prompts/${filename}`);
-                if (!response.ok) {
-                    throw new Error(`Serverfehler: ${response.statusText}`);
-                }
-                const result = await response.json();
-                if (result.content) {
-                    textarea.value = result.content;
-                    showToast(`Vorlage '${filename}' geladen.`, 'success');
-                } else {
-                    showToast(result.error || 'Vorlage konnte nicht geladen werden.', 'error');
-                }
-            } catch (error) {
-                console.error('Fehler beim Laden des Prompts:', error);
-                showToast('Fehler beim Abrufen der Vorlage.', 'error');
-            } finally {
-                closePromptModal();
-            }
-        }
-
-        function updateFileList() {
-            const input = document.getElementById('additional-files');
-            const fileList = document.getElementById('file-list');
-            if (input.files.length > 0) {
-                const fileNames = Array.from(input.files).map(file => file.name).join(', ');
-                fileList.textContent = fileNames;
-            } else {
-                fileList.textContent = 'Keine Dateien ausgewählt.';
-            }
-        }
-
         async function saveObservations() {
             try {
-                const socialObs = document.getElementById('social-observations').value;
-                const verbalObs = document.getElementById('verbal-observations').value;
-                
-                // Dies ist die "flache" Datenstruktur, die app.py jetzt erwartet.
                 const dataToSend = {
-                    social: socialObs,
-                    verbal: verbalObs
+                    social: document.getElementById('social-observations').value,
+                    verbal: document.getElementById('verbal-observations').value
                 };
 
                 const response = await fetch(`{{ url_for('save_observations', participant_id=participant.id) }}`, {
@@ -166,56 +57,14 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(dataToSend)
                 });
-
-                if (!response.ok) {
-                    // Wirft einen Fehler, wenn die Serverantwort nicht erfolgreich war (z.B. 400, 500)
-                    throw new Error(`HTTP-Fehler! Status: ${response.status}`);
-                }
-
                 const result = await response.json();
-                showToast(result.message, result.status);
+                
+                // Einfache Feedback-Meldung via alert
+                alert(result.message);
 
             } catch (error) {
                 console.error('Fehler in saveObservations:', error);
-                showToast('Speichern fehlgeschlagen. Prüfen Sie die Browser-Konsole für Details.', 'error');
-            }
-        }
-
-        async function runKiAnalysis() {
-            const form = document.getElementById('ki-analysis-form');
-            const button = document.getElementById('ki-run-button');
-            const spinner = document.getElementById('loading-spinner');
-            
-            button.disabled = true;
-            spinner.classList.remove('hidden');
-
-            try {
-                // Speichert vor der Analyse die neuesten Beobachtungen
-                await saveObservations(); 
-                
-                const formData = new FormData(form);
-                formData.append('social_observations', document.getElementById('social-observations').value);
-                formData.append('verbal_observations', document.getElementById('verbal-observations').value);
-
-                const response = await fetch(`{{ url_for('run_ki_analysis', participant_id=participant.id) }}`, {
-                    method: 'POST',
-                    body: formData
-                });
-                const result = await response.json();
-                
-                if (result.message) {
-                    showToast(result.message, result.status || 'info');
-                }
-                
-                if (result.status === 'success' && result.redirect_url) {
-                    window.location.href = result.redirect_url;
-                }
-            } catch (error) {
-                console.error('Fehler in runKiAnalysis:', error);
-                showToast('Ein schwerwiegender Netzwerk- oder Serverfehler ist aufgetreten.', 'error');
-            } finally {
-                button.disabled = false;
-                spinner.classList.add('hidden');
+                alert('Speichern fehlgeschlagen. Prüfen Sie die Browser-Konsole für Details.');
             }
         }
     </script>
