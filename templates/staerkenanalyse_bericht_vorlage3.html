@@ -190,10 +190,19 @@
     .logo { font-size: 2.5em; font-weight: 700; margin-bottom: 40px; }
     .main-title { font-family: var(--font-heading); font-size: 1.5em; line-height: 1.2; }
     .participant-name {
-        font-size: 1.5em; /* Etwas kleiner als vorher */
+        font-size: 1.5em;
         font-weight: 700;
-        word-wrap: break-word;
-        max-width: 180px; /* Passe diesen Wert nach Bedarf an */
+        
+        /* NEU & KORRIGIERT: Diese Regeln sorgen für den korrekten Umbruch */
+        display: block; /* Stellt sicher, dass das Element die volle Breite einnehmen kann */
+        overflow-wrap: break-word; /* Erzwingt den Umbruch, wenn ein Wort zu lang ist */
+        -webkit-hyphens: auto;     /* Aktiviert die Silbentrennung für Chrome/Safari */
+        -ms-hyphens: auto;         /* Aktiviert die Silbentrennung für IE/Edge */
+        hyphens: auto;             /* Aktiviert die Silbentrennung für Firefox/Standard */
+
+        /* ALT: Diese Regeln können entfernt werden, da sie durch die oberen ersetzt werden */
+        /* word-wrap: break-word; */ /* Veraltet, wird durch overflow-wrap ersetzt */
+        /* max-width: 180px; */    /* Diese Beschränkung ist nicht mehr nötig */
     }
     .metadata { flex-shrink: 0; margin-bottom: 20px; font-size: 0.85em; line-height: 1.8; }
     .metadata-title { font-family: var(--font-heading); font-weight: 700; letter-spacing: 1px; opacity: 0.8; margin-bottom: 10px; }

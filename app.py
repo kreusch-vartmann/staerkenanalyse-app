@@ -2,14 +2,17 @@
 Hauptanwendung für das Stärkenanalyse-Tool.
 """
 import os
+import io
 import json
 from datetime import datetime, UTC
 
 from flask import (Flask, render_template, request, redirect, url_for,
                    flash, jsonify, session)
+from flask import Response
 from werkzeug.utils import secure_filename
 
 import database as db
+import pandas as pd
 from ki_services import generate_report_with_ai
 from utils import get_file_content, clean_json_response
 
@@ -137,8 +140,6 @@ def show_data_entry(participant_id):
     flash("Teilnehmer nicht gefunden.", "error")
     return redirect(url_for('manage_participants'))
 
-from datetime import datetime # Fügen Sie dies am Anfang der Datei hinzu, falls es fehlt
-
 @app.route('/participant/<int:participant_id>/report')
 def show_report(participant_id):
     participant = db.get_participant_by_id(participant_id)
@@ -227,7 +228,100 @@ def execute_batch_ai_analysis():
         analysis_data=analysis_data,
         breadcrumbs=breadcrumbs
     )
+@app.route('/export/selection')
+def export_selection():
+    """Zeigt die Seite zur Auswahl der zu exportierenden Daten an."""
+    groups = db.get_all_groups()
+    groups_with_participants = []
+    for group in groups:
+        participants = db.get_participants_by_group(group['id'])
+        groups_with_participants.append({
+            'id': group['id'],
+            'name': group['name'],
+            'participants': participants
+        })
+    
+    breadcrumbs = [{"link": url_for('dashboard'), "text": "Dashboard"}, {"text": "Datenexport"}]
+    return render_template('export_selection.html', 
+                           groups_with_participants=groups_with_participants, 
+                           breadcrumbs=breadcrumbs)
 
+@app.route('/export/data', methods=['POST'])
+def export_data():
+    """Verarbeitet die Auswahl und generiert die Export-Datei (XLSX oder CSV)."""
+    participant_ids = request.form.getlist('participant_ids')
+    export_format = request.form.get('format', 'xlsx') # Standard ist xlsx
+
+    if not participant_ids:
+        flash("Keine Teilnehmer für den Export ausgewählt.", "warning")
+        return redirect(url_for('export_selection'))
+
+    selected_participants = [db.get_participant_by_id(pid) for pid in participant_ids]
+    
+    # --- KORREKTUR HIER ---
+    # Wir wandeln jedes 'group' (ein sqlite3.Row-Objekt) in ein echtes dict() um.
+    all_groups = {group['id']: dict(group) for group in db.get_all_groups()}
+    
+    records = []
+    for p in selected_participants:
+        if not p: continue
+        group_info = all_groups.get(p.get('group_id'), {})
+        record = {
+            'Teilnehmer ID': p.get('id'),
+            'Name': p.get('name'),
+            'Gruppe': group_info.get('name'), # Diese Zeile funktioniert jetzt, da group_info ein dict ist
+            'Beobachtung (Sozial)': p.get('observations', {}).get('social', ''),
+            'Beobachtung (Verbal)': p.get('observations', {}).get('verbal', ''),
+            'SK - Flexibilität': p.get('sk_ratings', {}).get('flexibility'),
+            'SK - Teamorientierung': p.get('sk_ratings', {}).get('team_orientation'),
+            'SK - Prozessorientierung': p.get('sk_ratings', {}).get('process_orientation'),
+            'SK - Ergebnisorientierung': p.get('sk_ratings', {}).get('results_orientation'),
+            'VK - Flexibilität': p.get('vk_ratings', {}).get('flexibility'),
+            'VK - Beratung': p.get('vk_ratings', {}).get('consulting'),
+            'VK - Sachlichkeit': p.get('vk_ratings', {}).get('objectivity'),
+            'VK - Zielorientierung': p.get('vk_ratings', {}).get('goal_orientation'),
+            'KI-Text (Sozial)': p.get('ki_texts', {}).get('social_text', ''),
+            'KI-Text (Verbal)': p.get('ki_texts', {}).get('verbal_text', ''),
+            'KI-Text (Zusammenfassung)': p.get('ki_texts', {}).get('summary_text', ''),
+        }
+        records.append(record)
+    
+    if not records:
+        flash("Konnte Daten für die ausgewählten Teilnehmer nicht laden.", "error")
+        return redirect(url_for('export_selection'))
+
+    df = pd.DataFrame(records)
+    output = io.BytesIO()
+    filename = f"staerkenanalyse_export_{datetime.now().strftime('%Y-%m-%d')}"
+
+    if export_format == 'xlsx':
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='Export')
+            worksheet = writer.sheets['Export']
+            for idx, col in enumerate(df):
+                max_len = max((df[col].astype(str).map(len).max(), len(str(df[col].name)))) + 2
+                worksheet.set_column(idx, idx, max_len if max_len < 100 else 100)
+        
+        mimetype = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        filename += ".xlsx"
+    
+    elif export_format == 'csv':
+        df.to_csv(output, index=False, encoding='utf-8-sig')
+        mimetype = "text/csv"
+        filename += ".csv"
+        
+    else:
+        flash("Ungültiges Exportformat ausgewählt.", "error")
+        return redirect(url_for('export_selection'))
+
+    output.seek(0)
+
+    return Response(
+        output,
+        mimetype=mimetype,
+        headers={"Content-Disposition": f"attachment;filename={filename}"}
+    )
+    
 @app.route('/api/group/<int:group_id>/participants')
 def get_participants_for_group(group_id):
     return jsonify([dict(p) for p in db.get_participants_by_group(group_id)])
