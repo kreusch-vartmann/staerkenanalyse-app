@@ -26,8 +26,13 @@
         </a>
 
         <a href="{{ url_for('manage_participants') }}" class="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 transition-colors">
-            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">📄 Berichte ansehen</h5>
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">📄 Berichte bearbeiten</h5>
             <p class="font-normal text-gray-700">Sehen Sie sich die fertigen Berichte an, bearbeiten Sie sie und exportieren Sie sie.</p>
+        </a>
+
+        <a href="{{ url_for('export_selection') }}" class="block p-6 bg-white border border-green-200 rounded-lg shadow hover:bg-green-100">
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">📦 Daten exportieren</h5>
+            <p class="font-normal text-gray-700">Wählen Sie Teilnehmer- und Gruppendaten zum Export als xslx oder csv aus.</p>
         </a>
 
     </div>

@@ -289,3 +289,36 @@ def save_report_details(participant_id, group_details, footer_data):
         (footer_json, participant_id)
     )
     db_conn.commit()
+  
+def get_all_participants_for_export():
+    """
+    Holt alle Teilnehmer mit zugehörigen Gruppendaten für den Export.
+    Gibt eine Liste von Dictionaries zurück, bei denen JSON-Felder bereits geparst sind.
+    """
+    query = """
+        SELECT
+            p.id,
+            g.name as group_name,
+            g.date as group_date,
+            g.location as group_location
+        FROM participants p
+        JOIN groups g ON p.group_id = g.id
+        ORDER BY g.name, p.name
+    """
+    participant_rows = query_db(query)
+    if not participant_rows:
+        return []
+
+    participants = []
+    for row in participant_rows:
+        # Hier wird die bestehende, robuste Funktion get_participant_by_id genutzt,
+        # um sicherzustellen, dass alle JSON-Daten korrekt geparst werden.
+        clean_participant = get_participant_by_id(row['id'])
+        if clean_participant:
+            # Füge die zusätzlichen Gruppen-Infos aus der ersten Abfrage hinzu
+            clean_participant['group_name'] = row['group_name']
+            clean_participant['group_date'] = row['group_date']
+            clean_participant['group_location'] = row['group_location']
+            participants.append(clean_participant)
+
+    return participants 
