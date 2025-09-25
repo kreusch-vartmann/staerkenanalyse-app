@@ -68,4 +68,40 @@
             }
         }
     </script>
+
+    <script>
+        // --- Warnung bei ungespeicherten Änderungen ---
+        let isDirty = false;
+    
+        // Funktion, um den Zustand auf "geändert" zu setzen
+        function setDirty() {
+            isDirty = true;
+        }
+    
+        // Überwache die beiden Textareas
+        document.getElementById('social-observations').addEventListener('input', setDirty);
+        document.getElementById('verbal-observations').addEventListener('input', setDirty);
+    
+        // Wenn der Nutzer versucht, die Seite zu verlassen, prüfe den "dirty"-Status
+        window.addEventListener('beforeunload', (event) => {
+            if (isDirty) {
+                // Zeige den Standard-Dialog des Browsers an
+                event.preventDefault();
+                event.returnValue = '';
+            }
+        });
+    
+        // --- Bestehende Speicher-Funktion anpassen ---
+        // Wir "überschreiben" die bestehende saveObservations-Funktion, um den Status zurückzusetzen
+        const originalSaveObservations = window.saveObservations;
+        window.saveObservations = async function() {
+            // Rufe die ursprüngliche Speicherfunktion auf
+            const wasSuccessful = await originalSaveObservations();
+            
+            // Setze den Status NUR nach erfolgreichem Speichern zurück
+            if (wasSuccessful) {
+                isDirty = false;
+            }
+        };
+    </script>
 {% endblock %}

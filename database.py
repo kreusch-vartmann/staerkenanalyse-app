@@ -5,10 +5,14 @@ Verwaltet die Verbindung und alle Abfragen zur SQLite-Datenbank.
 """
 import sqlite3
 import json
+import os
 from math import ceil
 from flask import g
 
-DATABASE = 'database.db'
+# FINALE KORREKTUR 1: Absoluter Pfad zur Datenbank, um sicherzustellen, dass immer die richtige Datei gefunden wird.
+APP_ROOT = os.path.dirname(os.path.abspath(__file__))
+DATABASE = os.path.join(APP_ROOT, 'database.db')
+
 PER_PAGE = 10  # Definiert, wie viele Einträge pro Seite angezeigt werden
 
 # --- Dashboard Statistik-Funktionen ---
@@ -20,8 +24,6 @@ def get_dashboard_stats():
     total_groups = db_conn.execute("SELECT COUNT(id) FROM groups").fetchone()[0]
     total_participants = db_conn.execute("SELECT COUNT(id) FROM participants").fetchone()[0]
     
-    # Zählt Teilnehmer, bei denen eine KI-Analyse durchgeführt wurde
-    # Annahme: Eine Analyse wurde durchgeführt, wenn 'ki_texts' nicht mehr das leere JSON-Objekt '{}' ist.
     completed_analyses = db_conn.execute(
         "SELECT COUNT(id) FROM participants WHERE ki_texts IS NOT NULL AND ki_texts != '{}'"
     ).fetchone()[0]
@@ -65,29 +67,31 @@ def query_db(query, args=(), one=False):
 
 # --- Paginierungs- und Suchfunktionen ---
 
-def get_paginated_groups(page=1):
-    """Holt eine paginierte Liste von Gruppen."""
-    offset = (page - 1) * PER_PAGE
-    count_query = "SELECT COUNT(id) FROM groups"
-    total_items = query_db(count_query, one=True)[0]
-
-    query = "SELECT * FROM groups ORDER BY name ASC LIMIT ? OFFSET ?"
-    groups = query_db(query, (PER_PAGE, offset))
-
+def get_paginated_groups(page, per_page=10):
+    """Holt eine paginierte Liste aller Gruppen."""
+    offset = (page - 1) * per_page
+    db = get_db()
+    groups = db.execute(
+        'SELECT * FROM groups ORDER BY name LIMIT ? OFFSET ?', (per_page, offset)
+    ).fetchall()
+    total_groups = db.execute('SELECT COUNT(id) FROM groups').fetchone()[0]
+    
+    # KORREKTUR: Ersetzt die nicht definierte Pagination-Klasse durch ein Dictionary,
+    # konsistent mit get_paginated_participants.
     pagination = {
         'page': page,
-        'pages': int(ceil(total_items / PER_PAGE)),
-        'total_items': total_items,
+        'pages': int(ceil(total_groups / per_page)) if per_page > 0 else 0,
+        'total_items': total_groups,
         'has_prev': page > 1,
-        'has_next': page * PER_PAGE < total_items,
+        'has_next': page * per_page < total_groups,
         'prev_num': page - 1,
         'next_num': page + 1
     }
     return pagination, groups
 
-def get_paginated_participants(page=1, search_query='', sort_order='name_asc'):
-    """Holt eine paginierte, suchbare und sortierbare Liste von Teilnehmern."""
-    offset = (page - 1) * PER_PAGE
+def get_paginated_participants(page, search_query, sort_order, per_page=10):
+    """Holt eine paginierte, durchsuchbare und sortierbare Liste aller Teilnehmer."""
+    offset = (page - 1) * per_page
     base_query = """
         SELECT p.id, p.name, g.name as group_name
         FROM participants p JOIN groups g ON p.group_id = g.id
@@ -113,17 +117,17 @@ def get_paginated_participants(page=1, search_query='', sort_order='name_asc'):
     }
     order_clause = sort_map.get(sort_order, 'p.name ASC')
     base_query += f" ORDER BY {order_clause} LIMIT ? OFFSET ?"
-    args.extend([PER_PAGE, offset])
+    args.extend([per_page, offset])
 
     total_items = query_db(count_base_query, tuple(count_args), one=True)[0]
     participants = query_db(base_query, tuple(args))
 
     pagination = {
         'page': page,
-        'pages': int(ceil(total_items / PER_PAGE)),
+        'pages': int(ceil(total_items / per_page)),
         'total_items': total_items,
         'has_prev': page > 1,
-        'has_next': page * PER_PAGE < total_items,
+        'has_next': page * per_page < total_items,
         'prev_num': page - 1,
         'next_num': page + 1
     }
@@ -133,11 +137,13 @@ def get_paginated_participants(page=1, search_query='', sort_order='name_asc'):
 
 def get_all_groups():
     """Holt alle Gruppen (nicht paginiert) aus der Datenbank."""
-    return query_db('SELECT id, name FROM groups ORDER BY name ASC')
+    # FINALE KORREKTUR 3: Alle relevanten Spalten explizit abfragen
+    return query_db('SELECT id, name, date, location, leitung, beobachter1, beobachter2, created_at FROM groups ORDER BY name ASC')
 
 def get_group_by_id(group_id):
     """Holt eine einzelne Gruppe anhand ihrer ID."""
-    return query_db('SELECT * FROM groups WHERE id = ?', (group_id,), one=True)
+    # FINALE KORREKTUR 4: Explizite Spaltenauswahl statt 'SELECT *'
+    return query_db('SELECT id, name, date, location, leitung, beobachter1, beobachter2, created_at FROM groups WHERE id = ?', (group_id,), one=True)
 
 def get_participant_by_id(participant_id):
     """Holt einen Teilnehmer und parst alle JSON-Felder korrekt."""
@@ -148,20 +154,17 @@ def get_participant_by_id(participant_id):
         return None
 
     participant = dict(participant_row)
-    # Definierte Liste von Spalten, die JSON-Daten enthalten
     json_columns = ['general_data', 'observations', 'sk_ratings', 'vk_ratings', 'ki_texts', 'ki_raw_response', 'footer_data']    
     for key, value in participant.items():
         if key in json_columns:
             try:
-                # Stellt sicher, dass der Wert ein String ist und nicht nur aus Leerzeichen besteht
                 if value and isinstance(value, str) and value.strip():
                     participant[key] = json.loads(value)
                 else:
-                    participant[key] = {}  # Leeres Dict für None, leere Strings etc.
+                    participant[key] = {}
             except (json.JSONDecodeError, TypeError):
-                participant[key] = {}  # Fallback bei ungültigem JSON
+                participant[key] = {}
     return participant
-
 
 def get_participants_by_group(group_id):
     """Holt alle Teilnehmer einer bestimmten Gruppe."""
@@ -177,7 +180,6 @@ def get_prompt_by_name(prompt_name):
 
 # --- Setter/Writer-Funktionen ---
 
-# pylint: disable=too-many-arguments
 def add_group(name, date, location, leitung, beobachter1, beobachter2):
     """Fügt eine neue Gruppe zur Datenbank hinzu."""
     db_conn = get_db()
@@ -221,37 +223,14 @@ def delete_group_by_id(group_id):
     db_conn.execute('DELETE FROM groups WHERE id = ?', (group_id,))
     db_conn.commit()
 
-def add_participant_to_group(group_id, name):
-    """Fügt einen neuen Teilnehmer zu einer Gruppe hinzu."""
-    db_conn = get_db()
-    empty_json = json.dumps({})
-    db_conn.execute(
-        (
-            'INSERT INTO participants (group_id, name, general_data, observations, '
-            'sk_ratings, vk_ratings, ki_texts, ki_raw_response, footer_data) '
-            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
-        ),
-        (
-            group_id, name, empty_json, empty_json,
-            json.dumps({"flexibility": 0.0, "team_orientation": 0.0,
-                        "process_orientation": 0.0, "results_orientation": 0.0}),
-            json.dumps({"flexibility": 0.0, "consulting": 0.0,
-                        "objectivity": 0.0, "goal_orientation": 0.0}),
-            empty_json, "{}", empty_json
-        )
-    )
-    db_conn.commit()
-
 def add_multiple_participants_to_group(group_id, names):
     """Fügt eine Liste von neuen Teilnehmern zu einer Gruppe hinzu."""
     db_conn = get_db()
     cursor = db_conn.cursor()
     empty_json = json.dumps({})
     
-    # Bereite die Daten für das Einfügen vor
     participants_to_add = []
     for name in names:
-        # Ignoriere leere Zeilen
         if name.strip():
             participants_to_add.append((
                 group_id, name.strip(), empty_json, empty_json,
@@ -262,7 +241,6 @@ def add_multiple_participants_to_group(group_id, names):
                 empty_json, "{}", empty_json
             ))
 
-    # Führe das Einfügen für alle neuen Teilnehmer aus
     if participants_to_add:
         cursor.executemany(
             (
@@ -322,14 +300,12 @@ def save_ki_raw_response(participant_id, raw_response):
 def save_report_details(participant_id, group_details, footer_data):
     """Speichert aktualisierte Gruppen- und Fußzeilendetails."""
     db_conn = get_db()
-    # Speichere die Gruppendetails in der 'groups' Tabelle
     group_id = query_db('SELECT group_id FROM participants WHERE id = ?', (participant_id,), one=True)['group_id']
     set_clause_group = ", ".join([f"{key} = ?" for key in group_details.keys()])
     query_group = f"UPDATE groups SET {set_clause_group} WHERE id = ?"
     values_group = list(group_details.values()) + [group_id]
     db_conn.execute(query_group, tuple(values_group))
 
-    # Speichere die Fußzeilendaten in der 'participants' Tabelle
     footer_json = json.dumps(footer_data)
     db_conn.execute(
         'UPDATE participants SET footer_data = ? WHERE id = ?',
@@ -340,7 +316,6 @@ def save_report_details(participant_id, group_details, footer_data):
 def get_all_participants_for_export():
     """
     Holt alle Teilnehmer mit zugehörigen Gruppendaten für den Export.
-    Gibt eine Liste von Dictionaries zurück, bei denen JSON-Felder bereits geparst sind.
     """
     query = """
         SELECT
@@ -358,11 +333,8 @@ def get_all_participants_for_export():
 
     participants = []
     for row in participant_rows:
-        # Hier wird die bestehende, robuste Funktion get_participant_by_id genutzt,
-        # um sicherzustellen, dass alle JSON-Daten korrekt geparst werden.
         clean_participant = get_participant_by_id(row['id'])
         if clean_participant:
-            # Füge die zusätzlichen Gruppen-Infos aus der ersten Abfrage hinzu
             clean_participant['group_name'] = row['group_name']
             clean_participant['group_date'] = row['group_date']
             clean_participant['group_location'] = row['group_location']
@@ -403,3 +375,9 @@ def delete_prompt_by_id(prompt_id):
     db_conn = get_db()
     db_conn.execute("DELETE FROM prompts WHERE id = ?", (prompt_id,))
     db_conn.commit()
+
+def get_all_participants():
+    """Gibt alle Teilnehmer aus der Datenbank zurück."""
+    db = get_db()
+    participants = db.execute('SELECT * FROM participants ORDER BY name').fetchall()
+    return [dict(row) for row in participants]  # Wichtig: Umwandlung in Dictionaries
