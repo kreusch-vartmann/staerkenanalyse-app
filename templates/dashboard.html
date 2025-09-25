@@ -7,7 +7,46 @@
         <h1 class="text-3xl font-bold text-gray-800 mb-2">Stärkenanalyse-Tool</h1>
         <p class="text-gray-600 mb-6">⏱️ Stärkenanalysen durchführen mit der Power von Künstlicher Intelligenz 💪.</p>
     </div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    
+    <div class="bg-white p-6 rounded-lg shadow-md">
+        <h3 class="text-lg font-semibold text-gray-600 mb-4">Projektübersicht</h3>
+        <div class="flex justify-around text-center">
+            <div>
+                <p class="text-4xl font-bold text-blue-600">{{ stats.total_groups }}</p>
+                <p class="text-sm text-gray-500">Gruppen</p>
+            </div>
+            <div>
+                <p class="text-4xl font-bold text-blue-600">{{ stats.total_participants }}</p>
+                <p class="text-sm text-gray-500">Teilnehmer</p>
+            </div>
+            <div>
+                <p class="text-4xl font-bold text-green-600">{{ stats.completed_analyses }}</p>
+                <p class="text-sm text-gray-500">Analysen</p>
+            </div>
+        </div>
+    </div>
 
+    <div class="bg-white p-6 rounded-lg shadow-md">
+        <h3 class="text-lg font-semibold text-gray-600 mb-3">Zuletzt bearbeitet</h3>
+        {% if recently_updated_participants %}
+            <ul class="space-y-2">
+                {% for participant in recently_updated_participants %}
+                <li class="text-sm">
+                    <a href="{{ url_for('show_data_entry', participant_id=participant.id) }}" class="text-blue-600 hover:underline">
+                        <strong>{{ participant.name }}</strong>
+                    </a>
+                    <span class="text-gray-500 block">in Gruppe: {{ participant.group_name }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-sm text-gray-500">Noch keine Teilnehmer bearbeitet.</p>
+        {% endif %}
+    </div>
+</div>
+
+<h2 class="text-2xl font-bold text-gray-700 mb-4">Aktionen</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
         <a href="{{ url_for('manage_groups') }}" class="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 transition-colors">
@@ -33,6 +72,16 @@
         <a href="{{ url_for('export_selection') }}" class="block p-6 bg-white border border-green-200 rounded-lg shadow hover:bg-green-100">
             <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">📦 Daten exportieren</h5>
             <p class="font-normal text-gray-700">Wählen Sie Teilnehmer- und Gruppendaten zum Export als xslx oder csv aus.</p>
+        </a>
+
+        <a href="{{ url_for('import_page') }}" class="block p-6 bg-white border border-blue-200 rounded-lg shadow hover:bg-blue-100">
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">📥 Daten importieren</h5>
+            <p class="font-normal text-gray-700">Daten wiederherstellen oder neue Gruppen aus einer Namensliste erstellen.</p>
+        </a>
+
+        <a href="{{ url_for('manage_prompts') }}" class="block p-6 bg-white border border-purple-200 rounded-lg shadow hover:bg-purple-100">
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">🔄 Prompts verwalten</h5>
+            <p class="font-normal text-gray-700">KI-Analyseanweisungen erstellen, bearbeiten und verwalten.</p>
         </a>
 
     </div>

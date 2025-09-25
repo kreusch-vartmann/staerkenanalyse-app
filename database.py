@@ -11,6 +11,38 @@ from flask import g
 DATABASE = 'database.db'
 PER_PAGE = 10  # Definiert, wie viele Einträge pro Seite angezeigt werden
 
+# --- Dashboard Statistik-Funktionen ---
+
+def get_dashboard_stats():
+    """Holt die aggregierten Statistiken für das Dashboard."""
+    db_conn = get_db()
+    
+    total_groups = db_conn.execute("SELECT COUNT(id) FROM groups").fetchone()[0]
+    total_participants = db_conn.execute("SELECT COUNT(id) FROM participants").fetchone()[0]
+    
+    # Zählt Teilnehmer, bei denen eine KI-Analyse durchgeführt wurde
+    # Annahme: Eine Analyse wurde durchgeführt, wenn 'ki_texts' nicht mehr das leere JSON-Objekt '{}' ist.
+    completed_analyses = db_conn.execute(
+        "SELECT COUNT(id) FROM participants WHERE ki_texts IS NOT NULL AND ki_texts != '{}'"
+    ).fetchone()[0]
+
+    return {
+        'total_groups': total_groups,
+        'total_participants': total_participants,
+        'completed_analyses': completed_analyses
+    }
+
+def get_recently_updated_participants(limit=5):
+    """Holt die zuletzt bearbeiteten Teilnehmer."""
+    query = """
+        SELECT p.id, p.name, g.name as group_name
+        FROM participants p
+        JOIN groups g ON p.group_id = g.id
+        ORDER BY p.updated_at DESC
+        LIMIT ?
+    """
+    return query_db(query, (limit,))
+
 def get_db():
     """Öffnet eine neue DB-Verbindung oder gibt die bestehende aus dem Kontext zurück."""
     if 'db' not in g:
@@ -158,6 +190,21 @@ def add_group(name, date, location, leitung, beobachter1, beobachter2):
     )
     db_conn.commit()
 
+def add_group_and_get_id(name, date=None, location=None, leitung=None, beobachter1=None, beobachter2=None):
+    """Fügt eine neue Gruppe hinzu und gibt die ID der neuen Gruppe zurück."""
+    db_conn = get_db()
+    cursor = db_conn.cursor()
+    cursor.execute(
+        (
+            'INSERT INTO groups (name, date, location, leitung, beobachter1, beobachter2) '
+            'VALUES (?, ?, ?, ?, ?, ?)'
+        ),
+        (name, date, location, leitung, beobachter1, beobachter2)
+    )
+    new_group_id = cursor.lastrowid
+    db_conn.commit()
+    return new_group_id
+
 def update_group_details(group_id, details):
     """Aktualisiert die Details einer Gruppe."""
     db_conn = get_db()
@@ -232,7 +279,7 @@ def update_participant_name(participant_id, new_name):
     """Aktualisiert den Namen eines Teilnehmers."""
     db_conn = get_db()
     db_conn.execute(
-        'UPDATE participants SET name = ? WHERE id = ?', (new_name, participant_id)
+        'UPDATE participants SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', (new_name, participant_id)
     )
     db_conn.commit()
 
@@ -246,7 +293,7 @@ def save_participant_data(participant_id, data_dict):
     """Speichert verschiedene JSON-Daten für einen Teilnehmer."""
     db_conn = get_db()
     updates = {key: json.dumps(value) for key, value in data_dict.items()}
-    set_clause = ", ".join([f"{key} = ?" for key in updates.keys()])
+    set_clause = ", ".join([f"{key} = ?" for key in updates.keys()]) + ", updated_at = CURRENT_TIMESTAMP"
 
     query = f"UPDATE participants SET {set_clause} WHERE id = ?"
     values = list(updates.values()) + [participant_id]
@@ -322,3 +369,37 @@ def get_all_participants_for_export():
             participants.append(clean_participant)
 
     return participants 
+
+# --- Prompt Management Funktionen ---
+
+def get_all_prompts():
+    """Holt alle Prompts, sortiert nach Name."""
+    return query_db("SELECT * FROM prompts ORDER BY name ASC")
+
+def get_prompt_by_id(prompt_id):
+    """Holt einen einzelnen Prompt anhand seiner ID."""
+    return query_db("SELECT * FROM prompts WHERE id = ?", (prompt_id,), one=True)
+
+def add_prompt(name, description, content):
+    """Fügt einen neuen Prompt zur Datenbank hinzu."""
+    db_conn = get_db()
+    db_conn.execute(
+        "INSERT INTO prompts (name, description, content, created_at, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+        (name, description, content)
+    )
+    db_conn.commit()
+
+def update_prompt(prompt_id, name, description, content):
+    """Aktualisiert einen bestehenden Prompt."""
+    db_conn = get_db()
+    db_conn.execute(
+        "UPDATE prompts SET name = ?, description = ?, content = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+        (name, description, content, prompt_id)
+    )
+    db_conn.commit()
+
+def delete_prompt_by_id(prompt_id):
+    """Löscht einen Prompt anhand seiner ID."""
+    db_conn = get_db()
+    db_conn.execute("DELETE FROM prompts WHERE id = ?", (prompt_id,))
+    db_conn.commit()

@@ -1,34 +1,50 @@
-"""
-Hilfsfunktionen für das Stärkenanalyse-Tool.
-
-Enthält Funktionen zum Verarbeiten von Dateien und Bereinigen von Daten.
-"""
 import io
 import mimetypes
 import re
 
 from docx import Document
 from pdfminer.high_level import extract_text as pdf_extract_text
+from pdfminer.layout import LAParams
 
 def get_file_content(file):
-    """Liest den Inhalt von hochgeladenen Dateien (PDF, DOCX, TXT)."""
-    mimetype = mimetypes.guess_type(file.filename)[0]
-    content = ""
+    """
+    Liest den Inhalt von hochgeladenen Dateien (PDF, DOCX, TXT) robust.
+    Behandelt Dateizeiger und Parsing-Fehler und gibt klares Feedback.
+    """
+    filename = file.filename
+    
     try:
+        # Liest die gesamte Datei EINMAL in einen In-Memory-Puffer.
+        # Das verhindert Probleme mit erschöpften Dateizeigern.
+        file_buffer = io.BytesIO(file.read())
+        
+        mimetype = mimetypes.guess_type(filename)[0]
+
         if mimetype == 'application/pdf':
-            content = pdf_extract_text(io.BytesIO(file.read()))
+            # Nutzt den Puffer für die Textextraktion.
+            content = pdf_extract_text(file_buffer, laparams=LAParams())
+        
         elif mimetype == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-            doc = Document(io.BytesIO(file.read()))
-            content = "\n".join([para.text for para in doc.paragraphs])
+            # Nutzt den Puffer für die Dokumentenanalyse.
+            doc = Document(file_buffer)
+            content = "\n".join([para.text for para in doc.paragraphs if para.text])
+        
         elif mimetype and mimetype.startswith('text/'):
-            content = file.read().decode('utf-8')
+            # Dekodiert aus dem Puffer.
+            content = file_buffer.read().decode('utf-8', errors='ignore')
+        
         else:
-            content = f"Fehler: Dateityp {mimetype} wird nicht unterstützt."
+            content = f"--- FEHLER: Dateityp '{mimetype}' von '{filename}' wird nicht unterstützt. ---"
+
+        # Wenn nach all dem der Inhalt immer noch leer ist, machen wir es explizit.
+        if not content or not content.strip():
+            content = f"--- HINWEIS: Aus der Datei '{filename}' konnte kein Text extrahiert werden. Ist die Datei leer oder enthält sie nur Bilder? ---"
+
     except Exception as e:
-        # Eine allgemeine Exception ist hier sinnvoll, da viele Fehler
-        # beim Parsen von Dateien auftreten können (z.B. beschädigte Datei).
-        content = f"Fehler beim Lesen der Datei {file.filename}: {e}"
-    return content
+        content = f"--- KRITISCHER FEHLER beim Verarbeiten der Datei '{filename}': {str(e)} ---"
+    
+    # Fügt einen klaren Header hinzu, um den Inhalt im Prompt zu identifizieren und bereinigt Whitespace.
+    return f"--- START INHALT AUS DATEI: {filename} ---\n{content.strip()}\n--- ENDE INHALT AUS DATEI: {filename} ---"
 
 def clean_json_response(raw_response):
     """

@@ -13,7 +13,7 @@
 <div id="report-container">
     <div class="flex justify-between items-start mb-6 no-print">
         <div>
-            <h2 class="text-3xl font-bold text-gray-800">Stärkenanalyse-Bericht (Neues Design)</h2>
+            <h2 class="text-3xl font-bold text-gray-800">Stärkenanalyse-Bericht</h2>
             <p class="text-xl text-gray-600 font-semibold">{{ participant.name }}</p>
         </div>
         <div>
@@ -218,4 +218,52 @@
     .text-content-for-pdf { font-family: var(--font-body); font-size: 11pt; line-height: 1.7; text-align: justify; white-space: pre-wrap; }
     @media print { .no-print { display: none !important; } }
 </style>
+
+<script>
+    // --- Warnung bei ungespeicherten Änderungen ---
+    let isDirty = false;
+
+    // Funktion, um den Zustand auf "geändert" zu setzen
+    function setDirty() {
+        isDirty = true;
+    }
+
+    // Überwache alle Textareas
+    document.querySelectorAll('textarea').forEach(item => {
+        item.addEventListener('input', setDirty);
+    });
+
+    // Überwache alle Content-Editable Felder
+    document.querySelectorAll('[contenteditable="true"]').forEach(item => {
+        item.addEventListener('input', setDirty);
+    });
+    
+    // Überwache alle Slider (input type=range)
+    // Wir müssen einen Moment warten, bis die Slider dynamisch erstellt wurden
+    setTimeout(() => {
+        document.querySelectorAll('input[type="range"]').forEach(item => {
+            item.addEventListener('input', setDirty);
+        });
+    }, 1000);
+
+    // Wenn der Nutzer versucht, die Seite zu verlassen, prüfe den "dirty"-Status
+    window.addEventListener('beforeunload', (event) => {
+        if (isDirty) {
+            // Zeige den Standard-Dialog des Browsers an
+            event.preventDefault();
+            event.returnValue = '';
+        }
+    });
+
+    // --- Bestehende Speicher-Funktion anpassen ---
+    // Wir "überschreiben" die bestehende saveReport-Funktion, um den Status zurückzusetzen
+    const originalSaveReport = window.saveReport;
+    window.saveReport = async function() {
+        // Rufe die ursprüngliche Speicherfunktion auf
+        await originalSaveReport();
+        
+        // Setze den Status nach erfolgreichem Speichern zurück
+        isDirty = false;
+    };
+</script>
 {% endblock %}

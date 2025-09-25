@@ -6,6 +6,7 @@ import io
 import json
 from datetime import datetime, UTC
 
+from click import prompt
 from flask import (Flask, render_template, request, redirect, url_for,
                    flash, jsonify, session)
 from flask import Response
@@ -18,15 +19,6 @@ from utils import get_file_content, clean_json_response
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
-
-def get_prompt_list():
-    try:
-        prompts_dir = os.path.join(app.root_path, 'prompts')
-        if os.path.isdir(prompts_dir):
-            return [f for f in os.listdir(prompts_dir) if f.endswith('.txt')]
-        return []
-    except FileNotFoundError:
-        return []
 
 @app.teardown_appcontext
 def close_connection(_exception):
@@ -54,8 +46,134 @@ def datetimeformat(value, fmt='%d.%m.%Y'):
 
 @app.route('/')
 def dashboard():
+    """Zeigt das Dashboard mit Statistiken und letzten Teilnehmern an."""
+    stats = db.get_dashboard_stats()
+    recently_updated = db.get_recently_updated_participants()
+    
     breadcrumbs = [{"text": "Dashboard"}]
-    return render_template('dashboard.html', breadcrumbs=breadcrumbs)
+    return render_template('dashboard.html', 
+                           breadcrumbs=breadcrumbs, 
+                           stats=stats,
+                           recently_updated_participants=recently_updated)
+
+@app.route('/import')
+def import_page():
+    """Zeigt die Seite für den Datenimport an."""
+    breadcrumbs = [{"link": url_for('dashboard'), "text": "Dashboard"}, {"text": "Daten importieren"}]
+    return render_template('import_page.html', breadcrumbs=breadcrumbs)
+
+@app.route('/import/names', methods=['POST'])
+def import_names():
+    """Verarbeitet den Import einer Namensliste zur Erstellung einer neuen Gruppe."""
+    group_name = request.form.get('group_name')
+    file = request.files.get('name_file')
+
+    if not group_name or not file or file.filename == '':
+        flash("Bitte geben Sie einen Gruppennamen an und wählen Sie eine Datei aus.", "warning")
+        return redirect(url_for('import_page'))
+
+    try:
+        # Lese den Inhalt der Datei und erstelle eine saubere Namensliste
+        content = file.read().decode('utf-8')
+        names = [name.strip() for name in content.splitlines() if name.strip()]
+
+        if not names:
+            flash("Die ausgewählte Datei enthält keine gültigen Namen.", "warning")
+            return redirect(url_for('import_page'))
+
+        # Erstelle die neue Gruppe und füge die Teilnehmer hinzu
+        new_group_id = db.add_group_and_get_id(group_name)
+        count = db.add_multiple_participants_to_group(new_group_id, names)
+
+        flash(f'Gruppe "{group_name}" wurde erfolgreich mit {count} Teilnehmern erstellt.', 'success')
+        return redirect(url_for('show_group_participants', group_id=new_group_id))
+
+    except Exception as e:
+        flash(f"Ein Fehler ist beim Verarbeiten der Datei aufgetreten: {e}", "error")
+        return redirect(url_for('import_page'))
+
+@app.route('/import/full', methods=['POST'])
+def import_full():
+    """Verarbeitet den Import einer vollständigen Export-Datei."""
+    file = request.files.get('full_export_file')
+
+    if not file or file.filename == '':
+        flash("Bitte wählen Sie eine Datei aus.", "warning")
+        return redirect(url_for('import_page'))
+
+    try:
+        # Lade die Daten je nach Dateityp in einen Pandas DataFrame
+        if file.filename.endswith('.xlsx'):
+            df = pd.read_excel(file)
+        elif file.filename.endswith('.csv'):
+            df = pd.read_csv(file)
+        else:
+            flash("Ungültiges Dateiformat. Bitte eine .xlsx oder .csv Datei hochladen.", "warning")
+            return redirect(url_for('import_page'))
+
+        # Bereite das Einfügen vor
+        all_groups = {dict(g)['name']: g['id'] for g in db.get_all_groups()}
+        participants_to_add = []
+        groups_added_count = 0
+        
+        # Gehe jede Zeile der importierten Datei durch
+        for index, row in df.iterrows():
+            group_name = row.get('Gruppe')
+            if pd.isna(group_name):
+                continue # Überspringe Zeilen ohne Gruppennamen
+
+            # Prüfe, ob die Gruppe bereits existiert. Wenn nicht, erstelle sie.
+            if group_name not in all_groups:
+                new_group_id = db.add_group_and_get_id(group_name, date=row.get('Gruppen-Datum'), location=row.get('Gruppen-Ort'))
+                all_groups[group_name] = new_group_id
+                groups_added_count += 1
+            
+            group_id = all_groups[group_name]
+            
+            # Sammle alle Teilnehmerdaten für diese Zeile
+            participant_data = (
+                group_id,
+                row.get('Name'),
+                json.dumps({
+                    'social': str(row.get('Beobachtung (Sozial)', '')) if pd.notna(row.get('Beobachtung (Sozial)')) else '',
+                    'verbal': str(row.get('Beobachtung (Verbal)', '')) if pd.notna(row.get('Beobachtung (Verbal)')) else ''
+                }),
+                json.dumps({
+                    'flexibility': row.get('SK - Flexibilität'),
+                    'team_orientation': row.get('SK - Teamorientierung'),
+                    'process_orientation': row.get('SK - Prozessorientierung'),
+                    'results_orientation': row.get('SK - Ergebnisorientierung')
+                }),
+                json.dumps({
+                    'flexibility': row.get('VK - Flexibilität'),
+                    'consulting': row.get('VK - Beratung'),
+                    'objectivity': row.get('VK - Sachlichkeit'),
+                    'goal_orientation': row.get('VK - Zielorientierung')
+                }),
+                json.dumps({
+                    'social_text': str(row.get('KI-Text (Sozial)', '')) if pd.notna(row.get('KI-Text (Sozial)')) else '',
+                    'verbal_text': str(row.get('KI-Text (Verbal)', '')) if pd.notna(row.get('KI-Text (Verbal)')) else '',
+                    'summary_text': str(row.get('KI-Text (Zusammenfassung)', '')) if pd.notna(row.get('KI-Text (Zusammenfassung)')) else ''
+                })
+            )
+            participants_to_add.append(participant_data)
+
+        # Füge alle gesammelten Teilnehmer in die Datenbank ein
+        if participants_to_add:
+            db_conn = db.get_db()
+            cursor = db_conn.cursor()
+            cursor.executemany(
+                'INSERT INTO participants (group_id, name, observations, sk_ratings, vk_ratings, ki_texts) VALUES (?, ?, ?, ?, ?, ?)',
+                participants_to_add
+            )
+            db_conn.commit()
+
+        flash(f'Import erfolgreich! {groups_added_count} neue Gruppen und {len(participants_to_add)} Teilnehmer hinzugefügt.', 'success')
+        return redirect(url_for('manage_groups'))
+
+    except Exception as e:
+        flash(f"Ein Fehler ist beim Importieren der Datei aufgetreten: {e}", "error")
+        return redirect(url_for('import_page'))
 
 @app.route('/groups')
 def manage_groups():
@@ -136,7 +254,7 @@ def show_data_entry(participant_id):
     if participant:
         group = db.get_group_by_id(participant['group_id'])
         breadcrumbs = [{"link": url_for('dashboard'), "text": "Dashboard"}, {"link": url_for('manage_groups'), "text": "Gruppen"}, {"link": url_for('show_group_participants', group_id=group['id']), "text": group['name']}, {"text": f"Dateneingabe: {participant['name']}"}]
-        return render_template('data_entry.html', participant=participant, group=group, breadcrumbs=breadcrumbs, prompts=get_prompt_list())
+        return render_template('data_entry.html', participant=participant, group=group, breadcrumbs=breadcrumbs, prompts=db.get_all_prompts())
     flash("Teilnehmer nicht gefunden.", "error")
     return redirect(url_for('manage_participants'))
 
@@ -199,7 +317,7 @@ def configure_batch_ai_analysis():
     group = db.get_group_by_id(participants[0]['group_id']) if participants else None
     breadcrumbs = [{"link": url_for('dashboard'), "text": "Dashboard"}, {"link": url_for('ai_analysis_select_group'), "text": "KI-Analyse"}, {"link": url_for('ai_analysis_select_participants', group_id=group['id']), "text": f"Auswahl für: {group['name']}"}, {"text": "Analyse konfigurieren"}]
     
-    return render_template('run_batch_ai.html', participants=participants, group=group, prompts=get_prompt_list(), breadcrumbs=breadcrumbs)
+    return render_template('run_batch_ai.html', participants=participants, group=group, prompts=db.get_all_prompts(), breadcrumbs=breadcrumbs)
 
 @app.route('/ai_analysis/execute', methods=['POST'])
 def execute_batch_ai_analysis():
@@ -321,6 +439,62 @@ def export_data():
         mimetype=mimetype,
         headers={"Content-Disposition": f"attachment;filename={filename}"}
     )
+# --- Prompt Management Routen ---
+
+@app.route('/prompts')
+def manage_prompts():
+    """Zeigt die Seite zur Verwaltung der KI-Prompts an."""
+    prompts = db.get_all_prompts()
+    breadcrumbs = [{"link": url_for('dashboard'), "text": "Dashboard"}, {"text": "Prompt-Verwaltung"}]
+    return render_template('manage_prompts.html', prompts=prompts, breadcrumbs=breadcrumbs)
+
+@app.route('/prompt/add', methods=['GET', 'POST'])
+def add_prompt():
+    """Behandelt das Hinzufügen eines neuen Prompts."""
+    if request.method == 'POST':
+        name = request.form.get('name')
+        description = request.form.get('description')
+        content = request.form.get('content')
+        if not name or not content:
+            flash("Name und Inhalt des Prompts dürfen nicht leer sein.", "warning")
+            return render_template('prompt_form.html', title="Neuen Prompt erstellen")
+        
+        db.add_prompt(name, description, content)
+        flash(f'Prompt "{name}" wurde erfolgreich erstellt.', 'success')
+        return redirect(url_for('manage_prompts'))
+
+    breadcrumbs = [{"link": url_for('dashboard'), "text": "Dashboard"}, {"link": url_for('manage_prompts'), "text": "Prompt-Verwaltung"}, {"text": "Neuen Prompt erstellen"}]
+    return render_template('prompt_form.html', title="Neuen Prompt erstellen", breadcrumbs=breadcrumbs)
+
+@app.route('/prompt/edit/<int:prompt_id>', methods=['GET', 'POST'])
+def edit_prompt(prompt_id):
+    """Behandelt das Bearbeiten eines bestehenden Prompts."""
+    prompt = db.get_prompt_by_id(prompt_id)
+    if not prompt:
+        flash("Prompt nicht gefunden.", "error")
+        return redirect(url_for('manage_prompts'))
+
+    if request.method == 'POST':
+        name = request.form.get('name')
+        description = request.form.get('description')
+        content = request.form.get('content')
+        if not name or not content:
+            flash("Name und Inhalt des Prompts dürfen nicht leer sein.", "warning")
+            return render_template('prompt_form.html', title=f"Prompt bearbeiten: {prompt['name']}", prompt=prompt)
+
+        db.update_prompt(prompt_id, name, description, content)
+        flash(f'Prompt "{name}" wurde erfolgreich aktualisiert.', 'success')
+        return redirect(url_for('manage_prompts'))
+
+    breadcrumbs = [{"link": url_for('dashboard'), "text": "Dashboard"}, {"link": url_for('manage_prompts'), "text": "Prompt-Verwaltung"}, {"text": f"Prompt bearbeiten: {prompt['name']}"}]
+    return render_template('prompt_form.html', title=f"Prompt bearbeiten: {prompt['name']}", prompt=prompt, breadcrumbs=breadcrumbs)
+
+@app.route('/prompt/delete/<int:prompt_id>', methods=['POST'])
+def delete_prompt(prompt_id):
+    """Löscht einen Prompt."""
+    db.delete_prompt_by_id(prompt_id)
+    flash("Prompt wurde gelöscht.", "success")
+    return redirect(url_for('manage_prompts'))
     
 @app.route('/api/group/<int:group_id>/participants')
 def get_participants_for_group(group_id):
@@ -330,6 +504,14 @@ def get_participants_for_group(group_id):
 def get_participant_observations(participant_id):
     p = db.get_participant_by_id(participant_id)
     return jsonify(p.get('observations', {'social': '', 'verbal': ''}))
+
+@app.route('/api/prompt/<int:prompt_id>')
+def get_prompt_content_api(prompt_id):
+    """Gibt den Inhalt eines Prompts als JSON zurück."""
+    prompt = db.get_prompt_by_id(prompt_id)
+    if prompt:
+        return jsonify({'content': prompt['content']})
+    return jsonify({'error': 'Prompt not found'}), 404
 
 @app.route('/save_observations/<int:participant_id>', methods=['POST'])
 def save_observations(participant_id):
@@ -427,7 +609,7 @@ def run_single_analysis_api(participant_id):
     prompt = prompt.replace('{{social_observations}}', obs.get('social', '')).replace('{{verbal_observations}}', obs.get('verbal', ''))
     prompt = prompt.replace('{{additional_content}}', data.get('additional_content', ''))
 
-
+    print(f"--- FINALER PROMPT AN DIE KI ---\n{prompt}\n--- ENDE PROMPT ---")
     response_str = generate_report_with_ai(prompt, data.get('ki_model'))
     db.save_ki_raw_response(participant_id, response_str)
 
@@ -444,20 +626,6 @@ def run_single_analysis_api(participant_id):
         return jsonify({"status": "success", "message": "Analyse erfolgreich."})
     except json.JSONDecodeError as e:
         return jsonify({"status": "error", "message": f"Formatfehler: {e}", "raw_response": response_str})
-    
-@app.route('/prompts/<path:filename>')
-def get_prompt_content(filename):
-    prompts_dir = os.path.join(app.root_path, 'prompts')
-    safe_path = os.path.normpath(os.path.join(prompts_dir, secure_filename(filename)))
-    if not safe_path.startswith(os.path.normpath(prompts_dir)):
-        return jsonify({"error": "Ungültiger Pfad"}), 400
-    try:
-        with open(safe_path, 'r', encoding='utf-8') as f:
-            return jsonify({'content': f.read()})
-    except FileNotFoundError:
-        return jsonify({'error': 'Datei nicht gefunden.'}), 404
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 @app.route('/info')
 def info():

@@ -28,7 +28,7 @@
                     <a href="{{ url_for('show_data_entry', participant_id=participant.id) }}" class="py-2 px-4 text-sm rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 text-center">Dateneingabe</a>
                     <button onclick="editParticipant('{{ participant.id }}', '{{ participant.name }}')" class="py-2 px-4 text-sm rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700">Bearbeiten</button>
                     <a href="{{ url_for('show_report', participant_id=participant.id) }}" class="py-2 px-4 text-sm rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 text-center">Bericht anzeigen</a>
-                    <form action="{{ url_for('delete_participant', participant_id=participant.id) }}" method="post" onsubmit="return confirm('Möchten Sie den Teilnehmer \'{{ participant.name }}\' wirklich löschen?');">
+                    <form action="{{ url_for('delete_participant', participant_id=participant.id) }}" method="post" onsubmit="return confirm('Sind Sie sicher, dass Sie den Teilnehmer \'{{ participant.name }}\' endgültig löschen möchten?');">
                         <input type="hidden" name="group_id" value="{{ group.id }}">
                         <button type="submit" class="w-full py-2 px-4 text-sm rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700">Löschen</button>
                     </form>
