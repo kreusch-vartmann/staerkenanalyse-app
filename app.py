@@ -2,11 +2,21 @@
 Hauptanwendung für das Stärkenanalyse-Tool.
 """
 
+# 1. Standard-Bibliotheken
+import base64
 import io
+from io import BytesIO
 import json
 import os
 from datetime import UTC, datetime
 
+# 2. Externe Bibliotheken (Third-Party)
+
+# WICHTIG: Matplotlib-Backend muss VOR dem Import von pyplot konfiguriert werden
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from flask import (
     Flask,
@@ -19,12 +29,13 @@ from flask import (
     session,
     url_for,
 )
+from weasyprint import HTML
 from werkzeug.utils import secure_filename
 
+# 3. Eigene Anwendungs-Module
 import database as db
 from ki_services import generate_report_with_ai
 from utils import clean_json_response, get_file_content
-
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
@@ -434,7 +445,233 @@ def show_report(participant_id):
         current_location=current_location_for_footer,
     )
 
+# SUCHE DIESE BESTEHENDE FUNKTION IN DEINER APP.PY:
+@app.route('/edit_report/<int:participant_id>')
+def edit_report(participant_id):
+    """Zeigt die bearbeitbare Version des Berichts an."""
+    participant = get_participant_by_id(participant_id)
+    if not participant:
+        return "Teilnehmer nicht gefunden", 404
+    group = get_group_by_id(participant['group_id'])
 
+    # Abrufen des aktuellen Datums und Ortes für die Fußzeile
+    current_date = datetime.now().strftime("%d.%m.%Y")
+    # Annahme: Der Ort ist der des aktuellen Gruppen-Datensatzes
+    current_location = group['location'] if group else "Unbekannter Ort"
+
+    return render_template('staerkenanalyse_bericht_vorlage3.html', 
+                           participant=participant, 
+                           group=group,
+                           current_date=current_date,
+                           current_location=current_location)
+
+def create_radar_chart(ratings_dict, keys, labels, color, title):
+    """
+    Erzeugt ein Radardiagramm, das dem Chart.js-Layout entspricht, 
+    und gibt es als Base64-Bild zurück.
+    """
+    # 1. Werte in fester Reihenfolge holen
+    values = [ratings_dict.get(key, 0) for key in keys]
+    num_vars = len(labels)
+
+    # 2. Winkel berechnen
+    angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
+    
+    # 3. Datenreihe für den Plot schließen
+    values_plot = values[:] + values[:1]
+    angles_plot = angles[:] + angles[:1]
+    
+    # 4. Plot erstellen (Zurück zur stabilen Methode)
+    fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
+    
+    # 5. Daten zeichnen
+    ax.fill(angles_plot, values_plot, color=color, alpha=0.2)
+    ax.plot(angles_plot, values_plot, color=color, linewidth=2)
+    
+    # 6. Gitternetz dezent gestalten
+    ax.grid(color='#E0E0E0', linestyle='-', linewidth=0.7)
+    ax.spines['polar'].set_edgecolor('#E0E0EE')
+    
+    # 7. Skala und Beschriftungen
+    ax.set_yticklabels([])
+    ax.set_rlim(0, 10)
+    ax.set_xticks(angles)
+    ax.set_xticklabels(labels, size=12, fontfamily='sans-serif')
+    
+    # 8. Layout an Chart.js anpassen
+    ax.set_theta_offset(np.pi / 2)
+    ax.set_theta_direction(-1)
+
+    # 9. Beschriftungen ausrichten (vereinfachte Version)
+    for label in ax.get_xticklabels():
+        # Diese Logik kann bei Bedarf verfeinert werden, ist aber mit Zeilenumbrüchen oft nicht mehr nötig
+        pass
+    ax.tick_params(axis='x', pad=15)
+    
+    # 10. Bild im Speicher ablegen (Zurück zur stabilen Methode)
+    buf = BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight', transparent=True, pad_inches=0.2)
+    plt.close(fig)
+    buf.seek(0)
+    
+    # Bild in Base64 umwandeln
+    img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+    return f"data:image/png;base64,{img_base64}"
+
+
+def create_radar_chart(ratings_dict, keys, labels, color, title):
+    """
+    Erzeugt ein Radardiagramm, das dem Chart.js-Layout entspricht, 
+    und gibt es als Base64-Bild zurück.
+    """
+    # 1. Werte in fester Reihenfolge holen
+    values = [ratings_dict.get(key, 0) for key in keys]
+    num_vars = len(labels)
+
+    # 2. Winkel berechnen
+    angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
+    
+    # 3. Datenreihe für den Plot schließen
+    values_plot = values[:] + values[:1]
+    angles_plot = angles[:] + angles[:1]
+    
+    # 4. Plot erstellen (Zurück zur stabilen Methode)
+    fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
+    
+    # 5. Daten zeichnen
+    ax.fill(angles_plot, values_plot, color=color, alpha=0.2)
+    ax.plot(angles_plot, values_plot, color=color, linewidth=2)
+    
+    # 6. Gitternetz dezent gestalten
+    ax.grid(color='#E0E0E0', linestyle='-', linewidth=0.7)
+    ax.spines['polar'].set_edgecolor('#E0E0EE')
+    
+    # 7. Skala und Beschriftungen
+    ax.set_yticklabels([])
+    ax.set_rlim(0, 10)
+    ax.set_xticks(angles)
+    ax.set_xticklabels(labels, size=12, fontfamily='sans-serif')
+    
+    # 8. Layout an Chart.js anpassen
+    ax.set_theta_offset(np.pi / 2)
+    ax.set_theta_direction(-1)
+
+    # 9. Beschriftungen ausrichten (vereinfachte Version)
+    for label in ax.get_xticklabels():
+        # Diese Logik kann bei Bedarf verfeinert werden, ist aber mit Zeilenumbrüchen oft nicht mehr nötig
+        pass
+    ax.tick_params(axis='x', pad=15)
+    
+    # 10. Bild im Speicher ablegen (Zurück zur stabilen Methode)
+    buf = BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight', transparent=True, pad_inches=0.2)
+    plt.close(fig)
+    buf.seek(0)
+    
+    # Bild in Base64 umwandeln
+    img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+    return f"data:image/png;base64,{img_base64}"
+
+
+def create_radar_chart(ratings_dict, keys, labels, color, title):
+    """
+    Erzeugt ein Radardiagramm, das dem Chart.js-Layout (Start oben, im Uhrzeigersinn) 
+    entspricht, und gibt es als Base64-Bild zurück.
+    """
+    # 1. Werte in der korrekten, festen Reihenfolge aus dem Dictionary holen
+    values = [ratings_dict.get(key, 0) for key in keys]
+    num_vars = len(labels)
+
+    # 2. Winkel für die Achsen berechnen
+    angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
+    
+    # 3. Die Datenreihe für den Plot schließen
+    values_plot = values[:] + values[:1]
+    angles_plot = angles[:] + angles[:1]
+    
+    # 4. Plot erstellen (Zurück zur stabilen Methode, die große Diagramme erzeugt)
+    fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
+    
+    # 5. Daten zeichnen
+    ax.fill(angles_plot, values_plot, color=color, alpha=0.2)
+    ax.plot(angles_plot, values_plot, color=color, linewidth=2)
+    
+    # 6. Gitternetz dezent gestalten
+    ax.grid(color='#E0E0E0', linestyle='-', linewidth=0.7)
+    ax.spines['polar'].set_edgecolor('#E0E0E0')
+    
+    # 7. Skala und Beschriftungen einstellen
+    ax.set_yticklabels([])
+    ax.set_rlim(0, 10)
+    ax.set_xticks(angles)
+    ax.set_xticklabels(labels, size=12, fontfamily='sans-serif')
+    
+    # 8. Layout an Chart.js anpassen für korrekte Ausrichtung
+    ax.set_theta_offset(np.pi / 2)
+    ax.set_theta_direction(-1)
+
+    # 9. Globalen Abstand für Beschriftungen festlegen
+    ax.tick_params(axis='x', pad=15)
+
+    # 10. Bild im Speicher ablegen (Zurück zur stabilen Methode)
+    buf = BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight', transparent=True, pad_inches=0.2)
+    plt.close(fig)
+    buf.seek(0)
+    
+    # Bild in Base64 umwandeln
+    img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+    return f"data:image/png;base64,{img_base64}"
+
+
+@app.route('/bericht/<int:participant_id>/pdf')
+def bericht_pdf(participant_id):
+    """ Generiert eine PDF-Version des Berichts serverseitig inkl. Diagrammen und gibt sie als Download aus. """
+    participant = db.get_participant_by_id(participant_id)
+    if not participant:
+        return "Teilnehmer nicht gefunden", 404
+    
+    group = db.get_group_by_id(participant['group_id'])
+    current_date = datetime.now().strftime("%d.%m.%Y")
+    current_location = "Lingen (Ems)"
+
+    # === NEU: BESCHRIFTUNGEN MIT MANUELLEN ZEILENUMBRÜCHEN ('\n') ===
+    sk_ratings = participant.get('sk_ratings', {})
+    sk_labels = ['Flexibilität', 'Team-\norientierung', 'Prozess-\norientierung', 'Ergebnis-\norientierung']
+    sk_keys = ['flexibility', 'team_orientation', 'process_orientation', 'results_orientation']
+    
+    vk_ratings = participant.get('vk_ratings', {})
+    vk_labels = ['Flexibilität', 'Beratung', 'Sachlichkeit', 'Ziel-\norientierung']
+    vk_keys = ['flexibility', 'consulting', 'objectivity', 'goal_orientation']
+    
+    # Diagramme als Bilder erzeugen
+    sk_chart_image = create_radar_chart(sk_ratings, sk_keys, sk_labels, '#5A7D7C', 'Soziale Kompetenzen')
+    vk_chart_image = create_radar_chart(vk_ratings, vk_keys, vk_labels, '#2F4F4F', 'Verbale Kompetenzen')
+
+    # Rendere das HTML-Template im Hintergrund
+    html_string = render_template('bericht_pdf_vorlage.html', 
+                                   participant=participant, 
+                                   group=group,
+                                   current_date=current_date,
+                                   current_location=current_location,
+                                   sk_chart_image=sk_chart_image,
+                                   vk_chart_image=vk_chart_image,
+                                   _external=True)
+    
+    # Erzeuge das PDF-Dokument
+    pdf_bytes = HTML(string=html_string, base_url=request.base_url).write_pdf()
+    
+    # Erstelle einen sicheren Dateinamen
+    safe_name = "".join(c for c in participant.get('name', 'Unbekannt') if c.isalnum() or c in (' ', '_')).rstrip()
+    filename = f"Staerkenanalyse_{safe_name.replace(' ', '_')}.pdf"
+    
+    # Sende das PDF als Download
+    return Response(
+        pdf_bytes,
+        mimetype="application/pdf",
+        headers={"Content-disposition": f"attachment; filename=\"{filename}\""}
+    )
+    
 @app.route("/entry")
 def data_entry_rework():
     """Zeigt die Seite zur Auswahl der Gruppe für die Dateneingabe an."""

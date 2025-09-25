@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Stärkenanalyse für {{ participant.name }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Source+Serif+Pro:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        @page { size: A4; margin: 0; }
+        body { font-family: 'Source Serif Pro', serif; margin: 0; padding: 0; background-color: white; color: #2F4F4F; }
+        :root {
+            --primary-color: #5A7D7C;
+            --text-color: #2F4F4F;
+            --font-heading: 'Montserrat', sans-serif;
+            --font-body: 'Source Serif Pro', serif;
+        }
+        .pdf-page { display: flex; width: 210mm; height: 297mm; overflow: hidden; }
+        .sidebar { width: 30%; background-color: var(--primary-color); color: white; padding: 30px; display: flex; flex-direction: column; box-sizing: border-box; }
+        .main-content { width: 70%; padding: 40px; display: flex; flex-direction: column; box-sizing: border-box; }
+        .sidebar-header { flex-shrink: 0; }
+        .sidebar-spacer { flex-grow: 1; }
+        .logo { font-size: 2.5em; font-weight: 700; margin-bottom: 40px; }
+        .main-title { font-family: var(--font-heading); font-size: 1.5em; line-height: 1.2; }
+        .participant-name { font-size: 1.5em; font-weight: 700; display: block; margin-top: 5px; hyphens: auto; word-wrap: break-word; }
+        .metadata { flex-shrink: 0; margin-bottom: 20px; font-size: 0.85em; line-height: 1.8; }
+        .metadata-title { font-family: var(--font-heading); font-weight: 700; letter-spacing: 1px; opacity: 0.8; margin-bottom: 10px; }
+        .sidebar-footer { flex-shrink: 0; font-family: var(--font-heading); opacity: 0.8; }
+        .footer-spacer { flex-grow: 1; }
+        .subtitle { font-family: var(--font-heading); color: #888; margin-bottom: 40px; text-align: center; }
+        .content-section {
+            margin-bottom: 40px;
+        }
+        .main-content .content-section:first-of-type {
+             margin-top: 20px;
+        }
+        .section-title { font-family: var(--font-heading); font-size: 1.6em; font-weight: 700; color: var(--primary-color); margin-bottom: 15px; }
+        .text-content-for-pdf { font-size: 11pt; line-height: 1.7; text-align: justify; white-space: pre-wrap; text-indent: 0; }
+        
+        /* === FINALE ANPASSUNG: MEHR ABSTAND FÜR DIE GRAFIK === */
+        .chart-container { 
+            width: 100%; 
+            max-width: 400px; 
+            margin: 50px auto 0 auto; /* Oberen Abstand von 40px auf 50px erhöht */
+            text-align: center; 
+        }
+        .chart-container img { max-width: 100%; height: auto; }
+        
+        .main-content-footer { display: flex; justify-content: space-between; border-top: 1px solid #e2e8f0; padding-top: 15px; font-family: var(--font-heading); font-size: 0.9em; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+    <div id="report-content">
+        <div class="pdf-page">
+            <aside class="sidebar">
+                <div class="sidebar-header"><div class="logo">🔍</div><h1 class="main-title">Stärkenanalyse für<br><span class="participant-name">{{ participant.name }}</span></h1></div>
+                <div class="sidebar-spacer"></div>
+                <div class="metadata">
+                    <h2 class="metadata-title">RAHMENDATEN</h2>
+                    <p><strong>Durchführungsdatum:</strong> <span>{{ group.date | datetimeformat }}</span></p>
+                    <p><strong>Durchführungsort:</strong> <span>{{ group.location }}</span></p>
+                    <p><strong>Leitung:</strong> <span>{{ group.leitung }}</span></p>
+                    <p><strong>Beobachter:</strong> <span>{{ group.beobachter1 }}</span>, <span>{{ group.beobachter2 }}</span></p>
+                </div>
+                <div class="sidebar-footer"><p>Seite 1 von 2</p></div>
+            </aside>
+            <main class="main-content">
+                <h2 class="subtitle">Soziale Kompetenz & Verbale Kompetenz</h2>
+                <section class="content-section">
+                    <h3 class="section-title">Soziale Kompetenzen</h3>
+                    <div class="text-content-for-pdf">{{ (participant.ki_texts or {}).social_text | replace('\n', '<br>') | safe }}</div>
+                    <div class="chart-container">
+                        <img src="{{ sk_chart_image }}" alt="Radardiagramm Soziale Kompetenzen">
+                    </div>
+                </section>
+                <div class="footer-spacer"></div>
+            </main>
+        </div>
+        <div class="pdf-page">
+            <aside class="sidebar">
+                <div class="sidebar-header"><div class="logo">🔍</div></div>
+                <div class="sidebar-spacer"></div>
+                <div class="sidebar-footer"><p>Seite 2 von 2</p></div>
+            </aside>
+            <main class="main-content">
+                <section class="content-section">
+                    <h3 class="section-title">Verbale Kompetenzen</h3>
+                    <div class="text-content-for-pdf">{{ (participant.ki_texts or {}).verbal_text | replace('\n', '<br>') | safe }}</div>
+                    <div class="chart-container">
+                        <img src="{{ vk_chart_image }}" alt="Radardiagramm Verbale Kompetenzen">
+                    </div>
+                </section>
+                <section class="content-section">
+                    <h3 class="section-title">Zusammenfassung</h3>
+                    <div class="text-content-for-pdf">{{ (participant.ki_texts or {}).summary_text | replace('\n', '<br>') | safe }}</div>
+                </section>
+                <div class="footer-spacer"></div>
+                <footer class="main-content-footer">
+                    <span>{{ (participant.footer_data or {}).footer_line1 or 'Timo Kreusch-Vartmann' }}</span>
+                    <span><span>{{ (participant.footer_data or {}).footer_location or current_location }}</span>, den <span>{{ (participant.footer_data or {}).footer_date or current_date }}</span></span>
+                </footer>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

@@ -38,33 +38,47 @@ def generate_report_with_ai(prompt_text, ki_model):
     Generiert einen Bericht mithilfe des ausgewählten KI-Modells.
     Nutzt einen festen System-Prompt für die JSON-Struktur und den User-Prompt für die inhaltlichen Anweisungen.
     """
+    print(f"--- DEBUG-INFO: Das übergebene 'ki_model' ist: '{ki_model}' ---")
     try:
-        if ki_model == "gemini":  # Name ändern von "google" zu "gemini" für Klarheit
+        if ki_model == "gemini":
             if not GenerativeModel:
-                raise ValueError("Google Generative AI Bibliothek nicht installiert.")
-            
-            # Aktualisierte Modellbezeichnung und Fehlerbehandlung
+                raise ValueError("Die 'Google Generative AI'-Bibliothek ist nicht installiert.")
+
             try:
-                # Versuchen Sie zuerst die neueste Modellbezeichnung
-                model = GenerativeModel('gemini-1.5-pro')
+                # API-Keys aus dem Google AI Studio benötigen oft spezifischere Modellnamen.
+                # Wir versuchen es mit 'gemini-1.5-flash', einem gängigen und leistungsstarken Modell.
+                model = GenerativeModel('gemini-1.5-flash')
                 response = model.generate_content(prompt_text)
                 return response.text
-            except Exception as model_error:
-                print(f"Fehler mit gemini-1.5-pro: {model_error}")
+            except Exception as e:
+                print(f"!!! FEHLER BEI DER ANFRAGE AN DAS GEMINI MODELL ('gemini-1.5-flash') !!!\n{e}")
+                
+                # WICHTIG: Wir listen jetzt alle Modelle auf, die für deinen API-Key verfügbar sind.
+                # Das hilft dir, den exakt richtigen Namen zu finden.
                 try:
-                    # Fallback auf ältere Modellbezeichnung
-                    model = GenerativeModel('gemini-pro')
-                    response = model.generate_content(prompt_text)
-                    return response.text
-                except Exception as fallback_error:
-                    print(f"Auch Fallback fehlgeschlagen: {fallback_error}")
-                    # Liste verfügbare Modelle auf (für Debugging)
+                    print("\n--- VERSUCHE, VERFÜGBARE MODELLE AUFZULISTEN ---")
                     from google.generativeai import list_models
-                    available_models = list(list_models())
-                    model_names = [m.name for m in available_models]
-                    print(f"Verfügbare Modelle: {model_names}")
-                    raise ValueError(f"Kein kompatibles Gemini-Modell gefunden. Verfügbar: {model_names}")
+                    
+                    available_models = []
+                    for m in list_models():
+                        # Wir prüfen, ob das Modell die 'generateContent'-Methode unterstützt
+                        if 'generateContent' in m.supported_generation_methods:
+                            available_models.append(m.name)
+                            
+                    if available_models:
+                        print("Folgende Modelle sind für deinen API-Key verfügbar und nutzbar:")
+                        for name in available_models:
+                            print(f"- {name}")
+                        print("----------------------------------------------------")
+                        raise ValueError(f"Das Modell 'gemini-1.5-flash' hat nicht funktioniert. Bitte versuche eines der oben gelisteten Modelle in der 'ki_services.py'.")
+                    else:
+                         print("Es konnten keine verfügbaren Modelle für deinen API-Key gefunden werden.")
+                         raise ValueError("Keine kompatiblen Gemini-Modelle für deinen API-Key gefunden.")
 
+                except Exception as list_models_error:
+                    print(f"Fehler beim Auflisten der verfügbaren Modelle: {list_models_error}")
+                    raise ValueError(f"Die Kommunikation mit dem Gemini-Modell ist fehlgeschlagen und die verfügbaren Modelle konnten nicht ermittelt werden.")
+            
         if ki_model == "mistral":
             if not MISTRAL_CLIENT:
                 raise ValueError("Mistral Client nicht initialisiert. API-Key fehlt?")
