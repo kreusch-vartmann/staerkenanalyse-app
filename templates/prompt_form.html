@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<h2 class="text-3xl font-bold text-gray-800 mb-6">{{ title }}</h2>
+
+<form method="post" class="bg-white p-8 rounded-lg shadow-md space-y-6">
+    <div>
+        <label for="name" class="block text-sm font-medium text-gray-700">Prompt-Name</label>
+        <input type="text" name="name" id="name" value="{{ prompt.name if prompt else '' }}" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+        <p class="mt-1 text-xs text-gray-500">Ein kurzer, wiedererkennbarer Name (z.B. "Standardanalyse Mistral V2").</p>
+    </div>
+    <div>
+        <label for="description" class="block text-sm font-medium text-gray-700">Beschreibung (optional)</label>
+        <input type="text" name="description" id="description" value="{{ prompt.description if prompt else '' }}" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+        <p class="mt-1 text-xs text-gray-500">Wofür ist dieser Prompt gedacht?</p>
+    </div>
+    <div>
+        <label for="content" class="block text-sm font-medium text-gray-700">Prompt-Inhalt</label>
+        <textarea name="content" id="content" rows="15" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-mono text-sm">{{ prompt.content if prompt else '' }}</textarea>
+        <p class="mt-1 text-xs text-gray-500">Der eigentliche Text, der an die KI gesendet wird. Verfügbare Platzhalter: <code>{{name}}</code>, <code>{{vorname}}</code>, <code>{{ganzer_name}}</code>, <code>{{social_observations}}</code>, <code>{{verbal_observations}}</code>, <code>{{additional_content}}</code>, <code>{{context}}</code>.</p>
+    </div>
+    <div class="flex justify-end space-x-4">
+        <a href="{{ url_for('manage_prompts') }}" class="py-2 px-5 rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 font-semibold">Abbrechen</a>
+        <button type="submit" class="py-2 px-5 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold">Speichern</button>
+    </div>
+</form>
+{% endblock %}

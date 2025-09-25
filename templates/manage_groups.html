@@ -55,7 +55,7 @@
                 <div class="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0">
                     <a href="{{ url_for('show_group_participants', group_id=group.id) }}" class="py-2 px-4 text-sm rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 text-center">Details anzeigen</a>
                     <button onclick="editGroup('{{ group.id }}', '{{ group.name }}', '{{ group.date }}', '{{ group.location }}', '{{ group.leitung }}', '{{ group.beobachter1 }}', '{{ group.beobachter2 }}')" class="py-2 px-4 text-sm rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700">Bearbeiten</button>
-                    <form action="{{ url_for('delete_group', group_id=group.id) }}" method="post" onsubmit="return confirm('Möchten Sie die Gruppe \'{{ group.name }}\' wirklich löschen?');">
+                    <form action="{{ url_for('delete_group', group_id=group.id) }}" method="post" onsubmit="return confirm('Sind Sie sicher, dass Sie die Gruppe \'{{ group.name }}\' und alle zugehörigen Teilnehmer endgültig löschen möchten?');">
                         <button type="submit" class="w-full py-2 px-4 text-sm rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700">Löschen</button>
                     </form>
                 </div>

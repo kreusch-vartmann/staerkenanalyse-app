@@ -27,6 +27,16 @@ CREATE TABLE participants (
     ki_raw_response TEXT, -- NEU: JSON-String für die rohe, unveränderte KI-Antwort
     footer_data TEXT,  -- JSON-String für Footer-Daten
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (group_id) REFERENCES groups (id)
 );
 
+-- Erstellt die Tabelle für die KI-Prompts.
+CREATE TABLE prompts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    description TEXT,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
