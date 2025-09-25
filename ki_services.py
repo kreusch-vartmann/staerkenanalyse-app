@@ -39,12 +39,31 @@ def generate_report_with_ai(prompt_text, ki_model):
     Nutzt einen festen System-Prompt für die JSON-Struktur und den User-Prompt für die inhaltlichen Anweisungen.
     """
     try:
-        if ki_model == "google":
+        if ki_model == "gemini":  # Name ändern von "google" zu "gemini" für Klarheit
             if not GenerativeModel:
                 raise ValueError("Google Generative AI Bibliothek nicht installiert.")
-            model = GenerativeModel('gemini-pro')
-            response = model.generate_content(prompt_text)
-            return response.text
+            
+            # Aktualisierte Modellbezeichnung und Fehlerbehandlung
+            try:
+                # Versuchen Sie zuerst die neueste Modellbezeichnung
+                model = GenerativeModel('gemini-1.5-pro')
+                response = model.generate_content(prompt_text)
+                return response.text
+            except Exception as model_error:
+                print(f"Fehler mit gemini-1.5-pro: {model_error}")
+                try:
+                    # Fallback auf ältere Modellbezeichnung
+                    model = GenerativeModel('gemini-pro')
+                    response = model.generate_content(prompt_text)
+                    return response.text
+                except Exception as fallback_error:
+                    print(f"Auch Fallback fehlgeschlagen: {fallback_error}")
+                    # Liste verfügbare Modelle auf (für Debugging)
+                    from google.generativeai import list_models
+                    available_models = list(list_models())
+                    model_names = [m.name for m in available_models]
+                    print(f"Verfügbare Modelle: {model_names}")
+                    raise ValueError(f"Kein kompatibles Gemini-Modell gefunden. Verfügbar: {model_names}")
 
         if ki_model == "mistral":
             if not MISTRAL_CLIENT:

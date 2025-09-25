@@ -20,28 +20,30 @@
 
     <div class="mb-8 p-6 bg-white border border-gray-200 rounded-lg shadow">
         <h3 class="text-xl font-semibold mb-4">Einstellungen</h3>
+        
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                <label for="ki_model" class="block mb-2 text-sm font-medium text-gray-900">KI-Modell auswählen</label>
-                <select id="ki_model" name="ki_model" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                    <option value="mistral" selected>Mistral (Empfohlen)</option>
-                    <option value="google">Google Gemini</option>
+                <label for="prompt_selection" class="block text-sm font-medium text-gray-700">Prompt-Vorlage</label>
+                <select id="prompt_selection" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">-- Bitte eine Vorlage wählen --</option>
+                    {% for prompt in prompts %}
+                        <option value="{{ prompt.id }}">{{ prompt.name }}</option>
+                    {% endfor %}
                 </select>
             </div>
             <div>
-                <label for="prompt-select" class="block mb-2 text-sm font-medium text-gray-900">Prompt-Vorlage auswählen</label>
-                <select id="prompt-select" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                    <option value="" selected>Bitte Vorlage wählen...</option>
-                    {% for prompt_file in prompts %}
-                        <option value="{{ prompt_file }}">{{ prompt_file }}</option>
-                    {% endfor %}
+                <label for="ki_model" class="block text-sm font-medium text-gray-700">KI-Modell</label>
+                <select id="ki_model" name="ki_model" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    <option value="mistral">Mistral (Empfohlen)</option>
+                    <option value="google">Google Gemini</option>
                 </select>
             </div>
         </div>
 
         <div class="mt-6">
-            <label for="ki_prompt" class="block mb-2 text-sm font-medium text-gray-900">KI-Prompt</label>
-            <textarea id="ki_prompt" name="ki_prompt" rows="12" class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" placeholder="Prompt wird nach Auswahl einer Vorlage geladen..."></textarea>
+            <label for="ki_prompt" class="block text-sm font-medium text-gray-700">Prompt-Inhalt</label>
+            <textarea name="ki_prompt" id="ki_prompt" rows="15" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"></textarea>
+            <p class="mt-1 text-xs text-gray-500">Der Inhalt wird automatisch geladen, kann aber hier vor der Analyse noch angepasst werden.</p>
         </div>
 
         <div class="mt-6">
@@ -58,26 +60,23 @@
 </form>
 
 <script>
-    const promptSelect = document.getElementById('prompt-select');
-    const promptTextarea = document.getElementById('ki_prompt');
-
-    promptSelect.addEventListener('change', async (e) => {
-        const filename = e.target.value;
-        if (!filename) {
+    document.getElementById('prompt_selection').addEventListener('change', async function() {
+        const promptId = this.value;
+        const promptTextarea = document.getElementById('ki_prompt');
+        if (!promptId) {
             promptTextarea.value = '';
             return;
         }
-        promptTextarea.value = 'Lade Inhalt...';
+
         try {
-            const response = await fetch(`/prompts/${filename}`);
+            const response = await fetch(`/api/prompt/${promptId}`);
             const data = await response.json();
             if (data.content) {
                 promptTextarea.value = data.content;
-            } else {
-                promptTextarea.value = `Fehler: ${data.error}`;
             }
         } catch (error) {
-            promptTextarea.value = 'Fehler beim Laden des Prompts.';
+            console.error('Fehler beim Laden des Prompts:', error);
+            promptTextarea.value = 'Fehler: Prompt konnte nicht geladen werden.';
         }
     });
 </script>

@@ -1,8 +1,21 @@
-# Virtual Environment
+Python
+
+pycache/
+*.pyc
+*.pyo
+*.pyd
+Virtuelle Umgebung
+
 venv/
+.venv/
+env/
+Datenbank-Datei
 
-# VS Code files
-.vscode/
+database.db
+Umgebungs-Variablen
 
-# Secret files
 .env
+Alte Daten-Datei
+
+data.json
+settings.json
