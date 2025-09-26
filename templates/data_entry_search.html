@@ -21,7 +21,7 @@
 
     <div class="space-y-4">
         {% if participants %}
-            {% for p in participants %}
+            {% for p in participants.items %}
             <div class="p-4 border rounded-lg bg-white shadow-sm">
                 <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center">
                     <div>
@@ -51,9 +51,9 @@
                     Zeige
                     <span class="font-medium">{{ (pagination.page - 1) * 10 + 1 }}</span>
                     bis
-                    <span class="font-medium">{{ [pagination.page * 10, pagination.total_items] | min }}</span>
+                    <span class="font-medium">{{ [pagination.page * 10, pagination.total] | min }}</span>
                     von
-                    <span class="font-medium">{{ pagination.total_items }}</span>
+                    <span class="font-medium">{{ pagination.total }}</span>
                     Ergebnissen
                 </p>
             </div>
