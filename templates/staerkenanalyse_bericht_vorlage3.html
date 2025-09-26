@@ -5,19 +5,22 @@
 {% block content %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<div class="flex justify-between items-center mb-6">
-    <div>
-        <h2 class="text-3xl font-bold text-gray-800">Bericht bearbeiten</h2>
-        <p class="text-xl text-gray-600 font-semibold">{{ participant.name }} <span class="text-gray-400 font-normal">in Gruppe "{{ group.name }}"</span></p>
-    </div>
-    <div>
-        <button onclick="saveReport()" class="py-2 px-5 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold mr-2">
-            <i class="fas fa-save me-2"></i>Änderungen speichern
-        </button>
-        <button onclick="downloadPDF()" class="py-2 px-5 rounded-md text-white bg-red-600 hover:bg-red-700 font-semibold">
-            <i class="fas fa-file-pdf me-2"></i>PDF erstellen
-        </button>
-    </div>
+<div class="flex items-center justify-end flex-wrap gap-2">
+    <button onclick="openModal()" class="py-2 px-5 rounded-md text-white bg-gray-600 hover:bg-gray-700 font-semibold">
+        <i class="fas fa-eye me-2"></i>Beobachtungen
+    </button>
+
+    <a href="{{ url_for('ai_analysis_select_participants', participant_id=participant.id) }}" class="py-2 px-5 rounded-md text-white bg-green-600 hover:bg-green-700 font-semibold">
+        <i class="fas fa-robot me-2"></i>NEU!
+    </a>
+
+    <button onclick="saveReport()" class="py-2 px-5 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold">
+        <i class="fas fa-save me-2"></i>Änderungen speichern
+    </button>
+
+    <button onclick="downloadPDF()" class="py-2 px-5 rounded-md text-white bg-red-600 hover:bg-red-700 font-semibold">
+        <i class="fas fa-file-pdf me-2"></i>PDF erstellen
+    </button>
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-8">
@@ -101,6 +104,43 @@
     }
 </style>
 
+<div id="observationsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl w-11/12 max-w-2xl max-h-[80vh] flex flex-col">
+        <div class="flex justify-between items-center p-4 border-b">
+            <h3 class="text-2xl font-bold text-gray-800">Beobachtungen für {{ participant.name }}</h3>
+            <button onclick="closeModal()" class="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
+        </div>
+
+        <div class="p-6 overflow-y-auto">
+            {% if participant.observations and (participant.observations.social or participant.observations.verbal) %}
+                <dl class="space-y-4">
+                    {% if participant.observations.social %}
+                    <div>
+                        <dt class="font-semibold text-gray-700 text-lg">Beobachtungen (Soziale Kompetenzen)</dt>
+                        <dd class="text-gray-600 mt-1 pl-4 border-l-2 border-gray-200 whitespace-pre-wrap">{{ participant.observations.social }}</dd>
+                    </div>
+                    {% endif %}
+
+                    {% if participant.observations.verbal %}
+                    <div>
+                        <dt class="font-semibold text-gray-700 text-lg">Beobachtungen (Verbale Kompetenzen)</dt>
+                        <dd class="text-gray-600 mt-1 pl-4 border-l-2 border-gray-200 whitespace-pre-wrap">{{ participant.observations.verbal }}</dd>
+                    </div>
+                    {% endif %}
+                </dl>
+            {% else %}
+                <p class="text-gray-500">Keine Beobachtungen für diesen Teilnehmer vorhanden.</p>
+            {% endif %}
+        </div>
+
+        <div class="flex justify-end p-4 border-t bg-gray-50 rounded-b-lg">
+            <button onclick="closeModal()" class="py-2 px-5 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold">
+                Schließen
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
     // =================================================================================
     // KOMPLETTER, BEREINIGTER JAVASCRIPT-BLOCK
@@ -127,19 +167,22 @@
     // ---------------------------------------------------------------------------------
     // 2. FUNKTIONEN
     // ---------------------------------------------------------------------------------
-    function createSliders(containerId, keys, labels, ratings, chartInstance, dataset) {
+    function createSliders(containerId, keys, labels, ratings, chartInstance, dataset, prefix) {
         const container = document.getElementById(containerId);
         keys.forEach((key, index) => {
             const value = ratings[key] || 0;
             const sliderDiv = document.createElement('div');
-            sliderDiv.innerHTML = `<label for="${key}-slider" class="block text-sm font-medium text-gray-700">${labels[index]}</label><div class="flex items-center space-x-2"><input type="range" id="${key}-slider" min="0" max="10" value="${value}" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"><span id="${key}-value" class="font-semibold w-10 text-center text-sm">${value.toFixed(1)}</span></div>`;
+            const sliderId = `${prefix}_${key}-slider`;
+            const valueId = `${prefix}_${key}-value`;
+
+            sliderDiv.innerHTML = `<label for="${sliderId}" class="block text-sm font-medium text-gray-700">${labels[index]}</label><div class="flex items-center space-x-2"><input type="range" id="${sliderId}" min="0" max="10" value="${value}" step="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"><span id="${valueId}" class="font-semibold w-10 text-center text-sm">${value.toFixed(1)}</span></div>`;
             container.appendChild(sliderDiv);
             
-            const slider = document.getElementById(`${key}-slider`);
+            const slider = document.getElementById(sliderId);
             slider.addEventListener('input', (e) => {
                 isDirty = true;
                 const newValue = parseFloat(e.target.value);
-                document.getElementById(`${key}-value`).textContent = newValue.toFixed(1);
+                document.getElementById(valueId).textContent = newValue.toFixed(1);
                 ratings[key] = newValue;
                 dataset.data = keys.map(k => ratings[k]);
                 chartInstance.update();
@@ -192,10 +235,25 @@
     }
 
     // ---------------------------------------------------------------------------------
-    // 3. EVENT LISTENERS UND INITIALISIERUNG
+    // 3. FUNKTIONEN FÜR MODAL
     // ---------------------------------------------------------------------------------
-    createSliders('sk-sliders', sk_keys, sk_labels, sk_ratings, skChart, skDataset);
-    createSliders('vk-sliders', vk_keys, vk_labels, vk_ratings, vkChart, vkDataset);
+    const modal = document.getElementById('observationsModal');
+
+    function openModal() {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeModal() {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+    
+    // ---------------------------------------------------------------------------------
+    // 4. EVENT LISTENERS UND INITIALISIERUNG
+    // ---------------------------------------------------------------------------------
+    createSliders('sk-sliders', sk_keys, sk_labels, sk_ratings, skChart, skDataset, 'sk');
+    createSliders('vk-sliders', vk_keys, vk_labels, vk_ratings, vkChart, vkDataset, 'vk');
 
     document.querySelectorAll('textarea, [contenteditable="true"]').forEach(item => {
         item.addEventListener('input', () => { isDirty = true; });
