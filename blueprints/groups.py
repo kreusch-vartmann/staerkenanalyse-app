@@ -47,10 +47,14 @@ def show_group_participants(group_id):
 def add_group():
     """Fügt eine neue Gruppe hinzu."""
     details = {
-        k: request.form.get(k)
-        for k in ["name", "date", "location", "leitung", "beobachter1", "beobachter2"]
+        "name": request.form.get("name"),
+        "date": request.form.get("date"),
+        "location": request.form.get("location"),
+        "leitung": request.form.get("leitung"),
+        "beobachter1": request.form.get("beobachter1"),
+        "beobachter2": request.form.get("beobachter2"),
     }
-    db.add_group(**details)
+    db.add_group(details)
     flash(f'Gruppe "{details["name"]}" wurde erfolgreich hinzugefügt.', "success")
     return redirect(url_for("groups.manage_groups"))
 
