@@ -1,3 +1,5 @@
+"""Dieses Modul enthält Hilfsfunktionen für Dateiverarbeitung und Textbereinigung."""
+
 import io
 import mimetypes
 import re

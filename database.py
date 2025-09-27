@@ -76,8 +76,6 @@ def get_paginated_groups(page, per_page=10):
     ).fetchall()
     total_groups = db.execute('SELECT COUNT(id) FROM groups').fetchone()[0]
     
-    # KORREKTUR: Ersetzt die nicht definierte Pagination-Klasse durch ein Dictionary,
-    # konsistent mit get_paginated_participants.
     pagination = {
         'page': page,
         'pages': int(ceil(total_groups / per_page)) if per_page > 0 else 0,

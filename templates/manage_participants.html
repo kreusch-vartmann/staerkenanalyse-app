@@ -7,7 +7,7 @@
 
     <!-- Such- und Sortierfunktion -->
     <div class="mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
-        <form method="get" action="{{ url_for('manage_participants') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+        <form method="get" action="{{ url_for('participants.manage_participants') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
             <!-- Suchfeld -->
             <div class="md:col-span-2">
                 <label for="q" class="block text-sm font-medium text-gray-700 mb-1">Teilnehmer suchen</label>
@@ -39,8 +39,8 @@
                     <p class="text-sm text-gray-500">Gruppe: {{ participant.group_name }}</p>
                 </div>
                 <div class="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0 mt-2 sm:mt-0">
-                    <a href="{{ url_for('show_data_entry', participant_id=participant.id) }}" class="py-2 px-4 text-sm rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 text-center">Dateneingabe</a>
-                    <a href="{{ url_for('show_report', participant_id=participant.id) }}" class="py-2 px-4 text-sm rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 text-center">Bericht anzeigen</a>
+                    <a href="{{ url_for('participants.show_data_entry', participant_id=participant.id) }}" class="py-2 px-4 text-sm rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 text-center">Dateneingabe</a>
+                    <a href="{{ url_for('participants.show_report', participant_id=participant.id) }}" class="py-2 px-4 text-sm rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 text-center">Bericht anzeigen</a>
                 </div>
             </div>
         </div>
@@ -52,13 +52,13 @@
     <!-- Pagination -->
     <div class="mt-8 flex justify-center items-center space-x-2">
         {% if pagination.has_prev %}
-            <a href="{{ url_for('manage_participants', page=pagination.prev_num, q=request.args.get('q', ''), sort=request.args.get('sort', '')) }}" class="py-2 px-4 rounded-md bg-gray-200 hover:bg-gray-300 text-sm font-medium">‹ Vorherige</a>
+            <a href="{{ url_for('participants.manage_participants', page=pagination.prev_num, q=request.args.get('q', ''), sort=request.args.get('sort', '')) }}" class="py-2 px-4 rounded-md bg-gray-200 hover:bg-gray-300 text-sm font-medium">‹ Vorherige</a>
         {% endif %}
         
         <span class="text-sm text-gray-700">Seite {{ pagination.page }} von {{ pagination.pages }}</span>
         
         {% if pagination.has_next %}
-            <a href="{{ url_for('manage_participants', page=pagination.next_num, q=request.args.get('q', ''), sort=request.args.get('sort', '')) }}" class="py-2 px-4 rounded-md bg-gray-200 hover:bg-gray-300 text-sm font-medium">Nächste ›</a>
+            <a href="{{ url_for('participants.manage_participants', page=pagination.next_num, q=request.args.get('q', ''), sort=request.args.get('sort', '')) }}" class="py-2 px-4 rounded-md bg-gray-200 hover:bg-gray-300 text-sm font-medium">Nächste ›</a>
         {% endif %}
     </div>
 {% endblock %}

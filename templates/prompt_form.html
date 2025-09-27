@@ -22,7 +22,7 @@
         <p class="mt-1 text-xs text-gray-500">Der eigentliche Text, der an die KI gesendet wird. Verfügbare Platzhalter: <code>{{name}}</code>, <code>{{vorname}}</code>, <code>{{ganzer_name}}</code>, <code>{{social_observations}}</code>, <code>{{verbal_observations}}</code>, <code>{{additional_content}}</code>, <code>{{context}}</code>.</p>
     </div>
     <div class="flex justify-end space-x-4">
-        <a href="{{ url_for('manage_prompts') }}" class="py-2 px-5 rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 font-semibold">Abbrechen</a>
+        <a href="{{ url_for('prompts.manage_prompts') }}" class="py-2 px-5 rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 font-semibold">Abbrechen</a>
         <button type="submit" class="py-2 px-5 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold">Speichern</button>
     </div>
 </form>
