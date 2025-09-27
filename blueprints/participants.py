@@ -1,14 +1,13 @@
 # blueprints/participants.py
-"""Dieses Modul enthält Routen und Funktionen für die Teilnehmerverwaltung und Berichterstellung."""
+"""Dieses Modul enthält Routen und Funktionen für die Teilnehmerverwaltung."""
 
+from datetime import datetime
+import pytz
 from flask import Blueprint, request, redirect, url_for, flash, render_template, jsonify
 import database as db
 
-# Ein Blueprint-Objekt nur für Teilnehmer-Routen erstellen
 participants_bp = Blueprint('participants', __name__)
 
-
-# --- ROUTEN FÜR DIE TEILNEHMERVERWALTUNG ---
 
 @participants_bp.route("/participants")
 def manage_participants():
@@ -30,6 +29,7 @@ def manage_participants():
         breadcrumbs=breadcrumbs,
     )
 
+
 @participants_bp.route("/group/<int:group_id>/participant/add", methods=["POST"])
 def add_participant(group_id):
     """Fügt mehrere Teilnehmer zu einer Gruppe hinzu."""
@@ -40,14 +40,14 @@ def add_participant(group_id):
         flash(f"{count} Teilnehmer wurden hinzugefügt.", "success")
     else:
         flash("Keine gültigen Namen eingegeben.", "warning")
-    # Leitet zur Teilnehmeransicht der spezifischen Gruppe weiter
     return redirect(url_for("groups.show_group_participants", group_id=group_id))
 
 
 @participants_bp.route("/participant/edit/<int:participant_id>", methods=["POST"])
 def edit_participant(participant_id):
     """Aktualisiert den Namen eines Teilnehmers."""
-    new_name, group_id = request.form["new_name"], request.form["group_id"]
+    new_name = request.form["new_name"]
+    group_id = request.form["group_id"]
     if new_name:
         db.update_participant_name(participant_id, new_name)
         flash("Teilnehmername wurde aktualisiert.", "success")
@@ -62,8 +62,6 @@ def delete_participant(participant_id):
     flash("Teilnehmer wurde gelöscht.", "success")
     return redirect(url_for("groups.show_group_participants", group_id=group_id))
 
-
-# --- Routen für Dateneingabe & Berichte ---
 
 @participants_bp.route("/participant/<int:participant_id>/data_entry")
 def show_data_entry(participant_id):
@@ -90,6 +88,7 @@ def show_data_entry(participant_id):
     flash("Teilnehmer nicht gefunden.", "error")
     return redirect(url_for("participants.manage_participants"))
 
+
 @participants_bp.route("/participant/<int:participant_id>/report")
 def show_report(participant_id):
     """Zeigt den Bericht für einen bestimmten Teilnehmer an."""
@@ -102,10 +101,19 @@ def show_report(participant_id):
     full_name = participant.get("name", "")
     participant["first_name"] = full_name.split(" ")[0] if full_name else ""
 
-    # Diese Logik sollte später vielleicht flexibler werden, aber für jetzt ist es ok.
-    from datetime import datetime
-    current_location_for_footer = "Lingen (Ems)"
-    current_date_for_footer = datetime.now().strftime("%d.%m.%Y")
+    # ENDGÜLTIGE LÖSUNG:
+    # 1. Berechne das tagesaktuelle Datum in der korrekten Zeitzone.
+    german_tz = pytz.timezone('Europe/Berlin')
+    current_date_str = datetime.now(pytz.utc).astimezone(german_tz).strftime("%d.%m.%Y")
+    current_location_str = "Lingen (Ems)"
+
+    # 2. Überschreibe aktiv die Werte, die an das Template gehen.
+    # Dies stellt sicher, dass immer das tagesaktuelle Datum verwendet wird,
+    # egal was in der Datenbank in `footer_data` gespeichert ist.
+    if 'footer_data' not in participant or not isinstance(participant['footer_data'], dict):
+        participant['footer_data'] = {}
+    participant['footer_data']['footer_date'] = current_date_str
+    participant['footer_data']['footer_location'] = current_location_str
 
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
@@ -117,17 +125,18 @@ def show_report(participant_id):
         {"text": f"Bericht: {participant['name']}"},
     ]
 
+    # 3. Übergebe die geänderten Daten an das Template.
+    # Die zusätzlichen Variablen `current_date` und `current_location` werden
+    # nun nur noch als Fallback für komplett neue Berichte ohne `footer_data` benötigt.
     return render_template(
         "staerkenanalyse_bericht_vorlage3.html",
         participant=participant,
         group=group,
         breadcrumbs=breadcrumbs,
-        current_date=current_date_for_footer,
-        current_location=current_location_for_footer,
+        current_date=current_date_str,
+        current_location=current_location_str,
     )
 
-
-# --- API-Endpunkte und Datenverarbeitung ---
 
 @participants_bp.route("/save_observations/<int:participant_id>", methods=["POST"])
 def save_observations(participant_id):
@@ -156,9 +165,9 @@ def save_report(participant_id):
     )
     return jsonify({"status": "success", "message": "Bericht erfolgreich gespeichert!"})
 
+
 @participants_bp.route("/api/group/<int:group_id>/participants")
 def get_participants_for_group(group_id):
     """Gibt die Teilnehmer einer bestimmten Gruppe als JSON zurück."""
     participants = db.get_participants_by_group(group_id)
-    # Stelle sicher, dass die Datenbank-Rows in Dictionaries umgewandelt werden
     return jsonify([dict(p) for p in participants])

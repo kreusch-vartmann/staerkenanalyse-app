@@ -12,7 +12,7 @@ from blueprints.groups import groups_bp
 from blueprints.participants import participants_bp
 from blueprints.analysis import analysis_bp
 from blueprints.data_io import data_io_bp
-from blueprints.prompts import prompts_bp # <-- NEU
+from blueprints.prompts import prompts_bp
 
 # App-Initialisierung
 app = Flask(__name__)
@@ -23,14 +23,14 @@ app.register_blueprint(groups_bp)
 app.register_blueprint(participants_bp)
 app.register_blueprint(analysis_bp)
 app.register_blueprint(data_io_bp)
-app.register_blueprint(prompts_bp) # <-- NEU
+app.register_blueprint(prompts_bp)
 
 
 # --- ZENTRALE FUNKTIONEN ---
 
 @app.teardown_appcontext
 def close_connection(_exception):
-    """schließt die Datenbankverbindung am Ende jeder Anfrage."""
+    """Schließt die Datenbankverbindung am Ende jeder Anfrage."""
     db.close_db()
 
 @app.context_processor
@@ -41,15 +41,20 @@ def inject_now():
 @app.template_filter("datetimeformat")
 def datetimeformat(value, fmt="%d.%m.%Y"):
     """Formatiert ein Datum in ein lesbares Format."""
-    if not value: return ""
-    if isinstance(value, datetime): return value.strftime(fmt)
+    if not value:
+        return ""
+    if isinstance(value, datetime):
+        return value.strftime(fmt)
     if isinstance(value, str):
         try:
-            dt = datetime.strptime(value, "%Y-%m-%d"); return dt.strftime(fmt)
+            dt = datetime.strptime(value, "%Y-%m-%d")
+            return dt.strftime(fmt)
         except ValueError:
             try:
-                dt = datetime.strptime(value, "%d.%m.%Y"); return dt.strftime(fmt)
-            except ValueError: return value
+                dt = datetime.strptime(value, "%d.%m.%Y")
+                return dt.strftime(fmt)
+            except ValueError:
+                return value
     return value
 
 

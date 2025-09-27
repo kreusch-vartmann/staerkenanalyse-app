@@ -6,7 +6,7 @@
 <h2 class="text-3xl font-bold text-gray-800 mb-2">Analyse für Gruppe: {{ group.name }}</h2>
 <p class="text-gray-600 mb-6">Konfigurieren Sie hier die KI-Analyse für die ausgewählten Teilnehmer.</p>
 
-<form action="{{ url_for('execute_batch_ai_analysis') }}" method="post" enctype="multipart/form-data">
+<form action="{{ url_for('analysis.execute_batch_ai_analysis') }}" method="post" enctype="multipart/form-data">
     
     <div class="mb-8 p-6 bg-white border border-gray-200 rounded-lg shadow">
         <h3 class="text-xl font-semibold mb-4">Analyse wird für folgende {{ participants|length }} Teilnehmer ausgeführt:</h3>
@@ -69,7 +69,7 @@
         }
 
         try {
-            const response = await fetch(`/api/prompt/${promptId}`);
+            const response = await fetch(`{{ url_for('prompts.get_prompt_content_api', prompt_id=0) }}`.slice(0, -1) + promptId);
             const data = await response.json();
             if (data.content) {
                 promptTextarea.value = data.content;

@@ -1,16 +1,17 @@
-# blueprints/analysis.py - KOMPLETTE DATEI
-"""Dieses Modul enthält Routen und Funktionen für die Analyse, KI-Integration und Berichtserstellung."""
+# blueprints/analysis.py
+"""Dieses Modul enthält Routen für Analyse, KI-Integration und Berichtserstellung."""
 
 import base64
-import io
 import json
 from io import BytesIO
 from datetime import datetime
+import pytz
 
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
+
 from flask import (Blueprint, request, redirect, url_for, flash, render_template,
                    jsonify, Response)
 from weasyprint import HTML
@@ -19,21 +20,20 @@ import database as db
 from ki_services import generate_report_with_ai
 from utils import clean_json_response, get_file_content
 
-# Ein Blueprint-Objekt für Analyse, KI und Berichte
 analysis_bp = Blueprint('analysis', __name__)
 
 
 # --- HILFSFUNKTION FÜR DIAGRAMME ---
 
-def create_radar_chart(ratings_dict, keys, labels, color, title):
+def create_radar_chart(ratings_dict, keys, labels, color):
     """Erzeugt ein Radardiagramm und gibt es als Base64-Bild zurück."""
     values = [ratings_dict.get(key, 0) for key in keys]
     num_vars = len(labels)
     angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
     values_plot = values + values[:1]
     angles_plot = angles + angles[:1]
-    
-    fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
+
+    fig, ax = plt.subplots(figsize=(6, 6), subplot_kw={"polar": True})
     ax.fill(angles_plot, values_plot, color=color, alpha=0.2)
     ax.plot(angles_plot, values_plot, color=color, linewidth=2)
     ax.grid(color='#E0E0E0', linestyle='-', linewidth=0.7)
@@ -45,14 +45,30 @@ def create_radar_chart(ratings_dict, keys, labels, color, title):
     ax.set_theta_offset(np.pi / 2)
     ax.set_theta_direction(-1)
     ax.tick_params(axis='x', pad=15)
-    
+
     buf = BytesIO()
     plt.savefig(buf, format='png', bbox_inches='tight', transparent=True, pad_inches=0.2)
     plt.close(fig)
     buf.seek(0)
-    
+
     img_base64 = base64.b64encode(buf.read()).decode('utf-8')
     return f"data:image/png;base64,{img_base64}"
+
+
+def _prepare_pdf_data(participant):
+    """Bereitet die Daten und Diagramme für den PDF-Bericht vor."""
+    sk_ratings = participant.get('sk_ratings', {})
+    sk_labels = ['Flexibilität', 'Team-\norientierung',
+                 'Prozess-\norientierung', 'Ergebnis-\norientierung']
+    sk_keys = ['flexibility', 'team_orientation', 'process_orientation', 'results_orientation']
+
+    vk_ratings = participant.get('vk_ratings', {})
+    vk_labels = ['Flexibilität', 'Beratung', 'Sachlichkeit', 'Ziel-\norientierung']
+    vk_keys = ['flexibility', 'consulting', 'objectivity', 'goal_orientation']
+
+    sk_chart = create_radar_chart(sk_ratings, sk_keys, sk_labels, '#5A7D7C')
+    vk_chart = create_radar_chart(vk_ratings, vk_keys, vk_labels, '#2F4F4F')
+    return sk_chart, vk_chart
 
 
 # --- ROUTEN FÜR BERICHTE (HTML & PDF) ---
@@ -65,14 +81,16 @@ def edit_report(participant_id):
         return "Teilnehmer nicht gefunden", 404
     group = db.get_group_by_id(participant['group_id'])
 
-    current_date = datetime.now().strftime("%d.%m.%Y")
+    german_tz = pytz.timezone('Europe/Berlin')
+    current_date = datetime.now(pytz.utc).astimezone(german_tz).strftime("%d.%m.%Y")
     current_location = group['location'] if group else "Unbekannter Ort"
 
-    return render_template('staerkenanalyse_bericht_vorlage3.html', 
-                           participant=participant, 
+    return render_template('staerkenanalyse_bericht_vorlage3.html',
+                           participant=participant,
                            group=group,
                            current_date=current_date,
                            current_location=current_location)
+
 
 @analysis_bp.route('/bericht/<int:participant_id>/pdf')
 def bericht_pdf(participant_id):
@@ -80,41 +98,33 @@ def bericht_pdf(participant_id):
     participant = db.get_participant_by_id(participant_id)
     if not participant:
         return "Teilnehmer nicht gefunden", 404
-    
+
     group = db.get_group_by_id(participant['group_id'])
-    current_date = datetime.now().strftime("%d.%m.%Y")
+    german_tz = pytz.timezone('Europe/Berlin')
+    current_date = datetime.now(pytz.utc).astimezone(german_tz).strftime("%d.%m.%Y")
     current_location = "Lingen (Ems)"
 
-    sk_ratings = participant.get('sk_ratings', {})
-    sk_labels = ['Flexibilität', 'Team-\norientierung', 'Prozess-\norientierung', 'Ergebnis-\norientierung']
-    sk_keys = ['flexibility', 'team_orientation', 'process_orientation', 'results_orientation']
-    
-    vk_ratings = participant.get('vk_ratings', {})
-    vk_labels = ['Flexibilität', 'Beratung', 'Sachlichkeit', 'Ziel-\norientierung']
-    vk_keys = ['flexibility', 'consulting', 'objectivity', 'goal_orientation']
-    
-    sk_chart_image = create_radar_chart(sk_ratings, sk_keys, sk_labels, '#5A7D7C', 'Soziale Kompetenzen')
-    vk_chart_image = create_radar_chart(vk_ratings, vk_keys, vk_labels, '#2F4F4F', 'Verbale Kompetenzen')
+    sk_chart_image, vk_chart_image = _prepare_pdf_data(participant)
 
-    html_string = render_template('bericht_pdf_vorlage.html', 
-                                   participant=participant, 
-                                   group=group,
-                                   current_date=current_date,
-                                   current_location=current_location,
-                                   sk_chart_image=sk_chart_image,
-                                   vk_chart_image=vk_chart_image,
-                                   _external=True)
-    
+    html_string = render_template('bericht_pdf_vorlage.html',
+                                  participant=participant, group=group,
+                                  current_date=current_date,
+                                  current_location=current_location,
+                                  sk_chart_image=sk_chart_image,
+                                  vk_chart_image=vk_chart_image, _external=True)
+
     pdf_bytes = HTML(string=html_string, base_url=request.base_url).write_pdf()
-    
-    safe_name = "".join(c for c in participant.get('name', 'Unbekannt') if c.isalnum() or c in (' ', '_')).rstrip()
+
+    safe_name = "".join(c for c in participant.get('name', 'Unbekannt')
+                        if c.isalnum() or c in (' ', '_')).rstrip()
     filename = f"Staerkenanalyse_{safe_name.replace(' ', '_')}.pdf"
-    
+
     return Response(
         pdf_bytes,
         mimetype="application/pdf",
         headers={"Content-disposition": f"attachment; filename=\"{filename}\""}
     )
+
 
 # --- ROUTEN FÜR KI-ANALYSE (EINZELN & BATCH) ---
 
@@ -129,6 +139,7 @@ def ai_analysis_select_group():
     return render_template(
         "ai_analysis_select_group.html", groups=groups, breadcrumbs=breadcrumbs
     )
+
 
 @analysis_bp.route("/ai_analysis/group/<int:group_id>")
 def ai_analysis_select_participants(group_id):
@@ -146,6 +157,7 @@ def ai_analysis_select_participants(group_id):
         participants=participants,
         breadcrumbs=breadcrumbs,
     )
+
 
 @analysis_bp.route("/ai_analysis/configure", methods=["POST"])
 def configure_batch_ai_analysis():
@@ -174,6 +186,7 @@ def configure_batch_ai_analysis():
         prompts=db.get_all_prompts(),
         breadcrumbs=breadcrumbs,
     )
+
 
 @analysis_bp.route("/ai_analysis/execute", methods=["POST"])
 def execute_batch_ai_analysis():
@@ -208,6 +221,7 @@ def execute_batch_ai_analysis():
         breadcrumbs=breadcrumbs,
     )
 
+
 # --- API-Endpunkte für die KI ---
 
 @analysis_bp.route("/run_ki_analysis/<int:participant_id>", methods=["POST"])
@@ -216,32 +230,36 @@ def run_ki_analysis(participant_id):
     participant = db.get_participant_by_id(participant_id)
     final_prompt = request.form.get("ki_prompt", "")
     ki_model = request.form.get("ki_model", "mistral")
-    
+
     full_name = participant.get("name", "")
     first_name = full_name.split(" ")[0] if full_name else ""
-    
+
     final_prompt = final_prompt.replace("{{name}}", first_name).replace("{{vorname}}", first_name)
-    
+
     observations = participant.get("observations", {})
     social_obs = observations.get("social", "")
     verbal_obs = observations.get("verbal", "")
-    final_prompt = final_prompt.replace("{{social_observations}}", social_obs).replace("{{verbal_observations}}", verbal_obs)
-    
+    final_prompt = final_prompt.replace(
+        "{{social_observations}}", social_obs
+    ).replace(
+        "{{verbal_observations}}", verbal_obs
+    )
+
     additional_content = ""
     if "additional_files" in request.files:
         file = request.files.get("additional_files")
         if file and file.filename != "":
             additional_content = get_file_content(file)
     final_prompt = final_prompt.replace("{{additional_content}}", additional_content)
-    
+
     ki_response_str = generate_report_with_ai(final_prompt, ki_model)
     db.save_ki_raw_response(participant_id, ki_response_str)
-    
+
     try:
         ki_data = json.loads(clean_json_response(ki_response_str))
         if "error" in ki_data:
             return jsonify({"status": "error", "message": f"KI-Fehler: {ki_data['error']}"})
-            
+
         db.save_participant_data(
             participant_id,
             {
@@ -262,6 +280,7 @@ def run_ki_analysis(participant_id):
             "raw_response": ki_response_str,
         })
 
+
 @analysis_bp.route("/api/run_single_analysis/<int:participant_id>", methods=["POST"])
 def run_single_analysis_api(participant_id):
     """API-Endpunkt, um die KI-Analyse für die Batch-Verarbeitung auszuführen."""
@@ -269,28 +288,28 @@ def run_single_analysis_api(participant_id):
     participant = db.get_participant_by_id(participant_id)
     if not participant:
         return jsonify({"status": "error", "message": "Teilnehmer nicht gefunden."}), 404
-        
+
     full_name = participant.get("name", "")
     first_name = full_name.split(" ")[0] if full_name else ""
     obs = participant.get("observations", {})
-    
+
     context_block = (
         f"ANALYSE-SUBJEKT:\n- Vorname: {first_name}\n- Ganzer Name: {full_name}\n\n"
         f"BEOBACHTUNGEN ZUM VERHALTEN:\n- Soziale Kompetenzen: {obs.get('social', '')}\n"
         f"- Verbale Kompetenzen: {obs.get('verbal', '')}\n\n"
         f"ZUSÄTZLICHER KONTEXT:\n{data.get('additional_content', '')}"
     )
-    
+
     prompt = data.get("prompt_template", "").replace("{{context}}", context_block)
-    
+
     response_str = generate_report_with_ai(prompt, data.get("ki_model"))
     db.save_ki_raw_response(participant_id, response_str)
-    
+
     try:
         ki_data = json.loads(clean_json_response(response_str))
         if "error" in ki_data:
             return jsonify({"status": "error", "message": f"KI-Fehler: {ki_data['error']}"})
-            
+
         db.save_participant_data(
             participant_id,
             {
