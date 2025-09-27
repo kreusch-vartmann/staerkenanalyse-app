@@ -8,7 +8,7 @@
             <h2 class="text-3xl font-bold text-gray-800">Dateneingabe</h2>
             <p class="text-lg text-gray-600">für <span class="font-semibold">{{ participant.name }}</span> in Gruppe <span class="font-semibold">{{ group.name }}</span></p>
         </div>
-        <a href="{{ url_for('show_group_participants', group_id=group.id) }}" class="py-2 px-4 text-sm rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold">
+        <a href="{{ url_for('groups.show_group_participants', group_id=group.id) }}" class="py-2 px-4 text-sm rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold">
             ← Zurück zur Gruppenübersicht
         </a>
     </div>
@@ -36,7 +36,7 @@
         <h3 class="text-2xl font-bold text-gray-800 mb-4">Nächster Schritt</h3>
         <p class="text-gray-600 mb-4">Nachdem Sie die Beobachtungen gespeichert haben, können Sie die KI-Analyse für diesen Teilnehmer konfigurieren und starten.</p>
         
-        <form action="{{ url_for('configure_batch_ai_analysis') }}" method="post">
+        <form action="{{ url_for('analysis.configure_batch_ai_analysis') }}" method="post">
             <input type="hidden" name="participant_ids" value="{{ participant.id }}">
             <button type="submit" class="py-2 px-6 rounded-md text-white bg-green-600 hover:bg-green-700 font-semibold">
                 Analyse für {{ participant.name }} starten →
@@ -52,7 +52,7 @@
                     verbal: document.getElementById('verbal-observations').value
                 };
 
-                const response = await fetch(`{{ url_for('save_observations', participant_id=participant.id) }}`, {
+                const response = await fetch(`{{ url_for('participants.save_observations', participant_id=participant.id) }}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(dataToSend)

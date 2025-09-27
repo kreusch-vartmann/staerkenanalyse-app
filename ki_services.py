@@ -1,3 +1,5 @@
+"""Dieses Modul enthält Funktionen zur Integration und Nutzung von KI-Modellen für die Berichtserstellung."""
+
 import os
 import json # KORREKTUR: Fehlender Import hinzugefügt
 from dotenv import load_dotenv
@@ -44,46 +46,39 @@ def generate_report_with_ai(prompt_text, ki_model):
             if not GenerativeModel:
                 raise ValueError("Die 'Google Generative AI'-Bibliothek ist nicht installiert.")
 
+            # FINALE KORREKTUR: Wir verwenden das stabilste Modell für AI Studio API Keys.
+            model_name = 'models/gemini-1.5-pro-latest' 
+            
             try:
-                # API-Keys aus dem Google AI Studio benötigen oft spezifischere Modellnamen.
-                # Wir versuchen es mit 'gemini-1.5-flash', einem gängigen und leistungsstarken Modell.
-                model = GenerativeModel('gemini-1.5-flash')
+                model = GenerativeModel(model_name)
                 response = model.generate_content(prompt_text)
                 return response.text
             except Exception as e:
-                print(f"!!! FEHLER BEI DER ANFRAGE AN DAS GEMINI MODELL ('gemini-1.5-flash') !!!\n{e}")
+                print(f"!!! FEHLER BEI DER ANFRAGE AN DAS GEMINI MODELL ('{model_name}') !!!\n{e}")
                 
-                # WICHTIG: Wir listen jetzt alle Modelle auf, die für deinen API-Key verfügbar sind.
-                # Das hilft dir, den exakt richtigen Namen zu finden.
                 try:
                     print("\n--- VERSUCHE, VERFÜGBARE MODELLE AUFZULISTEN ---")
                     from google.generativeai import list_models
                     
-                    available_models = []
-                    for m in list_models():
-                        # Wir prüfen, ob das Modell die 'generateContent'-Methode unterstützt
-                        if 'generateContent' in m.supported_generation_methods:
-                            available_models.append(m.name)
+                    available_models = [m.name for m in list_models() if 'generateContent' in m.supported_generation_methods]
                             
                     if available_models:
                         print("Folgende Modelle sind für deinen API-Key verfügbar und nutzbar:")
-                        for name in available_models:
-                            print(f"- {name}")
+                        for name in available_models: print(f"- {name}")
                         print("----------------------------------------------------")
-                        raise ValueError(f"Das Modell 'gemini-1.5-flash' hat nicht funktioniert. Bitte versuche eines der oben gelisteten Modelle in der 'ki_services.py'.")
+                        raise ValueError(f"Das Modell '{model_name}' hat nicht funktioniert. Bitte versuche eines der oben gelisteten Modelle in der 'ki_services.py'.")
                     else:
                          print("Es konnten keine verfügbaren Modelle für deinen API-Key gefunden werden.")
                          raise ValueError("Keine kompatiblen Gemini-Modelle für deinen API-Key gefunden.")
 
                 except Exception as list_models_error:
                     print(f"Fehler beim Auflisten der verfügbaren Modelle: {list_models_error}")
-                    raise ValueError(f"Die Kommunikation mit dem Gemini-Modell ist fehlgeschlagen und die verfügbaren Modelle konnten nicht ermittelt werden.")
+                    raise ValueError(f"Die Kommunikation mit dem Gemini-Modell ist fehlgeschlagen.")
             
         if ki_model == "mistral":
             if not MISTRAL_CLIENT:
                 raise ValueError("Mistral Client nicht initialisiert. API-Key fehlt?")
 
-            # Fester System-Prompt, der NUR die JSON-Struktur erzwingt.
             system_prompt_json_structure = (
                 "Du bist ein Experte für die Auswertung von Assessment-Center-Beobachtungen. "
                 "Antworte IMMER und AUSSCHLIESSLICH mit einem JSON-Objekt, das exakt "
