@@ -1,9 +1,8 @@
-# blueprints/prompts.py - KOMPLETTE DATEI
+# blueprints/prompts.py
 """Dieses Modul enthält Routen und Funktionen für die Prompt-Verwaltung."""
 
 from flask import (Blueprint, request, redirect, url_for, flash, render_template,
                    jsonify)
-
 import database as db
 
 # Ein Blueprint-Objekt für die Prompt-Verwaltung
@@ -32,15 +31,15 @@ def add_prompt():
         name = request.form.get("name")
         description = request.form.get("description")
         content = request.form.get("content")
-        
+
         if not name or not content:
             flash("Name und Inhalt des Prompts dürfen nicht leer sein.", "warning")
             return render_template("prompt_form.html", title="Neuen Prompt erstellen")
-            
+
         db.add_prompt(name, description, content)
         flash(f'Prompt "{name}" wurde erfolgreich erstellt.', "success")
         return redirect(url_for("prompts.manage_prompts"))
-        
+
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
         {"link": url_for("prompts.manage_prompts"), "text": "Prompt-Verwaltung"},
@@ -58,12 +57,12 @@ def edit_prompt(prompt_id):
     if not prompt:
         flash("Prompt nicht gefunden.", "error")
         return redirect(url_for("prompts.manage_prompts"))
-        
+
     if request.method == "POST":
         name = request.form.get("name")
         description = request.form.get("description")
         content = request.form.get("content")
-        
+
         if not name or not content:
             flash("Name und Inhalt des Prompts dürfen nicht leer sein.", "warning")
             return render_template(
@@ -71,11 +70,11 @@ def edit_prompt(prompt_id):
                 title=f"Prompt bearbeiten: {prompt['name']}",
                 prompt=prompt,
             )
-            
+
         db.update_prompt(prompt_id, name, description, content)
         flash(f'Prompt "{name}" wurde erfolgreich aktualisiert.', "success")
         return redirect(url_for("prompts.manage_prompts"))
-        
+
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
         {"link": url_for("prompts.manage_prompts"), "text": "Prompt-Verwaltung"},
