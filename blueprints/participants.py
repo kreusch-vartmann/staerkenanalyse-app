@@ -171,3 +171,17 @@ def get_participants_for_group(group_id):
     """Gibt die Teilnehmer einer bestimmten Gruppe als JSON zurück."""
     participants = db.get_participants_by_group(group_id)
     return jsonify([dict(p) for p in participants])
+
+@participants_bp.route("/api/participant/<int:participant_id>/observations")
+def get_observations(participant_id):
+    """Gibt die Beobachtungen für einen Teilnehmer als JSON zurück."""
+    participant = db.get_participant_by_id(participant_id)
+    # Stellt sicher, dass observations ein dict ist, auch wenn es null ist
+    observations = participant.get("observations") if participant else None
+    if isinstance(observations, dict):
+        return jsonify({
+            "social": observations.get("social", ""),
+            "verbal": observations.get("verbal", "")
+        })
+    # Fallback, wenn keine Beobachtungen vorhanden sind
+    return jsonify({"social": "", "verbal": ""})
