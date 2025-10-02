@@ -7,70 +7,185 @@
 
 <div class="bg-white rounded-lg shadow p-6 mb-6">
     <form action="{{ url_for('data_io.export_data') }}" method="post" id="exportForm">
-        <div class="mb-4">
-            <h3 class="text-xl font-semibold mb-2">Exportformat:</h3>
+        
+        <div class="mb-6">
+            <h3 class="text-xl font-semibold mb-2">1. Exportformat auswählen</h3>
             <div class="flex space-x-4">
                 <label class="inline-flex items-center">
-                    <input type="radio" name="format" value="xlsx" checked class="form-radio text-blue-600">
+                    <input type="radio" name="format" value="xlsx" checked class="form-radio text-blue-600 h-4 w-4">
                     <span class="ml-2">Excel (.xlsx)</span>
                 </label>
                 <label class="inline-flex items-center">
-                    <input type="radio" name="format" value="csv" class="form-radio text-blue-600">
+                    <input type="radio" name="format" value="csv" class="form-radio text-blue-600 h-4 w-4">
                     <span class="ml-2">CSV (.csv)</span>
                 </label>
             </div>
         </div>
 
-        <div class="mb-4">
-            <h3 class="text-xl font-semibold mb-2">Teilnehmer auswählen:</h3>
-            <div class="mb-2">
+        <div>
+            <h3 class="text-xl font-semibold mb-2">2. Teilnehmer auswählen</h3>
+            
+            <div class="mb-4">
+                <input type="text" id="search-input" placeholder="Suche nach Gruppen oder Teilnehmern..." class="w-full p-2 border border-gray-300 rounded-md">
+            </div>
+
+            <div class="mb-4 p-3 rounded-md bg-gray-50 border">
                 <label class="inline-flex items-center">
-                    <input type="checkbox" id="selectAll" class="form-checkbox text-blue-600">
-                    <span class="ml-2 font-medium">Alle Teilnehmer auswählen</span>
+                    <input type="checkbox" id="select-all" class="form-checkbox h-5 w-5 text-blue-600 rounded">
+                    <span class="ml-2 font-bold text-gray-800">Alle sichtbaren Teilnehmer auswählen</span>
                 </label>
-                <input type="hidden" name="select_all_data" id="selectAllData" value="false">
             </div>
             
-            <div id="groupsContainer" class="space-y-4">
-                {% if groups_with_participants %}
-                    {% for group in groups_with_participants %}
-                        <div class="border rounded-lg p-4">
-                            <h4 class="font-semibold text-lg mb-2">{{ group.name }}</h4>
-                            <div class="ml-4">
-                                {% if group.participants %}
-                                    {% for participant in group.participants %}
-                                        <div class="mb-1">
-                                            <label class="inline-flex items-center">
-                                                <input type="checkbox" name="participant_ids" value="{{ participant.id }}" class="form-checkbox text-blue-600 participant-checkbox">
-                                                <span class="ml-2">{{ participant.name }}</span>
-                                            </label>
-                                        </div>
-                                    {% endfor %}
-                                {% else %}
-                                    <p class="text-gray-500 italic">Keine Teilnehmer in dieser Gruppe.</p>
-                                {% endif %}
-                            </div>
+            <div id="groups-container" class="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                {% for group in groups_with_participants %}
+                <div class="group-item border rounded-lg" data-group-name="{{ group.name | lower }}">
+                    <div class="group-header bg-gray-100 p-3 border-b cursor-pointer flex justify-between items-center">
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600 rounded group-checkbox" data-group-id="{{ group.id }}">
+                            <h4 class="ml-2 font-semibold text-lg">{{ group.name }}</h4>
+                        </label>
+                        <i class="fas fa-chevron-down transition-transform"></i>
+                    </div>
+                    <div class="participants-list hidden p-4 ml-4">
+                        {% for p in group.participants %}
+                        <div class="participant-item mb-1" data-participant-name="{{ p.name | lower }}">
+                            <label class="inline-flex items-center">
+                                <input type="checkbox" name="participant_ids" value="{{ p.id }}" class="form-checkbox text-blue-600 participant-checkbox" data-group-id="{{ group.id }}">
+                                <span class="ml-2">{{ p.name }}</span>
+                            </label>
                         </div>
-                    {% endfor %}
+                        {% else %}
+                        <p class="text-sm text-gray-500 italic">Keine Teilnehmer in dieser Gruppe.</p>
+                        {% endfor %}
+                    </div>
+                </div>
                 {% else %}
-                    <p class="text-gray-500">Keine Gruppen gefunden. Bitte erstellen Sie zuerst Gruppen und Teilnehmer.</p>
-                {% endif %}
+                <p class="text-gray-500">Keine Gruppen gefunden.</p>
+                {% endfor %}
             </div>
         </div>
 
-        <div class="mt-6">
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">
-                Export starten
+        <div class="mt-8 border-t pt-6">
+            <button type="submit" class="w-full md:w-auto py-2 px-6 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold text-lg">
+                <i class="fas fa-download me-2"></i>Auswahl exportieren
             </button>
         </div>
     </form>
 </div>
 
 <script>
-    document.getElementById('selectAll').addEventListener('change', function() {
-        const checkboxes = document.querySelectorAll('.participant-checkbox');
-        checkboxes.forEach(checkbox => checkbox.checked = this.checked);
-        document.getElementById('selectAllData').value = this.checked ? 'true' : 'false';
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('search-input');
+    const selectAllCheckbox = document.getElementById('select-all');
+    const groupHeaders = document.querySelectorAll('.group-header');
+
+    // KORRIGIERTE FUNKTION: Steuert das Anzeigen/Verbergen der Teilnehmerlisten
+    function toggleGroup(header, forceState) { // forceState kann sein: true (öffnen), false (schließen), undefined (umschalten)
+        const list = header.nextElementSibling;
+        const icon = header.querySelector('i');
+        const isHidden = list.classList.contains('hidden');
+
+        let shouldBeOpen;
+        if (typeof forceState !== 'undefined') {
+            shouldBeOpen = forceState;
+        } else {
+            shouldBeOpen = isHidden;
+        }
+
+        if (shouldBeOpen) {
+            list.classList.remove('hidden');
+            icon.classList.add('rotate-180');
+        } else {
+            list.classList.add('hidden');
+            icon.classList.remove('rotate-180');
+        }
+    }
+
+    // Funktion zum Filtern und Erweitern basierend auf der Suche
+    function filterAndExpand() {
+        const query = searchInput.value.toLowerCase().trim();
+
+        if (query === '') {
+            document.querySelectorAll('.group-item').forEach(group => {
+                group.style.display = '';
+                toggleGroup(group.querySelector('.group-header'), false); // Alle schließen
+                group.querySelectorAll('.participant-item').forEach(p => p.style.display = '');
+            });
+            return;
+        }
+
+        document.querySelectorAll('.group-item').forEach(group => {
+            const groupName = group.dataset.groupName;
+            let groupHasVisibleParticipant = false;
+
+            group.querySelectorAll('.participant-item').forEach(participant => {
+                const participantName = participant.dataset.participantName;
+                const isMatch = participantName.includes(query) || groupName.includes(query);
+                
+                participant.style.display = isMatch ? '' : 'none';
+                if (isMatch) {
+                    groupHasVisibleParticipant = true;
+                }
+            });
+            
+            group.style.display = groupHasVisibleParticipant ? '' : 'none';
+            toggleGroup(group.querySelector('.group-header'), groupHasVisibleParticipant); // Gruppe öffnen, wenn Treffer
+        });
+    }
+
+    // --- Event Listeners ---
+    searchInput.addEventListener('keyup', filterAndExpand);
+
+    groupHeaders.forEach(header => {
+        header.addEventListener('click', (e) => {
+            // Verhindern, dass der Klick auf die Checkbox oder das Label die Gruppe umschaltet.
+            // Nur der Klick auf den Header-Bereich selbst soll dies tun.
+            if (e.target.closest('label')) {
+                return;
+            }
+            toggleGroup(header);
+        });
     });
+
+    // "Alle auswählen" Event
+    selectAllCheckbox.addEventListener('change', function() {
+        document.querySelectorAll('.participant-checkbox').forEach(cb => {
+            const participantItem = cb.closest('.participant-item');
+            const groupItem = cb.closest('.group-item');
+            if (participantItem && participantItem.style.display !== 'none' && groupItem.style.display !== 'none') {
+                cb.checked = this.checked;
+            }
+        });
+        document.querySelectorAll('.group-checkbox').forEach(gc => {
+             if(gc.closest('.group-item').style.display !== 'none') {
+                gc.checked = this.checked;
+             }
+        });
+    });
+
+    // Gruppen-Checkbox Event
+    document.querySelectorAll('.group-checkbox').forEach(groupCb => {
+        groupCb.addEventListener('change', function() {
+            const groupId = this.dataset.groupId;
+            document.querySelectorAll(`.participant-checkbox[data-group-id="${groupId}"]`).forEach(participantCb => {
+                participantCb.checked = this.checked;
+            });
+        });
+    });
+    
+    // Teilnehmer-Checkbox Event
+    document.querySelectorAll('.participant-checkbox').forEach(participantCb => {
+        participantCb.addEventListener('change', function() {
+            if (!this.checked) {
+                const groupId = this.dataset.groupId;
+                const groupCheckbox = document.querySelector(`.group-checkbox[data-group-id="${groupId}"]`);
+                if (groupCheckbox) groupCheckbox.checked = false;
+            }
+        });
+    });
+});
 </script>
+<style>
+    .rotate-180 { transform: rotate(180deg); }
+</style>
 {% endblock %}

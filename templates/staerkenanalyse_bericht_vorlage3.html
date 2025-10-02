@@ -5,21 +5,26 @@
 {% block content %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<div class="flex items-center justify-end flex-wrap gap-2">
-    <button onclick="openModal()" class="py-2 px-5 rounded-md text-white bg-gray-600 hover:bg-gray-700 font-semibold">
-        <i class="fas fa-eye me-2"></i>Beobachtungen
-    </button>
+<div class="flex items-center justify-between mb-6 flex-wrap gap-4">
+    <h2 class="text-3xl font-bold text-gray-800">{{ participant.first_name }}</h2>
 
-<a href="{{ url_for('analysis.ai_analysis_select_participants', group_id=group.id) }}" class="py-2 px-5 rounded-md text-white bg-green-600 hover:bg-green-700 font-semibold">        <i class="fas fa-robot me-2"></i>NEU!
-    </a>
+    <div class="flex items-center flex-wrap gap-2">
+        <button onclick="openModal()" class="py-2 px-5 rounded-md text-white bg-gray-600 hover:bg-gray-700 font-semibold">
+            <i class="fas fa-eye me-2"></i>Beobachtungen
+        </button>
 
-    <button onclick="saveReport()" class="py-2 px-5 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold">
-        <i class="fas fa-save me-2"></i>Änderungen speichern
-    </button>
+        <a href="{{ url_for('analysis.ai_analysis_select_participants', group_id=group.id) }}" class="py-2 px-5 rounded-md text-white bg-green-600 hover:bg-green-700 font-semibold">
+            <i class="fas fa-robot me-2"></i>NEU!
+        </a>
 
-    <button onclick="downloadPDF()" class="py-2 px-5 rounded-md text-white bg-red-600 hover:bg-red-700 font-semibold">
-        <i class="fas fa-file-pdf me-2"></i>PDF erstellen
-    </button>
+        <button onclick="saveReport()" class="py-2 px-5 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold">
+            <i class="fas fa-save me-2"></i>Änderungen speichern
+        </button>
+
+        <button onclick="downloadPDF()" class="py-2 px-5 rounded-md text-white bg-red-600 hover:bg-red-700 font-semibold">
+            <i class="fas fa-file-pdf me-2"></i>PDF erstellen
+        </button>
+    </div>
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-8">
