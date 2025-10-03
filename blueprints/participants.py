@@ -1,23 +1,43 @@
 # blueprints/participants.py
 """Dieses Modul enthält Routen und Funktionen für die Teilnehmerverwaltung."""
 
-from datetime import datetime
-import pytz
+import json
 from flask import Blueprint, request, redirect, url_for, flash, render_template, jsonify
-import database as db
+from datetime import datetime
+
+from extensions import db
+from models import Participant, Group
 
 participants_bp = Blueprint('participants', __name__)
 
 
 @participants_bp.route("/participants")
 def manage_participants():
-    """Zeigt die Seite zur Verwaltung von Teilnehmern an."""
+    """Zeigt die Seite zur Verwaltung aller Teilnehmer an."""
     page = request.args.get("page", 1, type=int)
     search_query = request.args.get("q", "")
     sort_order = request.args.get("sort", "name_asc")
-    pagination, participants = db.get_paginated_participants(
-        page, search_query, sort_order
-    )
+
+    # Basis-Abfrage mit SQLAlchemy
+    query = db.select(Participant).join(Group)
+
+    if search_query:
+        search_term = f"%{search_query}%"
+        # Logik für 'OR' in SQLAlchemy
+        query = query.filter(db.or_(Participant.name.like(search_term), Group.name.like(search_term)))
+
+    sort_map = {
+        'name_asc': Participant.name.asc(),
+        'name_desc': Participant.name.desc(),
+        'group_asc': Group.name.asc(),
+        'group_desc': Group.name.desc(),
+    }
+    order_clause = sort_map.get(sort_order, Participant.name.asc())
+    query = query.order_by(order_clause)
+
+    pagination = db.paginate(query, page=page, per_page=15)
+    participants = pagination.items
+    
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
         {"text": "Teilnehmer"},
@@ -26,162 +46,150 @@ def manage_participants():
         "manage_participants.html",
         participants=participants,
         pagination=pagination,
+        search_query=search_query,
+        sort_order=sort_order,
         breadcrumbs=breadcrumbs,
     )
 
 
-@participants_bp.route("/group/<int:group_id>/participant/add", methods=["POST"])
-def add_participant(group_id):
-    """Fügt mehrere Teilnehmer zu einer Gruppe hinzu."""
-    names_input = request.form.get("participant_names", "")
-    valid_names = [name.strip() for name in names_input.splitlines() if name.strip()]
-    if valid_names:
-        count = db.add_multiple_participants_to_group(group_id, valid_names)
-        flash(f"{count} Teilnehmer wurden hinzugefügt.", "success")
+@participants_bp.route('/add')
+@participants_bp.route('/add/<int:group_id>')
+def add_participant(group_id=None):
+    """
+    Zeigt das Formular zum Hinzufügen eines neuen Teilnehmers.
+    """
+    group = None
+    if group_id:
+        group = Group.query.get_or_404(group_id)
+    
+    breadcrumbs = [
+        {'text': 'Dashboard', 'link': url_for('dashboard')},
+    ]
+    
+    if group:
+        breadcrumbs.extend([
+            {'text': 'Gruppen verwalten', 'link': url_for('groups.manage_groups')},
+            {'text': group.name, 'link': url_for('groups.show_group_participants', group_id=group.id)},
+            {'text': 'Teilnehmer hinzufügen', 'link': ''}
+        ])
     else:
-        flash("Keine gültigen Namen eingegeben.", "warning")
-    return redirect(url_for("groups.show_group_participants", group_id=group_id))
+        breadcrumbs.extend([
+            {'text': 'Teilnehmer verwalten', 'link': url_for('participants.manage_participants')},
+            {'text': 'Teilnehmer hinzufügen', 'link': ''}
+        ])
+    
+    return render_template('participants.html', group=group, breadcrumbs=breadcrumbs)
+
+
+@participants_bp.route("/create", methods=["POST"])
+def create_participant():
+    """
+    Erstellt einen neuen Teilnehmer.
+    """
+    try:
+        group_id = request.form.get('group_id')
+        vorname = request.form.get('vorname')
+        nachname = request.form.get('nachname')
+        email = request.form.get('email')
+        telefon = request.form.get('telefon')
+        geburtsdatum = request.form.get('geburtsdatum')
+        geschlecht = request.form.get('geschlecht')
+        notizen = request.form.get('notizen')
+        
+        # Vollständigen Namen erstellen
+        name = f"{vorname} {nachname}".strip()
+        
+        # Neuen Teilnehmer erstellen
+        participant = Participant(
+            group_id=int(group_id) if group_id else None,
+            name=name,  # Verwenden Sie 'name' statt 'vorname'/'nachname'
+            email=email if email else None,
+            telefon=telefon if telefon else None,
+            geburtsdatum=datetime.strptime(geburtsdatum, '%Y-%m-%d').date() if geburtsdatum else None,
+            geschlecht=geschlecht if geschlecht else None,
+            notizen=notizen if notizen else None
+        )
+        
+        db.session.add(participant)
+        db.session.commit()
+        
+        flash(f'Teilnehmer {name} wurde erfolgreich hinzugefügt.', 'success')
+        
+        # Zurück zur entsprechenden Übersicht
+        if group_id:
+            return redirect(url_for('groups.show_group_participants', group_id=group_id))
+        else:
+            return redirect(url_for('participants.manage_participants'))
+            
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Fehler beim Hinzufügen des Teilnehmers: {str(e)}', 'error')
+        if group_id:
+            return redirect(url_for('participants.add_participant', group_id=group_id))
+        else:
+            return redirect(url_for('participants.add_participant'))
 
 
 @participants_bp.route("/participant/edit/<int:participant_id>", methods=["POST"])
 def edit_participant(participant_id):
     """Aktualisiert den Namen eines Teilnehmers."""
-    new_name = request.form["new_name"]
-    group_id = request.form["group_id"]
-    if new_name:
-        db.update_participant_name(participant_id, new_name)
+    participant = db.get_or_404(Participant, participant_id)
+    new_name = request.form.get("new_name")
+    
+    if new_name and new_name.strip():
+        participant.name = new_name.strip()
+        db.session.commit()
         flash("Teilnehmername wurde aktualisiert.", "success")
-    return redirect(url_for("groups.show_group_participants", group_id=group_id))
+    else:
+        flash("Der Name darf nicht leer sein.", "warning")
+
+    # Redirect zurück zur Gruppenseite des Teilnehmers
+    return redirect(url_for("groups.show_group_participants", group_id=participant.group_id))
 
 
 @participants_bp.route("/participant/delete/<int:participant_id>", methods=["POST"])
 def delete_participant(participant_id):
     """Löscht einen Teilnehmer."""
-    group_id = request.form["group_id"]
-    db.delete_participant_by_id(participant_id)
+    participant = db.get_or_404(Participant, participant_id)
+    group_id = participant.group_id
+    
+    db.session.delete(participant)
+    db.session.commit()
+    
     flash("Teilnehmer wurde gelöscht.", "success")
     return redirect(url_for("groups.show_group_participants", group_id=group_id))
 
 
+# --- Routen für Dateneingabe und Berichte (müssen später noch angepasst werden) ---
+
 @participants_bp.route("/participant/<int:participant_id>/data_entry")
 def show_data_entry(participant_id):
     """Zeigt die Dateneingabeseite für einen Teilnehmer an."""
-    participant = db.get_participant_by_id(participant_id)
-    if participant:
-        group = db.get_group_by_id(participant["group_id"])
-        breadcrumbs = [
-            {"link": url_for("dashboard"), "text": "Dashboard"},
-            {"link": url_for("groups.manage_groups"), "text": "Gruppen"},
-            {
-                "link": url_for("groups.show_group_participants", group_id=group["id"]),
-                "text": group["name"],
-            },
-            {"text": f"Dateneingabe: {participant['name']}"},
-        ]
-        return render_template(
-            "data_entry.html",
-            participant=participant,
-            group=group,
-            breadcrumbs=breadcrumbs,
-            prompts=db.get_all_prompts(),
-        )
-    flash("Teilnehmer nicht gefunden.", "error")
-    return redirect(url_for("participants.manage_participants"))
-
-
-@participants_bp.route("/participant/<int:participant_id>/report")
-def show_report(participant_id):
-    """Zeigt den Bericht für einen bestimmten Teilnehmer an."""
-    participant = db.get_participant_by_id(participant_id)
-    if not participant:
-        flash("Teilnehmer nicht gefunden.", "error")
-        return redirect(url_for("participants.manage_participants"))
-
-    group = db.get_group_by_id(participant["group_id"])
-    full_name = participant.get("name", "")
-    participant["first_name"] = full_name.split(" ")[0] if full_name else ""
-
-    # ENDGÜLTIGE LÖSUNG:
-    # 1. Berechne das tagesaktuelle Datum in der korrekten Zeitzone.
-    german_tz = pytz.timezone('Europe/Berlin')
-    current_date_str = datetime.now(pytz.utc).astimezone(german_tz).strftime("%d.%m.%Y")
-    current_location_str = "Lingen (Ems)"
-
-    # 2. Überschreibe aktiv die Werte, die an das Template gehen.
-    # Dies stellt sicher, dass immer das tagesaktuelle Datum verwendet wird,
-    # egal was in der Datenbank in `footer_data` gespeichert ist.
-    if 'footer_data' not in participant or not isinstance(participant['footer_data'], dict):
-        participant['footer_data'] = {}
-    participant['footer_data']['footer_date'] = current_date_str
-    participant['footer_data']['footer_location'] = current_location_str
+    # Diese Funktion muss noch vollständig auf SQLAlchemy umgebaut werden
+    participant = db.get_or_404(Participant, participant_id)
+    group = participant.group
+    
+    # Temporäre Konvertierung der JSON-Daten für die alte Vorlage
+    participant_dict = {
+        'id': participant.id,
+        'name': participant.name,
+        'group_id': participant.group_id,
+        'general_data': json.loads(participant.general_data) if participant.general_data else {},
+        'observations': json.loads(participant.observations) if participant.observations else {},
+        # ... weitere Felder bei Bedarf ...
+    }
 
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
         {"link": url_for("groups.manage_groups"), "text": "Gruppen"},
-        {
-            "link": url_for("groups.show_group_participants", group_id=group["id"]),
-            "text": group["name"],
-        },
-        {"text": f"Bericht: {participant['name']}"},
+        {"link": url_for("groups.show_group_participants", group_id=group.id), "text": group.name},
+        {"text": f"Dateneingabe: {participant.name}"},
     ]
-
-    # 3. Übergebe die geänderten Daten an das Template.
-    # Die zusätzlichen Variablen `current_date` und `current_location` werden
-    # nun nur noch als Fallback für komplett neue Berichte ohne `footer_data` benötigt.
+    # HINWEIS: Die 'data_entry.html' Vorlage muss noch auf das neue Design umgestellt werden
     return render_template(
-        "staerkenanalyse_bericht_vorlage3.html",
-        participant=participant,
+        "data_entry.html",
+        participant=participant_dict,
         group=group,
         breadcrumbs=breadcrumbs,
-        current_date=current_date_str,
-        current_location=current_location_str,
+        prompts=[] # Platzhalter, da Prompts noch nicht umgestellt sind
     )
-
-
-@participants_bp.route("/save_observations/<int:participant_id>", methods=["POST"])
-def save_observations(participant_id):
-    """Speichert die Beobachtungen für einen bestimmten Teilnehmer."""
-    data = request.get_json()
-    if data and "social" in data:
-        db.save_participant_data(participant_id, {"observations": data})
-        return jsonify({"status": "success", "message": "Beobachtungen gespeichert!"})
-    return jsonify({"status": "error", "message": "Ungültige Daten."}), 400
-
-
-@participants_bp.route("/save_report/<int:participant_id>", methods=["POST"])
-def save_report(participant_id):
-    """Speichert die Berichtsdaten für einen bestimmten Teilnehmer."""
-    data = request.get_json()
-    db.save_participant_data(
-        participant_id,
-        {
-            "sk_ratings": data.get("sk_ratings"),
-            "vk_ratings": data.get("vk_ratings"),
-            "ki_texts": data.get("ki_texts"),
-        },
-    )
-    db.save_report_details(
-        participant_id, data.get("group_details"), data.get("footer_data")
-    )
-    return jsonify({"status": "success", "message": "Bericht erfolgreich gespeichert!"})
-
-
-@participants_bp.route("/api/group/<int:group_id>/participants")
-def get_participants_for_group(group_id):
-    """Gibt die Teilnehmer einer bestimmten Gruppe als JSON zurück."""
-    participants = db.get_participants_by_group(group_id)
-    return jsonify([dict(p) for p in participants])
-
-@participants_bp.route("/api/participant/<int:participant_id>/observations")
-def get_observations(participant_id):
-    """Gibt die Beobachtungen für einen Teilnehmer als JSON zurück."""
-    participant = db.get_participant_by_id(participant_id)
-    # Stellt sicher, dass observations ein dict ist, auch wenn es null ist
-    observations = participant.get("observations") if participant else None
-    if isinstance(observations, dict):
-        return jsonify({
-            "social": observations.get("social", ""),
-            "verbal": observations.get("verbal", "")
-        })
-    # Fallback, wenn keine Beobachtungen vorhanden sind
-    return jsonify({"social": "", "verbal": ""})
