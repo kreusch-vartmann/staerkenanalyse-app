@@ -1,67 +1,113 @@
 {% extends 'base.html' %}
 
-{% block title %}Teilnehmer für {{ group.name }}{% endblock %}
+{% block title %}Teilnehmer von {{ group.name }}{% endblock %}
 
 {% block content %}
-    <h2 class="text-3xl font-bold text-gray-800 mb-2">Gruppe: {{ group.name }}</h2>
-    <p class="text-gray-600 mb-6">Verwalten Sie hier die Teilnehmer dieser Gruppe.</p>
+<div class="container mx-auto px-4 py-6">
+    <!-- Breadcrumbs -->
+    <nav class="mb-6">
+        <ol class="flex items-center space-x-2 text-sm text-gray-600">
+            <li>
+                <a href="{{ url_for('dashboard') }}" class="hover:text-blue-600 transition-colors">Dashboard</a>
+                <span class="mx-2">/</span>
+            </li>
+            <li>
+                <a href="{{ url_for('groups.manage_groups') }}" class="hover:text-blue-600 transition-colors">Gruppen</a>
+                <span class="mx-2">/</span>
+            </li>
+            <li class="text-blue-600 font-medium">{{ group.name }}</li>
+        </ol>
+    </nav>
 
-    <div class="mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
-        <h3 class="text-xl font-semibold mb-4">Neue Teilnehmer hinzufügen</h3>
-        <form action="{{ url_for('participants.add_participant', group_id=group.id) }}" method="post">
-            <div class="w-full">
-                <label for="participant_names" class="block text-sm font-medium text-gray-700 mb-2">
-                    Teilnehmernamen (ein Name pro Zeile)
-                </label>
-                <textarea name="participant_names" id="participant_names" rows="5" required class="w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="Max Mustermann&#10;Erika Musterfrau&#10;John Doe"></textarea>
-            </div>
-            <button type="submit" class="mt-4 py-2 px-6 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold">Hinzufügen</button>
-        </form>
-    </div>
-
-    <div class="space-y-4">
-        {% for participant in participants %}
-        <div class="p-4 border rounded-lg bg-white shadow-sm" id="participant-container-{{ participant.id }}">
-            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center">
-                <h3 class="text-lg font-medium text-gray-800">{{ participant.name }}</h3>
-                <div class="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0 mt-2 sm:mt-0">
-                    <a href="{{ url_for('participants.show_data_entry', participant_id=participant.id) }}" class="py-2 px-4 text-sm rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 text-center">Dateneingabe</a>
-                    <button onclick="editParticipant('{{ participant.id }}', '{{ participant.name }}')" class="py-2 px-4 text-sm rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700">Bearbeiten</button>
-                    <a href="{{ url_for('participants.show_report', participant_id=participant.id) }}" class="py-2 px-4 text-sm rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 text-center">Bericht anzeigen</a>
-                    <form action="{{ url_for('participants.delete_participant', participant_id=participant.id) }}" method="post" onsubmit="return confirm('Sind Sie sicher, dass Sie den Teilnehmer \'{{ participant.name }}\' endgültig löschen möchten?');">
-                        <input type="hidden" name="group_id" value="{{ group.id }}">
-                        <button type="submit" class="w-full py-2 px-4 text-sm rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700">Löschen</button>
-                    </form>
+    <!-- Gruppeninfo Card -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h2 class="text-3xl font-bold text-gray-800">{{ group.name }}</h2>
+                <div class="text-sm text-gray-500 mt-1">
+                    <span>ID: {{ group.id }}</span>
+                    {% if group.date %}
+                        <span class="mx-2">|</span>
+                        <span>Datum: {{ group.date.strftime('%d.%m.%Y') }}</span>
+                    {% endif %}
+                    {% if group.location %}
+                        <span class="mx-2">|</span>
+                        <span>Ort: {{ group.location }}</span>
+                    {% endif %}
                 </div>
             </div>
+            <a href="{{ url_for('groups.manage_groups') }}" class="text-blue-600 hover:text-blue-800 font-semibold">
+                &larr; Zurück zur Übersicht
+            </a>
         </div>
-        {% else %}
-        <p class="text-gray-500 italic">Für diese Gruppe wurden noch keine Teilnehmer angelegt.</p>
-        {% endfor %}
+        <div class="border-t border-gray-200 mt-4 pt-4 text-sm text-gray-700">
+            <p><strong>Leitung Fremdeinschätzung:</strong> {{ group.leitung_fremdeinschatzung or 'N/A' }}</p>
+            <p><strong>Leitung Selbsteinschätzung:</strong> {{ group.leitung_selbsteinschatzung or 'N/A' }}</p>
+            <p><strong>Beobachter:</strong> {{ group.beobachter1 or 'N/A' }}, {{ group.beobachter2 or 'N/A' }}</p>
+        </div>
     </div>
 
-    <script>
-        let originalParticipantHtmlStore = {};
-        function editParticipant(id, name) {
-            const container = document.getElementById(`participant-container-${id}`);
-            originalParticipantHtmlStore[id] = container.innerHTML;
-            container.innerHTML = `
-                <form action="{{ url_for('participants.edit_participant', participant_id=0) }}`.slice(0, -2) + `/${id}" method="post" class="flex items-center w-full space-x-4">
-                    <input type="hidden" name="group_id" value="{{ group.id }}">
-                    <input type="text" name="new_name" value="${name}" class="flex-1 p-2 border rounded-md" required>
-                    <div class="flex space-x-2">
-                        <button type="submit" class="py-2 px-4 text-sm rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700">Speichern</button>
-                        <button type="button" class="py-2 px-4 text-sm rounded-lg bg-gray-500 text-white font-semibold hover:bg-gray-600" onclick="cancelEdit(${id})">Abbrechen</button>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Teilnehmer hinzufügen -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Teilnehmer hinzufügen</h3>
+                <form method="POST" action="{{ url_for('participants.add_participant', group_id=group.id) }}">
+                    <div class="form-group">
+                        <label for="participant_names" class="block text-sm font-medium text-gray-700">
+                            Namen eingeben (einer pro Zeile)
+                        </label>
+                        <textarea id="participant_names" name="participant_names" rows="5" 
+                                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                  placeholder="Max Mustermann&#10;Erika Mustermann"></textarea>
                     </div>
+                    <button type="submit" 
+                            class="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                        Hinzufügen
+                    </button>
                 </form>
-            `;
-        }
-        function cancelEdit(id) {
-            const container = document.getElementById(`participant-container-${id}`);
-            if (originalParticipantHtmlStore[id]) {
-                container.innerHTML = originalParticipantHtmlStore[id];
-                delete originalParticipantHtmlStore[id];
-            }
-        }
-    </script>
+            </div>
+        </div>
+
+        <!-- Teilnehmerliste -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Teilnehmerliste ({{ participants|length }})</h3>
+                </div>
+                
+                {% if participants %}
+                    <ul class="divide-y divide-gray-200">
+                        {% for participant in participants %}
+                        <li class="p-4 hover:bg-gray-50 flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-800">{{ participant.name }}</span>
+                            <div class="flex items-center space-x-3">
+                                <a href="{{ url_for('participants.show_data_entry', participant_id=participant.id) }}"
+                                   class="text-sm font-medium text-blue-600 hover:text-blue-900">
+                                   Dateneingabe
+                                </a>
+                                <!-- Bearbeiten und Löschen (Funktionalität kommt später) -->
+                                <button onclick="alert('Bearbeiten-Funktion wird noch implementiert.')" class="text-gray-400 cursor-not-allowed">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                </button>
+                                <form method="POST" action="{{ url_for('participants.delete_participant', participant_id=participant.id) }}" 
+                                      onsubmit="return confirm('Sind Sie sicher, dass Sie {{ participant.name|e }} löschen möchten?')"
+                                      class="inline">
+                                    <button type="submit" class="text-red-500 hover:text-red-800">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="text-center py-12 text-sm text-gray-500">
+                        <p>Dieser Gruppe wurden noch keine Teilnehmer hinzugefügt.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

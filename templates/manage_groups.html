@@ -1,114 +1,424 @@
 {% extends 'base.html' %}
 
-{% block title %}Gruppenverwaltung{% endblock %}
+{% block title %}Gruppen verwalten{% endblock %}
 
 {% block content %}
-    <h2 class="text-3xl font-bold text-gray-800 mb-6">Gruppenverwaltung</h2>
+<div class="container mx-auto px-4 py-6">
+    <!-- Breadcrumbs -->
+    <nav class="mb-6">
+        <ol class="flex items-center space-x-2 text-sm text-gray-600">
+            {% for breadcrumb in breadcrumbs %}
+                {% if loop.last %}
+                    <li class="text-blue-600 font-medium">{{ breadcrumb.text }}</li>
+                {% else %}
+                    <li>
+                        <a href="{{ breadcrumb.link }}" class="hover:text-blue-600 transition-colors">{{ breadcrumb.text }}</a>
+                        <span class="mx-2">/</span>
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ol>
+    </nav>
 
-    <!-- Neue Gruppe hinzufügen -->
-    <div class="mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
-        <h3 class="text-xl font-semibold mb-4">Neue Gruppe anlegen</h3>
-        <form action="{{ url_for('groups.add_group') }}" method="post" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-            <!-- linke Spalte -->
-            <div>
-                <label for="name" class="block text-sm font-medium text-gray-700">Gruppenname</label>
-                <input type="text" id="name" name="name" required class="mt-1 w-full rounded-md border-gray-300 shadow-sm p-2">
-            </div>
-            <div>
-                <label for="date" class="block text-sm font-medium text-gray-700">Datum der Durchführung</label>
-                <input type="date" id="date" name="date" class="mt-1 w-full rounded-md border-gray-300 shadow-sm p-2">
-            </div>
-            <div>
-                <label for="location" class="block text-sm font-medium text-gray-700">Ort der Durchführung</label>
-                <input type="text" id="location" name="location" class="mt-1 w-full rounded-md border-gray-300 shadow-sm p-2">
-            </div>
-
-            <!-- rechte Spalte -->
-            <div>
-                <label for="leitung" class="block text-sm font-medium text-gray-700">Leitung</label>
-                <input type="text" id="leitung" name="leitung" value="Timo Kreusch-Vartmann, Learning Manager" class="mt-1 w-full rounded-md border-gray-300 shadow-sm p-2">
-            </div>
-            <div>
-                <label for="beobachter1" class="block text-sm font-medium text-gray-700">1. Beobachter*in</label>
-                <input type="text" id="beobachter1" name="beobachter1" class="mt-1 w-full rounded-md border-gray-300 shadow-sm p-2">
-            </div>
-            <div>
-                <label for="beobachter2" class="block text-sm font-medium text-gray-700">2. Beobachter*in</label>
-                <input type="text" id="beobachter2" name="beobachter2" class="mt-1 w-full rounded-md border-gray-300 shadow-sm p-2">
-            </div>
-
-            <!-- Button -->
-            <div class="md:col-span-2">
-                <button type="submit" class="w-full mt-2 py-2 px-4 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold">
-                    Gruppe hinzufügen
-                </button>
-            </div>
-        </form>
+    <!-- Header mit Titel und Neue Gruppe Button -->
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-3xl font-bold text-gray-800">Gruppen verwalten</h2>
+        <button onclick="openAddGroupModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            Neue Gruppe
+        </button>
     </div>
 
-    <!-- Bestehende Gruppen -->
-    <div class="space-y-4">
-        {% for group in groups %}
-        <div class="p-4 border rounded-lg bg-white shadow-sm" id="group-container-{{ group.id }}">
-             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center">
-                <h3 class="text-lg font-medium text-gray-800 mb-2 sm:mb-0">{{ group.name }}</h3>
-                <div class="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0">
-                    <a href="{{ url_for('groups.show_group_participants', group_id=group.id) }}" class="py-2 px-4 text-sm rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 text-center">Details anzeigen</a>
-                    <button onclick="editGroup('{{ group.id }}', '{{ group.name }}', '{{ group.date }}', '{{ group.location }}', '{{ group.leitung }}', '{{ group.beobachter1 }}', '{{ group.beobachter2 }}')" class="py-2 px-4 text-sm rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700">Bearbeiten</button>
-                    <form action="{{ url_for('groups.delete_group', group_id=group.id) }}" method="post" onsubmit="return confirm('Sind Sie sicher, dass Sie die Gruppe \'{{ group.name }}\' und alle zugehörigen Teilnehmer endgültig löschen möchten?');">
-                        <button type="submit" class="w-full py-2 px-4 text-sm rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700">Löschen</button>
-                    </form>
+    <!-- Statistiken Card -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="text-center">
+                <div class="text-2xl font-bold text-blue-600">{{ pagination.total }}</div>
+                <div class="text-sm text-gray-600">Gesamt Gruppen</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-green-600">
+                    {% set active_groups = 0 %}
+                    {% for group in groups %}
+                        {% if group.participants.count() > 0 %}
+                            {% set active_groups = active_groups + 1 %}
+                        {% endif %}
+                    {% endfor %}
+                    {{ active_groups }}
                 </div>
+                <div class="text-sm text-gray-600">Aktive Gruppen</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-purple-600">
+                    {# Korrigierte Berechnung der Gesamtteilnehmer mit SQLAlchemy #}
+                    {% set total_participants = 0 %}
+                    {% for group in groups %}
+                        {% set total_participants = total_participants + group.participants.count() %}
+                    {% endfor %}
+                    {{ total_participants }}
+                </div>
+                <div class="text-sm text-gray-600">Gesamt Teilnehmer</div>
             </div>
         </div>
-        {% endfor %}
     </div>
 
-    <!-- Pagination -->
-    <div class="mt-8 flex justify-center items-center space-x-2">
-        {% if pagination.has_prev %}
-            <a href="{{ url_for('groups.manage_groups', page=pagination.prev_num) }}" class="py-2 px-4 rounded-md bg-gray-200 hover:bg-gray-300 text-sm font-medium">‹ Vorherige</a>
-        {% endif %}
-        <span class="text-sm text-gray-700">Seite {{ pagination.page }} von {{ pagination.pages }}</span>
-        {% if pagination.has_next %}
-            <a href="{{ url_for('groupsmanage_groups', page=pagination.next_num) }}" class="py-2 px-4 rounded-md bg-gray-200 hover:bg-gray-300 text-sm font-medium">Nächste ›</a>
+    <!-- Gruppen Tabelle -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        {% if groups %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gruppe</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ort</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Teilnehmer</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Leitung</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aktionen</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for group in groups %}
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10">
+                                        <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <a href="{{ url_for('groups.show_group_participants', group_id=group.id) }}" class="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors">
+                                            {{ group.name }}
+                                        </a>
+                                        <div class="text-sm text-gray-500">ID: {{ group.id }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if group.date %}
+                                    <div class="text-sm text-gray-900">{{ group.date.strftime('%d.%m.%Y') }}</div>
+                                {% else %}
+                                    <div class="text-sm text-gray-400">Nicht gesetzt</div>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if group.location %}
+                                    <div class="text-sm text-gray-900">{{ group.location }}</div>
+                                {% else %}
+                                    <div class="text-sm text-gray-400">Nicht gesetzt</div>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        {{ group.participants.count() }} Teilnehmer
+                                    </span>
+                                    {% if group.participants.count() > 0 %}
+                                        <a href="{{ url_for('groups.show_group_participants', group_id=group.id) }}" 
+                                           class="ml-2 text-blue-600 hover:text-blue-900 text-sm">
+                                            Anzeigen
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">
+                                    {% if group.leitung_fremdeinschatzung %}
+                                        <div>F: {{ group.leitung_fremdeinschatzung }}</div>
+                                    {% endif %}
+                                    {% if group.leitung_selbsteinschatzung %}
+                                        <div>S: {{ group.leitung_selbsteinschatzung }}</div>
+                                    {% endif %}
+                                    {% if not group.leitung_fremdeinschatzung and not group.leitung_selbsteinschatzung %}
+                                        <div class="text-gray-400">Nicht gesetzt</div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div class="flex items-center justify-end space-x-2">
+                                    <!-- Teilnehmer hinzufügen Button - NEU -->
+                                    <a href="{{ url_for('participants.add_participant', group_id=group.id) }}" 
+                                       class="flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                        <svg class="w-4 h-4 text-gray-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-3-2a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                                        </svg>
+                                        + Teilnehmer
+                                    </a>
+                                    
+                                    <!-- Bearbeiten Button (bereits vorhanden) -->
+                                    <button onclick="openEditGroupModal({{ group.id }}, '{{ group.name|e }}', '{{ group.date.strftime('%Y-%m-%d') if group.date else '' }}', '{{ group.location|e if group.location else '' }}', '{{ group.leitung_fremdeinschatzung|e if group.leitung_fremdeinschatzung else '' }}', '{{ group.leitung_selbsteinschatzung|e if group.leitung_selbsteinschatzung else '' }}', '{{ group.beobachter1|e if group.beobachter1 else '' }}', '{{ group.beobachter2|e if group.beobachter2 else '' }}')"
+                                        class="flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    <svg class="w-4 h-4 text-gray-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    </svg>
+                                    Bearbeiten
+                                    </button>
+                                    
+                                    <!-- Löschen Button (bereits vorhanden) -->
+                                    <form method="POST" action="{{ url_for('groups.delete_group', group_id=group.id) }}" 
+                                          onsubmit="return confirm('Sind Sie sicher, dass Sie die Gruppe &quot;{{ group.name|e }}&quot; und alle zugehörigen Teilnehmer löschen möchten?')"
+                                          class="inline">
+                                        <button type="submit" class="flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                            <svg class="w-4 h-4 text-white mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            </svg>
+                                            Löschen
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if pagination.pages > 1 %}
+            <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    {% if pagination.has_prev %}
+                        <a href="{{ url_for('groups.manage_groups', page=pagination.prev_num) }}" 
+                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            Zurück
+                        </a>
+                    {% endif %}
+                    {% if pagination.has_next %}
+                        <a href="{{ url_for('groups.manage_groups', page=pagination.next_num) }}" 
+                           class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            Weiter
+                        </a>
+                    {% endif %}
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            Zeige
+                            <span class="font-medium">{{ (pagination.page - 1) * pagination.per_page + 1 }}</span>
+                            bis
+                            <span class="font-medium">{{ pagination.page * pagination.per_page if pagination.page * pagination.per_page < pagination.total else pagination.total }}</span>
+                            von
+                            <span class="font-medium">{{ pagination.total }}</span>
+                            Ergebnissen
+                        </p>
+                    </div>
+                    <div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                            {% if pagination.has_prev %}
+                                <a href="{{ url_for('groups.manage_groups', page=pagination.prev_num) }}" 
+                                   class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    <span class="sr-only">Zurück</span>
+                                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                            {% endif %}
+
+                            {% for page_num in pagination.iter_pages() %}
+                                {% if page_num %}
+                                    {% if page_num != pagination.page %}
+                                        <a href="{{ url_for('groups.manage_groups', page=page_num) }}" 
+                                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                            {{ page_num }}
+                                        </a>
+                                    {% else %}
+                                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-50 text-sm font-medium text-blue-600">
+                                            {{ page_num }}
+                                        </span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if pagination.has_next %}
+                                <a href="{{ url_for('groups.manage_groups', page=pagination.next_num) }}" 
+                                   class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    <span class="sr-only">Weiter</span>
+                                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                            {% endif %}
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        {% else %}
+            <!-- Empty State -->
+            <div class="text-center py-12">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">Keine Gruppen</h3>
+                <p class="mt-1 text-sm text-gray-500">Erstellen Sie Ihre erste Gruppe, um zu beginnen.</p>
+                <div class="mt-6">
+                    <button onclick="openAddGroupModal()" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Neue Gruppe
+                    </button>
+                </div>
+            </div>
         {% endif %}
     </div>
+</div>
 
-    <script>
-        let originalGroupHtmlStore = {};
+<!-- Neue Gruppe Modal -->
+<div id="addGroupModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Neue Gruppe erstellen</h3>
+            <form method="POST" action="{{ url_for('groups.add_group') }}" class="space-y-4">
+                <div class="text-left">
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Gruppenname *</label>
+                    <input type="text" id="name" name="name" required 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div class="text-left">
+                    <label for="date" class="block text-sm font-medium text-gray-700 mb-1">Datum</label>
+                    <input type="date" id="date" name="date" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div class="text-left">
+                    <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Ort</label>
+                    <input type="text" id="location" name="location" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div class="text-left">
+                    <label for="leitung_fremdeinschatzung" class="block text-sm font-medium text-gray-700 mb-1">Leitung (Fremdeinschätzung)</label>
+                    <input type="text" id="leitung_fremdeinschatzung" name="leitung_fremdeinschatzung" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div class="text-left">
+                    <label for="leitung_selbsteinschatzung" class="block text-sm font-medium text-gray-700 mb-1">Leitung (Selbsteinschätzung)</label>
+                    <input type="text" id="leitung_selbsteinschatzung" name="leitung_selbsteinschatzung" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div class="text-left">
+                    <label for="beobachter1" class="block text-sm font-medium text-gray-700 mb-1">1. Beobachter</label>
+                    <input type="text" id="beobachter1" name="beobachter1" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div class="text-left">
+                    <label for="beobachter2" class="block text-sm font-medium text-gray-700 mb-1">2. Beobachter</label>
+                    <input type="text" id="beobachter2" name="beobachter2" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeAddGroupModal()" 
+                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                        Abbrechen
+                    </button>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                        Erstellen
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
-        function editGroup(id, name, date, location, leitung, beobachter1, beobachter2) {
-            const container = document.getElementById(`group-container-${id}`);
-            originalGroupHtmlStore[id] = container.innerHTML;
+<!-- Gruppe bearbeiten Modal -->
+<div id="editGroupModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Gruppe bearbeiten</h3>
+            <form method="POST" id="editGroupForm" class="space-y-4">
+                <div class="text-left">
+                    <label for="group_name" class="block text-sm font-medium text-gray-700 mb-1">Gruppenname *</label>
+                    <input type="text" id="group_name" name="group_name" required 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div class="text-left">
+                    <label for="group_date" class="block text-sm font-medium text-gray-700 mb-1">Datum</label>
+                    <input type="date" id="group_date" name="group_date" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div class="text-left">
+                    <label for="group_location" class="block text-sm font-medium text-gray-700 mb-1">Ort</label>
+                    <input type="text" id="group_location" name="group_location" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div class="text-left">
+                    <label for="edit_leitung_fremdeinschatzung" class="block text-sm font-medium text-gray-700 mb-1">Leitung (Fremdeinschätzung)</label>
+                    <input type="text" id="edit_leitung_fremdeinschatzung" name="leitung_fremdeinschatzung" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div class="text-left">
+                    <label for="edit_leitung_selbsteinschatzung" class="block text-sm font-medium text-gray-700 mb-1">Leitung (Selbsteinschätzung)</label>
+                    <input type="text" id="edit_leitung_selbsteinschatzung" name="leitung_selbsteinschatzung" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div class="text-left">
+                    <label for="edit_beobachter1" class="block text-sm font-medium text-gray-700 mb-1">1. Beobachter</label>
+                    <input type="text" id="edit_beobachter1" name="beobachter1" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div class="text-left">
+                    <label for="edit_beobachter2" class="block text-sm font-medium text-gray-700 mb-1">2. Beobachter</label>
+                    <input type="text" id="edit_beobachter2" name="beobachter2" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeEditGroupModal()" 
+                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                        Abbrechen
+                    </button>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                        Speichern
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
-            const finalUrl = `/group/edit/${id}`;
+<script>
+function openAddGroupModal() {
+    document.getElementById('addGroupModal').classList.remove('hidden');
+}
 
-            container.innerHTML = `
-                <form action="${finalUrl}" method="post" class="space-y-3 p-3 bg-blue-50 rounded-lg">
-                    <div class="grid grid-cols-2 gap-x-4 gap-y-2">
-                        <div class="col-span-2"><label class="block text-sm font-medium text-gray-600">Gruppenname:</label><input type="text" name="group_name" value="${name}" class="p-1 mt-1 text-sm border rounded-md w-full" required></div>
-                        <div><label class="block text-sm font-medium text-gray-600">Datum:</label><input type="date" name="group_date" value="${date || ''}" class="p-1 mt-1 text-sm border rounded-md w-full"></div>
-                        <div><label class="block text-sm font-medium text-gray-600">Ort:</label><input type="text" name="group_location" value="${location || ''}" class="p-1 mt-1 text-sm border rounded-md w-full"></div>
-                        <div><label class="block text-sm font-medium text-gray-600">Leitung:</label><input type="text" name="group_leitung" value="${leitung || ''}" class="p-1 mt-1 text-sm border rounded-md w-full"></div>
-                        <div><label class="block text-sm font-medium text-gray-600">1. Beobachter*in:</label><input type="text" name="beobachter1" value="${beobachter1 || ''}" class="p-1 mt-1 text-sm border rounded-md w-full"></div>
-                        <div><label class="block text-sm font-medium text-gray-600">2. Beobachter*in:</label><input type="text" name="beobachter2" value="${beobachter2 || ''}" class="p-1 mt-1 text-sm border rounded-md w-full"></div>
-                    </div>
-                    <div class="flex justify-end space-x-2 pt-3">
-                        <button type="submit" class="py-2 px-4 text-sm rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700">Speichern</button>
-                        <button type="button" class="py-2 px-4 text-sm rounded-lg bg-gray-500 text-white font-semibold hover:bg-gray-600" onclick="cancelEdit(${id})">Abbrechen</button>
-                    </div>
-                </form>
-            `;
-        }
+function closeAddGroupModal() {
+    document.getElementById('addGroupModal').classList.add('hidden');
+}
 
-        function cancelEdit(id) {
-            const container = document.getElementById(`group-container-${id}`);
-            if (originalGroupHtmlStore[id]) {
-                container.innerHTML = originalGroupHtmlStore[id];
-                delete originalGroupHtmlStore[id];
-            }
-        }
-    </script>
+function openEditGroupModal(id, name, date, location, leitungF, leitungS, beobachter1, beobachter2) {
+    document.getElementById('editGroupForm').action = `{{ url_for('groups.edit_group', group_id=0) }}`.replace('0', id);
+    document.getElementById('group_name').value = name;
+    document.getElementById('group_date').value = date;
+    document.getElementById('group_location').value = location;
+    document.getElementById('edit_leitung_fremdeinschatzung').value = leitungF;
+    document.getElementById('edit_leitung_selbsteinschatzung').value = leitungS;
+    document.getElementById('edit_beobachter1').value = beobachter1;
+    document.getElementById('edit_beobachter2').value = beobachter2;
+    document.getElementById('editGroupModal').classList.remove('hidden');
+}
+
+function closeEditGroupModal() {
+    document.getElementById('editGroupModal').classList.add('hidden');
+}
+
+// Close modals when clicking outside
+window.onclick = function(event) {
+    const addModal = document.getElementById('addGroupModal');
+    const editModal = document.getElementById('editGroupModal');
+    if (event.target == addModal) {
+        closeAddGroupModal();
+    }
+    if (event.target == editModal) {
+        closeEditGroupModal();
+    }
+}
+</script>
 {% endblock %}
 
