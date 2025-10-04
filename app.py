@@ -1,7 +1,7 @@
-# app.py - FINALE MODULARISIERTE VERSION
+# app.py - Umbau auf SQLAlchemy
 """Dieses Modul initialisiert die Flask-Anwendung und registriert alle Blueprints."""
 
-# NEU: .env Datei laden, damit FLASK_APP und DATABASE_URL bekannt sind
+# .env Datei laden
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -9,9 +9,8 @@ import os
 from datetime import UTC, datetime
 from flask import Flask, render_template, url_for
 
-# NEU: Wir importieren unsere neuen Erweiterungen
+# Neue Imports
 from extensions import db, migrate
-# NEU: Wir importieren die Models, damit Flask-Migrate sie findet
 import models
 
 # Blueprints importieren
@@ -25,17 +24,14 @@ from blueprints.prompts import prompts_bp
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
-# --- NEUE KONFIGURATION FÜR POSTGRESQL & SQLAlchemy ---
+# --- NEUE KONFIGURATION ---
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# NEU: Initialisierung der Erweiterungen mit der App
+# Erweiterungen initialisieren
 db.init_app(app)
 migrate.init_app(app, db)
 
-
-# ENTFERNT: Die alte `database.py`-Datei wird hier nicht mehr importiert.
-# import database as db
 
 # Blueprints registrieren
 app.register_blueprint(groups_bp)
@@ -47,50 +43,37 @@ app.register_blueprint(prompts_bp)
 
 # --- ZENTRALE FUNKTIONEN ---
 
-# ENTFERNT: Die alte Funktion zum Schließen der DB-Verbindung wird nicht mehr benötigt.
-# SQLAlchemy verwaltet die Verbindungen automatisch.
-# @app.teardown_appcontext
-# def close_connection(_exception):
-#     """Schließt die Datenbankverbindung am Ende jeder Anfrage."""
-#     db.close_db()
-
 @app.context_processor
 def inject_now():
     """Fügt das aktuelle Jahr in alle Templates ein."""
     return {"current_year": datetime.now(UTC).year}
 
-@app.template_filter("datetimeformat")
-def datetimeformat(value, fmt="%d.%m.%Y"):
-    """Formatiert ein Datum in ein lesbares Format."""
-    if not value:
-        return ""
-    if isinstance(value, datetime):
-        return value.strftime(fmt)
-    if isinstance(value, str):
-        try:
-            # Versucht, verschiedene String-Formate zu parsen
-            dt = datetime.fromisoformat(value)
-            return dt.strftime(fmt)
-        except (ValueError, TypeError):
-            # Fallback, falls das Format nicht passt
-            return value
-    return value
-
+# Die alten Filter und teardown-Funktionen sind durch SQLAlchemy nicht mehr nötig
 
 # --- ZENTRALE ROUTE & INFOSEITE ---
 
 @app.route("/")
 def dashboard():
-    """Zeigt das Dashboard mit Statistiken und kürzlich aktualisierten Teilnehmern an."""
-    # VORÜBERGEHEND: Die alten DB-Aufrufe werden wir später ersetzen.
-    # Für den Moment verwenden wir Platzhalter, damit die App startet.
-    stats = {
-        'total_groups': models.Group.query.count(),
-        'total_participants': models.Participant.query.count(),
-        'completed_analyses': 0  # Diese Logik müssen wir neu definieren
-    }
-    recently_updated = models.Participant.query.order_by(models.Participant.updated_at.desc()).limit(5).all()
+    """Zeigt das Dashboard an."""
+    # --- KORRIGIERT: Veraltete Abfragen durch moderne SQLAlchemy-Syntax ersetzt ---
+    total_groups = db.session.scalar(db.select(db.func.count(models.Group.id)))
+    total_participants = db.session.scalar(db.select(db.func.count(models.Participant.id)))
+    
+    # Für 'completed_analyses' nehmen wir an, dass eine Analyse abgeschlossen ist, wenn ki_texts nicht leer ist.
+    completed_analyses = db.session.scalar(
+        db.select(db.func.count(models.Participant.id)).where(models.Participant.ki_texts.isnot(None) & (models.Participant.ki_texts != '{}'))
+    )
 
+    recently_updated = db.session.scalars(
+        db.select(models.Participant).order_by(models.Participant.updated_at.desc()).limit(5)
+    ).all()
+
+    stats = {
+        'total_groups': total_groups,
+        'total_participants': total_participants,
+        'completed_analyses': completed_analyses
+    }
+    
     breadcrumbs = [{"text": "Dashboard"}]
     return render_template(
         "dashboard.html",
