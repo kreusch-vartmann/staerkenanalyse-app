@@ -172,11 +172,11 @@
 
 ## ⚠️ Bekannte Issues & TODOs
 
-1. **SECRET_KEY regeneriert bei Restart** → Sessions werden ungültig
-2. **3x TODOs in blueprints/data_io.py** → Export-Funktion Field-Mapping
-3. **schema.sql veraltet** → Nur `leitung`, models.py hat `leitung_fremdeinschatzung` + `leitung_selbsteinschatzung`
-4. **database.py (338 Zeilen)** → Legacy Code, vermutlich unused
-5. **Debug-Modus in Production** → `app.run(debug=True)` hardcoded
+1. **3x TODOs in blueprints/data_io.py** → Export-Funktion Field-Mapping (gut dokumentiert)
+2. **schema.sql veraltet** → Nur `leitung`, models.py hat `leitung_fremdeinschatzung` + `leitung_selbsteinschatzung`
+3. **database.py (338 Zeilen)** → Legacy Code neben SQLAlchemy, sollte depreciert werden
+
+**Hinweis**: SECRET_KEY und Debug-Modus werden korrekt aus `.env` gelesen (siehe app.py Zeile 28 + 139).
 
 ---
 
