@@ -47,17 +47,20 @@
 
     <div class="bg-white p-6 shadow-md rounded-lg">
         <h3 class="text-xl font-bold text-gray-700 mb-4">Text: Soziale Kompetenzen</h3>
-        <textarea id="social_text" class="w-full h-48 p-3 border rounded-md focus:ring-2 focus:ring-blue-500 transition-shadow">{{ (participant.ki_texts or {}).social_text }}</textarea>
+        <div id="social_text_editor" class="border rounded-md" style="height: 192px;"></div>
+        <input type="hidden" id="social_text" value="{{ (participant.ki_texts or {}).social_text | e }}">
     </div>
 
     <div class="bg-white p-6 shadow-md rounded-lg">
         <h3 class="text-xl font-bold text-gray-700 mb-4">Text: Verbale Kompetenzen</h3>
-        <textarea id="verbal_text" class="w-full h-48 p-3 border rounded-md focus:ring-2 focus:ring-blue-500 transition-shadow">{{ (participant.ki_texts or {}).verbal_text }}</textarea>
+        <div id="verbal_text_editor" class="border rounded-md" style="height: 192px;"></div>
+        <input type="hidden" id="verbal_text" value="{{ (participant.ki_texts or {}).verbal_text | e }}">
     </div>
 
     <div class="bg-white p-6 shadow-md rounded-lg">
         <h3 class="text-xl font-bold text-gray-700 mb-4">Text: Zusammenfassung</h3>
-        <textarea id="summary_text" class="w-full h-32 p-3 border rounded-md focus:ring-2 focus:ring-blue-500 transition-shadow">{{ (participant.ki_texts or {}).summary_text }}</textarea>
+        <div id="summary_text_editor" class="border rounded-md" style="height: 128px;"></div>
+        <input type="hidden" id="summary_text" value="{{ (participant.ki_texts or {}).summary_text | e }}">
     </div>
 
     <div class="space-y-6">
@@ -169,6 +172,43 @@
     let isDirty = false;
 
     // ---------------------------------------------------------------------------------
+    // QUILL-EDITOREN FÜR KI-TEXTE
+    // ---------------------------------------------------------------------------------
+    let socialEditor, verbalEditor, summaryEditor;
+
+    // Quill-Konfiguration
+    const quillConfig = {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                ['bold', 'italic', 'underline'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                [{ 'header': [2, 3, false] }],
+                ['clean']
+            ]
+        }
+    };
+
+    // Initialisiere alle 3 Editoren
+    socialEditor = new Quill('#social_text_editor', quillConfig);
+    verbalEditor = new Quill('#verbal_text_editor', quillConfig);
+    summaryEditor = new Quill('#summary_text_editor', quillConfig);
+
+    // Bestehende Inhalte laden
+    const socialContent = document.getElementById('social_text').value;
+    const verbalContent = document.getElementById('verbal_text').value;
+    const summaryContent = document.getElementById('summary_text').value;
+
+    if (socialContent) socialEditor.root.innerHTML = socialContent;
+    if (verbalContent) verbalEditor.root.innerHTML = verbalContent;
+    if (summaryContent) summaryEditor.root.innerHTML = summaryContent;
+
+    // Change Tracking für Quill-Editoren
+    [socialEditor, verbalEditor, summaryEditor].forEach(editor => {
+        editor.on('text-change', () => { isDirty = true; });
+    });
+
+    // ---------------------------------------------------------------------------------
     // 2. FUNKTIONEN
     // ---------------------------------------------------------------------------------
     function createSliders(containerId, keys, labels, ratings, chartInstance, dataset, prefix) {
@@ -202,14 +242,14 @@
         document.querySelectorAll('.main-content-footer [data-key]').forEach(el => { footerData[el.dataset.key] = el.textContent; });
         
         const reportData = {
-            sk_ratings: sk_ratings, 
+            sk_ratings: sk_ratings,
             vk_ratings: vk_ratings,
-            ki_texts: { 
-                social_text: document.getElementById('social_text').value, 
-                verbal_text: document.getElementById('verbal_text').value, 
-                summary_text: document.getElementById('summary_text').value 
+            ki_texts: {
+                social_text: socialEditor.root.innerHTML,   // HTML statt .value
+                verbal_text: verbalEditor.root.innerHTML,   // HTML statt .value
+                summary_text: summaryEditor.root.innerHTML  // HTML statt .value
             },
-            group_details: groupDetails, 
+            group_details: groupDetails,
             footer_data: footerData
         };
         
@@ -259,7 +299,7 @@
     createSliders('sk-sliders', sk_keys, sk_labels, sk_ratings, skChart, skDataset, 'sk');
     createSliders('vk-sliders', vk_keys, vk_labels, vk_ratings, vkChart, vkDataset, 'vk');
 
-    document.querySelectorAll('textarea, [contenteditable="true"]').forEach(item => {
+    document.querySelectorAll('[contenteditable="true"]').forEach(item => {
         item.addEventListener('input', () => { isDirty = true; });
     });
 

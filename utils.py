@@ -5,6 +5,7 @@ import mimetypes
 import os
 import re
 
+import bleach
 from docx import Document
 from pdfminer.high_level import extract_text as pdf_extract_text
 from pdfminer.layout import LAParams
@@ -15,6 +16,41 @@ from werkzeug.utils import secure_filename
 # Konstanten für File Upload Security
 ALLOWED_EXTENSIONS = {'.pdf', '.docx', '.doc', '.txt', '.odt'}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB pro Datei
+
+# Erlaubte HTML-Tags für Rich-Text (Quill.js Output)
+ALLOWED_HTML_TAGS = [
+    'p', 'br', 'strong', 'em', 'u', 'ol', 'ul', 'li',
+    'h1', 'h2', 'h3', 's', 'blockquote', 'code', 'pre'
+]
+
+ALLOWED_HTML_ATTRIBUTES = {
+    '*': ['class']  # Quill fügt .ql-* Klassen hinzu
+}
+
+
+def sanitize_html(html_content):
+    """
+    Bereinigt HTML-Content gegen XSS-Angriffe.
+    Erlaubt nur sichere Tags die Quill.js generiert.
+
+    Args:
+        html_content (str): HTML string from Quill editor
+
+    Returns:
+        str: Sanitized HTML safe for database storage
+    """
+    if not html_content:
+        return ''
+
+    # Bleach entfernt alle nicht-erlaubten Tags/Attribute
+    cleaned = bleach.clean(
+        html_content,
+        tags=ALLOWED_HTML_TAGS,
+        attributes=ALLOWED_HTML_ATTRIBUTES,
+        strip=True  # Entferne Tags statt escape
+    )
+
+    return cleaned
 
 
 def validate_upload_file(file):

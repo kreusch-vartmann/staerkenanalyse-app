@@ -76,7 +76,7 @@
                 <h2 class="subtitle">Soziale Kompetenz & Verbale Kompetenz</h2>
                 <section class="content-section">
                     <h3 class="section-title">Soziale Kompetenzen</h3>
-                    <div class="text-content-for-pdf">{{ (participant.ki_texts or {}).social_text | replace('\n', '<br>') | safe }}</div>
+                    <div class="text-content-for-pdf">{{ (participant.ki_texts or {}).social_text | safe }}</div>
                     <div class="chart-container">
                         <img src="{{ sk_chart_image }}" alt="Radardiagramm Soziale Kompetenzen">
                     </div>
@@ -93,14 +93,14 @@
             <main class="main-content">
                 <section class="content-section">
                     <h3 class="section-title">Verbale Kompetenzen</h3>
-                    <div class="text-content-for-pdf">{{ (participant.ki_texts or {}).verbal_text | replace('\n', '<br>') | safe }}</div>
+                    <div class="text-content-for-pdf">{{ (participant.ki_texts or {}).verbal_text | safe }}</div>
                     <div class="chart-container">
                         <img src="{{ vk_chart_image }}" alt="Radardiagramm Verbale Kompetenzen">
                     </div>
                 </section>
                 <section class="content-section">
                     <h3 class="section-title">Zusammenfassung</h3>
-                    <div class="text-content-for-pdf">{{ (participant.ki_texts or {}).summary_text | replace('\n', '<br>') | safe }}</div>
+                    <div class="text-content-for-pdf">{{ (participant.ki_texts or {}).summary_text | safe }}</div>
                 </section>
                 <div class="footer-spacer"></div>
                 <footer class="main-content-footer">
