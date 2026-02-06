@@ -1,0 +1,84 @@
+Du bist ein Dependency-Management-Spezialist für Python-Projekte.
+
+## Aufgabe
+Analysiere die Änderungen in `requirements.txt` und prüfe auf potenzielle Breaking Changes, Sicherheitslücken und Kompatibilitätsprobleme.
+
+## requirements.txt Diff
+```diff
+{diff_content}
+```
+
+## Projekt-Kontext
+- **Python-Version**: 3.12.12
+- **Kritische Dependencies**:
+  - Flask 3.1.2, SQLAlchemy 2.0.28
+  - mistralai==0.4.2 (⚠️ Version MUSS 0.4.2 sein, nicht 1.x!)
+  - protobuf==5.29.5 (bekannter Konflikt mit älteren Packages)
+  - WeasyPrint (benötigt System-Dependencies)
+
+## Check-Kriterien
+
+### 1. Breaking Changes
+- ❌ Wurden Major-Versions erhöht (z.B. Flask 3.x → 4.x)?
+- ❌ Wurden Packages entfernt, die im Code verwendet werden?
+- ❌ Konflikte zwischen Dependency-Versionen?
+
+### 2. Sicherheit
+- 🔒 Bekannte CVEs in neuen Versionen?
+- 🔒 Veraltete Packages mit Sicherheitslücken?
+
+### 3. Kompatibilität
+- ⚙️ Passen neue Versionen zu Python 3.12.12?
+- ⚙️ Konflikte mit existierenden Packages (z.B. protobuf)?
+
+### 4. Performance
+- ⚡ Wurden Performance-kritische Libraries geändert (pandas, numpy)?
+
+## Spezielle Regeln für dieses Projekt
+
+1. **mistralai**: MUSS Version 0.4.2 bleiben (1.x hat Breaking API Changes)
+2. **protobuf**: Version 5.29.5 ist bekannter Sweet-Spot (4.x und 6.x problematisch)
+3. **WeasyPrint**: Benötigt libcairo, libpango (System-Level)
+
+## Output-Format
+
+```json
+{{
+  "status": "safe|warning|critical",
+  "summary": "Kurze Zusammenfassung der Dependency-Änderungen",
+  "changes": [
+    {{
+      "package": "flask",
+      "old_version": "3.1.2",
+      "new_version": "3.2.0",
+      "change_type": "minor",
+      "risk_level": "low",
+      "notes": "Minor Update, keine Breaking Changes erwartet"
+    }}
+  ],
+  "breaking_changes": [
+    {{
+      "package": "mistralai",
+      "old_version": "0.4.2",
+      "new_version": "1.9.10",
+      "impact": "CRITICAL: API hat sich komplett geändert, ki_services.py muss angepasst werden",
+      "action": "REVERT zu 0.4.2 oder Code migrieren"
+    }}
+  ],
+  "security_alerts": [
+    {{
+      "package": "requests",
+      "version": "2.28.0",
+      "cve": "CVE-2023-XXXXX",
+      "severity": "high",
+      "recommendation": "Update auf 2.32.5"
+    }}
+  ],
+  "recommendations": [
+    "Pin alle Versions exakt (==) statt loose (>=) für Production-Stabilität",
+    "Erwäge Dependency-Audit via pip-audit"
+  ]
+}}
+```
+
+Analysiere die Änderungen!

@@ -1,0 +1,124 @@
+Du bist ein Technical Writer und Dokumentations-Spezialist für Python-Projekte.
+
+## Aufgabe
+Generiere automatisch Dokumentation für geänderte Python-Dateien basierend auf Docstrings, Funktionssignaturen und Code-Kommentaren.
+
+## Geänderte Dateien
+```
+{changed_files}
+```
+
+## Code-Inhalte
+{file_contents}
+
+## Projekt-Kontext
+- **Projekt**: Stärkenanalyse-App (Flask-Anwendung)
+- **Zielgruppe**: Entwickler, die am Projekt mitarbeiten
+- **Dokumentations-Standard**: Google-Style Docstrings
+
+## Zu extrahieren
+
+### 1. Funktionen & Methoden
+- **Name**: Funktionsname
+- **Parameter**: Typ und Beschreibung
+- **Return**: Rückgabewert und Typ
+- **Raises**: Exceptions, die geworfen werden
+- **Docstring**: Vorhandene Dokumentation
+
+### 2. Klassen
+- **Name**: Klassenname
+- **Purpose**: Zweck der Klasse
+- **Attributes**: Instanz-/Klassen-Variablen
+- **Methods**: Alle Methoden mit Signaturen
+
+### 3. Routen (Flask)
+- **URL**: Route-Path
+- **Methods**: HTTP-Methoden (GET, POST, etc.)
+- **Parameters**: URL-Parameter, Query-Parameter
+- **Template**: Verwendetes Template
+- **Purpose**: Was macht diese Route?
+
+### 4. Models (SQLAlchemy)
+- **Table-Name**: Datenbank-Tabellenname
+- **Fields**: Alle Spalten mit Typ
+- **Relationships**: Foreign Keys, Backref
+- **JSON-Fields**: Welche Felder enthalten JSON?
+
+## Output-Format (Markdown)
+
+Generiere für jede Datei einen Markdown-Block:
+
+```markdown
+## `blueprints/analysis.py`
+
+**Zweck**: Verwaltet KI-Analyse-Prozesse und Berichterstellung
+
+### Routen
+
+#### `GET /edit_report/<int:participant_id>`
+**Zweck**: Zeigt editierbaren KI-generierten Bericht an
+
+**Parameter**:
+- `participant_id` (int): ID des Teilnehmers
+
+**Template**: `staerkenanalyse_bericht_vorlage3.html`
+
+**Rückgabe**: Gerenderte HTML-Seite mit Bericht
+
+**Fehlerbehandlung**: 
+- 404 wenn Teilnehmer nicht existiert
+- 400 wenn `ki_texts` leer ist
+
+---
+
+#### `POST /run_ki_analysis_api/<int:participant_id>`
+**Zweck**: Führt KI-Analyse für einzelnen Teilnehmer aus
+
+**Request Body** (JSON):
+```json
+{
+  "prompt_id": 1
+}
+```
+
+**Response**:
+- `status`: "success" oder "error"
+- `message`: Statusmeldung
+- `redirect_url`: URL zum Bericht
+
+**API-Calls**: Mistral API (mistral-large-latest)
+
+**Speichert**: `participant.ki_texts` (JSON mit Analyse-Ergebnissen)
+
+---
+
+### Funktionen
+
+#### `generate_radar_chart(participant_data: dict, group_data: dict) -> str`
+**Zweck**: Generiert Base64-encodiertes Radar-Chart-Bild
+
+**Parameter**:
+- `participant_data` (dict): SK/VK-Ratings des Teilnehmers
+- `group_data` (dict): Durchschnitts-Ratings der Gruppe
+
+**Returns**: Base64-String (PNG-Image)
+
+**Dependencies**: matplotlib, numpy
+
+---
+```
+
+## Dokumentations-Regeln
+
+1. **Sprache**: Deutsch (Code ist auf Deutsch)
+2. **Detailgrad**: Ausführlich, aber prägnant
+3. **Beispiele**: Wenn sinnvoll, JSON-Beispiele für API-Endpoints
+4. **Querverweise**: Verlinke auf andere Module (z.B. "→ siehe `models.py`")
+
+## Spezialfälle
+
+- **Wenn Docstring fehlt**: Erstelle basierend auf Funktionsnamen + Code-Analyse
+- **Wenn Code unklar**: Markiere mit `⚠️ Needs Review`
+- **Deprecated Code**: Markiere mit `🚫 Legacy - wird entfernt`
+
+Generiere die Dokumentation!

@@ -1,0 +1,212 @@
+name: AI Code Review (Mistral)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+    paths:
+      - '**.py'
+      - 'requirements.txt'
+
+jobs:
+  ai-review:
+    name: Mistral AI Code Review
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    
+    steps:
+      - name: Checkout PR Branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Get Changed Files
+        id: changed_files
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E '\.py$|requirements\.txt$' | head -20)
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: Get Diff Content
+        id: get_diff
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          DIFF_CONTENT=$(git diff origin/${{ github.base_ref }}...HEAD -- ${{ steps.changed_files.outputs.files }} | head -c 10000)
+          echo "diff<<EOF" >> $GITHUB_OUTPUT
+          echo "$DIFF_CONTENT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install Mistral AI SDK
+        run: |
+          pip install mistralai==0.4.2
+      
+      - name: Run Mistral Code Review
+        id: mistral_review
+        env:
+          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+        run: |
+          python - <<'PYTHON_SCRIPT'
+          import os
+          import json
+          from mistralai.client import MistralClient
+          
+          # Initialisiere Mistral Client
+          api_key = os.environ.get("MISTRAL_API_KEY")
+          if not api_key:
+              print("❌ MISTRAL_API_KEY nicht gefunden!")
+              exit(1)
+          
+          client = MistralClient(api_key=api_key)
+          
+          # Lade Prompt-Template
+          with open(".github/prompts/code-review-template.txt", "r") as f:
+              prompt_template = f.read()
+          
+          # Füge Diff-Content ein
+          diff_content = """${{ steps.get_diff.outputs.diff }}"""
+          prompt = prompt_template.replace("{diff_content}", diff_content)
+          
+          # Mistral API Call
+          try:
+              response = client.chat(
+                  model="mistral-large-latest",
+                  messages=[
+                      {"role": "user", "content": prompt}
+                  ],
+                  temperature=0.2,
+                  max_tokens=2000
+              )
+              
+              review_text = response.choices[0].message.content
+              
+              # Versuche JSON zu extrahieren
+              if "```json" in review_text:
+                  json_start = review_text.find("```json") + 7
+                  json_end = review_text.find("```", json_start)
+                  review_json = review_text[json_start:json_end].strip()
+              else:
+                  review_json = review_text
+              
+              # Parse JSON
+              review_data = json.loads(review_json)
+              
+              # Schreibe Output
+              with open("review_output.json", "w") as f:
+                  json.dump(review_data, f, indent=2)
+              
+              print("✅ Review erfolgreich!")
+              print(f"Summary: {review_data.get('summary', 'N/A')}")
+              
+          except Exception as e:
+              print(f"❌ Fehler bei Mistral API Call: {e}")
+              # Fallback: Leeres Review
+              fallback = {
+                  "summary": "Automatisches Review fehlgeschlagen",
+                  "severity": "info",
+                  "issues": [],
+                  "positive_notes": [],
+                  "recommendations": ["Bitte manuelles Review durchführen"]
+              }
+              with open("review_output.json", "w") as f:
+                  json.dump(fallback, f, indent=2)
+          PYTHON_SCRIPT
+      
+      - name: Format Review Comment
+        id: format_comment
+        run: |
+          REVIEW_DATA=$(cat review_output.json)
+          
+          COMMENT=$(python - <<'PYTHON_SCRIPT'
+          import json
+          import sys
+          
+          with open("review_output.json", "r") as f:
+              review = json.load(f)
+          
+          # Formatiere Markdown-Kommentar
+          severity_emoji = {
+              "info": "ℹ️",
+              "warning": "⚠️",
+              "error": "❌"
+          }
+          
+          emoji = severity_emoji.get(review.get("severity", "info"), "ℹ️")
+          
+          comment = f"""## {emoji} KI-Code-Review (Mistral AI)
+          
+          **Summary**: {review.get('summary', 'N/A')}
+          
+          """
+          
+          # Issues
+          issues = review.get('issues', [])
+          if issues:
+              comment += "### 🔍 Gefundene Issues\n\n"
+              for issue in issues:
+                  sev_icon = severity_emoji.get(issue.get('severity', 'info'), 'ℹ️')
+                  comment += f"**{sev_icon} {issue.get('category', 'General')}** - `{issue.get('file', 'N/A')}:{issue.get('line', 'N/A')}`\n"
+                  comment += f"{issue.get('message', 'N/A')}\n"
+                  if issue.get('suggestion'):
+                      comment += f"```python\n{issue.get('suggestion')}\n```\n"
+                  comment += "\n"
+          
+          # Positive Notes
+          positive = review.get('positive_notes', [])
+          if positive:
+              comment += "### ✅ Positives\n\n"
+              for note in positive:
+                  comment += f"- {note}\n"
+              comment += "\n"
+          
+          # Recommendations
+          recommendations = review.get('recommendations', [])
+          if recommendations:
+              comment += "### 💡 Empfehlungen\n\n"
+              for rec in recommendations:
+                  comment += f"- {rec}\n"
+              comment += "\n"
+          
+          comment += "---\n*Automatisches Review via Mistral AI - Bitte manuell validieren!*"
+          
+          print(comment)
+          PYTHON_SCRIPT
+          )
+          
+          echo "comment<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMENT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: Post Review Comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = `${{ steps.format_comment.outputs.comment }}`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+      
+      - name: Check Review Severity
+        run: |
+          SEVERITY=$(jq -r '.severity' review_output.json)
+          
+          if [ "$SEVERITY" == "error" ]; then
+            echo "❌ Review hat kritische Fehler gefunden!"
+            exit 1
+          elif [ "$SEVERITY" == "warning" ]; then
+            echo "⚠️ Review hat Warnungen gefunden - bitte prüfen!"
+          else
+            echo "✅ Review abgeschlossen ohne kritische Probleme"
+          fi

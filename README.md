@@ -130,6 +130,70 @@ python -m flask run --port 5002
 2. Falls Sie PDF-Generierung benötigen, installieren Sie die Systempakete für `weasyprint` (distribution-spezifisch).
 3. Fügen Sie ein CLI-Kommando `flask init-db` (oder ein kleines `manage.py`) hinzu, das `schema.sql` benutzt, damit die DB-Initialisierung benutzerfreundlicher wird.
 
+## GitHub Actions & CI/CD
+
+Dieses Projekt nutzt GitHub Actions für automatische Code-Qualitätsprüfungen und Dokumentations-Updates:
+
+### Workflows
+
+1. **CI - Code Quality** (`.github/workflows/ci-quality.yml`)
+   - Läuft bei jedem Push auf `main` oder `feature/*` Branches
+   - Prüft Code-Formatierung mit `black`, `isort`, `flake8`, `pylint`
+   - Security-Checks mit `bandit` und `pip-audit`
+   - Code-Komplexitäts-Analyse mit `radon`
+
+2. **Context Generator** (`.github/workflows/context-generator.yml`)
+   - Erstellt automatisch `CONTEXT.md` und `PROJECT_OVERVIEW.md`
+   - Analysiert Projektstruktur, Routen, Modelle
+   - Erstellt PR mit aktualisierten Kontext-Dateien
+
+3. **AI Code Review** (`.github/workflows/ai-code-review.yml`)
+   - Läuft bei Pull Requests auf `main`
+   - Nutzt Mistral AI für intelligente Code-Reviews
+   - Postet Review-Kommentare direkt im PR
+
+4. **Documentation Updater** (`.github/workflows/docs-updater.yml`)
+   - Synchronisiert `requirements.txt` mit `pip freeze`
+   - Aktualisiert Projekt-Statistiken in README.md
+
+### GitHub Secrets Konfiguration
+
+Für die Workflows werden folgende Secrets benötigt (in Repository Settings → Secrets and variables → Actions):
+
+| Secret Name | Beschreibung | Benötigt für |
+|-------------|--------------|--------------|
+| `MISTRAL_API_KEY` | Mistral AI API Key | AI Code Review Workflow |
+| `GITHUB_TOKEN` | Automatisch verfügbar | PR-Erstellung (kein Setup nötig) |
+
+**Setup-Anleitung**:
+1. Gehe zu Repository Settings → Secrets and variables → Actions
+2. Klicke "New repository secret"
+3. Name: `MISTRAL_API_KEY`
+4. Value: Dein Mistral API Key (aus `.env`)
+5. Speichern
+
+### Lokale Umgebung
+
+Für die lokale Entwicklung benötigst du eine `.env`-Datei:
+
+```bash
+# Kopiere die Beispiel-Konfiguration
+cp .env.example .env
+
+# Fülle die Werte aus:
+# - DATABASE_URL (z.B. sqlite:///instance/database.db)
+# - MISTRAL_API_KEY (optional, für KI-Analysen)
+# - SECRET_KEY (generiere mit: python -c "import os; print(os.urandom(24).hex())")
+```
+
+**⚠️ Wichtig**: Die `.env`-Datei **NIEMALS** in Git committen! Sie ist bereits in `.gitignore` gelistet.
+
+### Workflow-Trigger
+
+- **Push auf `main` oder `feature/*`**: Alle Quality-Checks + Context-Generator laufen
+- **Pull Request auf `main`**: AI Code Review + Quality-Checks laufen
+- **Manuell**: Context Generator kann manuell in Actions-Tab gestartet werden
+
 ## Kontakt
 
 Bei Fragen oder wenn ich die `README.md` weiter anpassen soll (z. B. Beispiele für API-Nutzung, Screenshots, oder CI/CD-Integration), sag kurz Bescheid — ich kann die Datei erweitern.
