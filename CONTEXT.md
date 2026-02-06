@@ -1,6 +1,6 @@
 # CONTEXT.md - Stärkenanalyse-App
 
-**Automatisch generiert am**: 2026-02-06 11:00:24
+**Automatisch generiert am**: 2026-02-06 17:02:58
 
 ---
 
@@ -26,17 +26,20 @@
 - **ki_services.py**: KI-API-Integration (Mistral, Google Gemini)
 - **utils.py**: File-Processing (PDF, DOCX Extraktion)
 
-### Blueprints (5 total)
+### Blueprints (6 total)
 
-#### analysis.py (8 Routes)
+#### analysis.py (11 Routes)
 - `GET /edit_report/<int:participant_id>` → `edit_report()`
+- `POST /save_report/<int:participant_id>` → `save_report()`
 - `GET /bericht/<int:participant_id>/pdf` → `bericht_pdf()`
 - `GET /ai_analysis/select_group` → `ai_analysis_select_group()`
 - `GET /ai_analysis/group/<int:group_id>` → `ai_analysis_select_participants()`
 - `POST /ai_analysis/configure` → `configure_batch_ai_analysis()`
 - `POST /ai_analysis/execute` → `execute_batch_ai_analysis()`
 - `POST /run_ki_analysis/<int:participant_id>` → `run_ki_analysis()`
-- `POST /api/run_single_analysis/<int:participant_id>` → `run_single_analysis_api()`
+- `GET /final-reports` → `manage_final_reports()`
+- `GET /final_report/<int:participant_id>` → `final_report()`
+- `POST /final_report/<int:participant_id>/pdf` → `final_report_pdf()`
 
 #### data_io.py (9 Routes)
 - `GET /data-entry/rework` → `data_entry_rework()`
@@ -49,6 +52,12 @@
 - `GET /export_selection` → `export_selection()`
 - `POST /export_data` → `export_data()`
 
+#### explanation_blocks.py (4 Routes)
+- `GET /explanation-blocks` → `manage_explanation_blocks()`
+- `GET, POST /explanation-block/add` → `add_explanation_block()`
+- `GET, POST /explanation-block/edit/<int:block_id>` → `edit_explanation_block()`
+- `POST /explanation-block/delete/<int:block_id>` → `delete_explanation_block()`
+
 #### groups.py (5 Routes)
 - `GET /groups` → `manage_groups()`
 - `GET /group/<int:group_id>/participants` → `show_group_participants()`
@@ -56,22 +65,24 @@
 - `POST /group/edit/<int:group_id>` → `edit_group()`
 - `POST /group/delete/<int:group_id>` → `delete_group()`
 
-#### participants.py (6 Routes)
+#### participants.py (9 Routes)
 - `GET /participants` → `manage_participants()`
 - `POST /group/<int:group_id>/participant/add` → `add_participant()`
 - `POST /participant/edit/<int:participant_id>` → `edit_participant()`
 - `POST /participant/delete/<int:participant_id>` → `delete_participant()`
 - `GET /participant/<int:participant_id>/data_entry` → `show_data_entry()`
 - `POST /participant/<int:participant_id>/save_observations` → `save_observations()`
+- `GET /self-assessments` → `manage_self_assessments()`
+- `GET /participant/<int:participant_id>/self_assessment` → `show_self_assessment()`
+- `POST /save_self_assessment/<int:participant_id>` → `save_self_assessment()`
 
-#### prompts.py (5 Routes)
+#### prompts.py (4 Routes)
 - `GET /prompts` → `manage_prompts()`
 - `GET, POST /prompt/add` → `add_prompt()`
 - `GET, POST /prompt/edit/<int:prompt_id>` → `edit_prompt()`
 - `POST /prompt/delete/<int:prompt_id>` → `delete_prompt()`
-- `GET /api/prompt/<int:prompt_id>` → `get_prompt_content_api()`
 
-### Templates (19 HTML-Dateien)
+### Templates (26 HTML-Dateien)
 - ai_analysis_select_group.html
 - ai_analysis_select_participants.html
 - ai_analysis_status.html
@@ -81,15 +92,22 @@
 - data_entry.html
 - data_entry_rework.html
 - data_entry_search.html
+- explanation_block_form.html
 - export_selection.html
+- final_report.html
+- final_report_pdf.html
 - import_page.html
 - info.html
+- manage_explanation_blocks.html
+- manage_final_reports.html
 - manage_groups.html
 - manage_participants.html
 - manage_prompts.html
+- manage_self_assessments.html
 - participants.html
 - prompt_form.html
 - run_batch_ai.html
+- self_assessment_entry.html
 - staerkenanalyse_bericht_vorlage3.html
 
 ---
