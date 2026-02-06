@@ -50,22 +50,25 @@ def show_group_participants(group_id):
 @groups_bp.route("/group/add", methods=["POST"])
 def add_group():
     """Verarbeitet das Hinzufügen einer neuen Gruppe aus dem Formular auf der Hauptseite."""
-    date_str = request.form.get("date")
-    group_date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else None
+    date_from_str = request.form.get("date_from")
+    date_to_str = request.form.get("date_to")
+    group_date_from = datetime.strptime(date_from_str, '%Y-%m-%d').date() if date_from_str else None
+    group_date_to = datetime.strptime(date_to_str, '%Y-%m-%d').date() if date_to_str else None
 
     new_group = Group(
         name=request.form.get("name"),
-        date=group_date,
+        date_from=group_date_from,
+        date_to=group_date_to,
         location=request.form.get("location"),
         leitung_fremdeinschatzung=request.form.get("leitung_fremdeinschatzung"),
         leitung_selbsteinschatzung=request.form.get("leitung_selbsteinschatzung"),
         beobachter1=request.form.get("beobachter1"),
         beobachter2=request.form.get("beobachter2"),
     )
-    
+
     db.session.add(new_group)
     db.session.commit()
-    
+
     flash(f'Gruppe "{new_group.name}" wurde erfolgreich hinzugefügt.', "success")
     return redirect(url_for("groups.manage_groups"))
 
@@ -74,17 +77,20 @@ def edit_group(group_id):
     """Verarbeitet die Aktualisierung einer bestehenden Gruppe aus dem Modal."""
     group_to_edit = db.get_or_404(Group, group_id)
 
-    date_str = request.form.get("group_date")
-    group_date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else None
-    
+    date_from_str = request.form.get("group_date_from")
+    date_to_str = request.form.get("group_date_to")
+    group_date_from = datetime.strptime(date_from_str, '%Y-%m-%d').date() if date_from_str else None
+    group_date_to = datetime.strptime(date_to_str, '%Y-%m-%d').date() if date_to_str else None
+
     group_to_edit.name = request.form.get("group_name")
-    group_to_edit.date = group_date
+    group_to_edit.date_from = group_date_from
+    group_to_edit.date_to = group_date_to
     group_to_edit.location = request.form.get("group_location")
     group_to_edit.leitung_fremdeinschatzung = request.form.get("leitung_fremdeinschatzung")
     group_to_edit.leitung_selbsteinschatzung = request.form.get("leitung_selbsteinschatzung")
     group_to_edit.beobachter1 = request.form.get("beobachter1")
     group_to_edit.beobachter2 = request.form.get("beobachter2")
-    
+
     db.session.commit()
 
     flash("Gruppe erfolgreich aktualisiert.", "success")

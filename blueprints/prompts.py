@@ -18,7 +18,7 @@ def manage_prompts():
     prompts = db.session.execute(db.select(Prompt).order_by(Prompt.name)).scalars().all()
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
-        {"text": "Prompt-Verwaltung"},
+        {"text": "Prompts"},
     ]
     return render_template(
         "manage_prompts.html", prompts=prompts, breadcrumbs=breadcrumbs
@@ -46,7 +46,7 @@ def add_prompt():
 
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
-        {"link": url_for("prompts.manage_prompts"), "text": "Prompt-Verwaltung"},
+        {"link": url_for("prompts.manage_prompts"), "text": "Prompts"},
         {"text": "Neuen Prompt erstellen"},
     ]
     return render_template(
@@ -85,7 +85,7 @@ def edit_prompt(prompt_id):
 
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
-        {"link": url_for("prompts.manage_prompts"), "text": "Prompt-Verwaltung"},
+        {"link": url_for("prompts.manage_prompts"), "text": "Prompts"},
         {"text": f"Prompt bearbeiten: {prompt.name}"},
     ]
     return render_template(

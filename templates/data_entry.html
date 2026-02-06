@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Dateneingabe für {{ participant.name }}{% endblock %}
+{% block title %}Beobachtungsdaten für {{ participant.name }}{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-6">
@@ -15,7 +15,7 @@
 
     <div class="flex justify-between items-center mb-6">
         <div>
-            <h2 class="text-3xl font-bold text-gray-800">Dateneingabe</h2>
+            <h2 class="text-3xl font-bold text-gray-800">Beobachtungsdaten</h2>
             <p class="text-lg text-gray-600">für {{ participant.name }}</p>
         </div>
         <a href="{{ url_for('groups.show_group_participants', group_id=group.id) }}" class="text-blue-600 hover:text-blue-800 font-semibold flex items-center">
@@ -38,10 +38,18 @@
                     <label for="verbal" class="block text-sm font-medium text-gray-700">Verbale Kompetenzen</label>
                     <textarea id="verbal" name="verbal" rows="5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">{{ participant.observations.verbal or '' }}</textarea>
                 </div>
-                <div class="text-right pt-2">
+                <div class="flex justify-end gap-3 pt-2">
                     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
                         Beobachtungen speichern
                     </button>
+                    <a href="{{ url_for('analysis.ai_analysis_select_participants', group_id=participant.group_id) }}?preselect={{ participant.id }}" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors inline-flex items-center">
+                        <i class="fas fa-brain mr-2"></i>Zur KI-Analyse
+                    </a>
+                    {% if has_ki_report %}
+                    <a href="{{ url_for('analysis.edit_report', participant_id=participant.id) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors inline-flex items-center">
+                        <i class="fas fa-file-alt mr-2"></i>Bericht ansehen
+                    </a>
+                    {% endif %}
                 </div>
             </form>
         </div>

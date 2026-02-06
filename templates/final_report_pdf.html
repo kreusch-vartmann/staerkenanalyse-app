@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Abschlussbericht - {{ participant.name }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+            @bottom-center {
+                content: "Seite " counter(page) " von " counter(pages);
+                font-size: 10pt;
+                color: #666;
+            }
+        }
+        
+        body {
+            font-family: "DejaVu Sans", Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        h1, h2, h3 {
+            color: #1f2937;
+            margin-top: 0;
+        }
+        
+        h1 { font-size: 24pt; margin-bottom: 1em; }
+        h2 { font-size: 18pt; margin-bottom: 0.8em; page-break-after: avoid; }
+        h3 { font-size: 14pt; margin-bottom: 0.6em; page-break-after: avoid; }
+        
+        .page-break {
+            page-break-after: always;
+        }
+        
+        .no-break {
+            page-break-inside: avoid;
+        }
+        
+        /* Deckblatt */
+        .cover-page {
+            text-align: center;
+            padding-top: 5cm;
+        }
+        
+        .cover-page h1 {
+            font-size: 32pt;
+            margin-bottom: 0.5em;
+        }
+        
+        .cover-page h2 {
+            font-size: 24pt;
+            margin-bottom: 2em;
+        }
+        
+        .cover-page .participant-box {
+            border-top: 2px solid #333;
+            border-bottom: 2px solid #333;
+            padding: 1em 0;
+            margin: 2em auto;
+            font-size: 18pt;
+            font-weight: bold;
+        }
+        
+        .cover-page .info {
+            margin-top: 3em;
+            font-size: 12pt;
+            color: #666;
+        }
+        
+        /* Erklärungstexte */
+        .explanation-block {
+            margin-bottom: 1.5em;
+            padding: 1em;
+            background-color: #f9fafb;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .explanation-block h4 {
+            margin-top: 0;
+            color: #1e40af;
+            font-size: 13pt;
+        }
+        
+        /* Fremdeinschätzung */
+        .assessment-section {
+            margin-bottom: 1.5em;
+            padding: 1em;
+            border: 1px solid #e5e7eb;
+            background-color: #fafafa;
+        }
+        
+        .assessment-section h4 {
+            margin-top: 0;
+            color: #374151;
+            font-size: 12pt;
+            border-bottom: 1px solid #d1d5db;
+            padding-bottom: 0.3em;
+        }
+        
+        .assessment-section p {
+            white-space: pre-line;
+            margin: 0.5em 0;
+        }
+        
+        /* Selbsteinschätzung */
+        .self-assessment {
+            padding: 1em;
+            background-color: #fef3c7;
+            border: 1px solid #fbbf24;
+            white-space: pre-line;
+        }
+        
+        /* Unterschriften */
+        .signature-grid {
+            display: table;
+            width: 100%;
+            margin-top: 2em;
+        }
+        
+        .signature-row {
+            display: table-row;
+        }
+        
+        .signature-cell {
+            display: table-cell;
+            padding: 1.5em 1em;
+            width: 50%;
+            vertical-align: top;
+        }
+        
+        .signature-label {
+            font-size: 10pt;
+            color: #666;
+            margin-bottom: 0.5em;
+        }
+        
+        .signature-line {
+            border-bottom: 2px solid #333;
+            padding-bottom: 0.5em;
+            margin-bottom: 0.3em;
+            min-height: 1.5em;
+        }
+        
+        .signature-hint {
+            font-size: 8pt;
+            color: #999;
+        }
+        
+        /* Section Headers */
+        .section-header {
+            background-color: #1f2937;
+            color: white;
+            padding: 0.5em 1em;
+            margin: 2em 0 1em 0;
+            font-size: 14pt;
+            font-weight: bold;
+        }
+        
+        /* Info boxes */
+        .info-box {
+            padding: 0.8em;
+            margin: 1em 0;
+            border-radius: 4px;
+            font-size: 10pt;
+        }
+        
+        .info-box.warning {
+            background-color: #fef3c7;
+            border: 1px solid #fbbf24;
+            color: #92400e;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Seite 1: Deckblatt -->
+<div class="cover-page page-break">
+    <h1>Abschlussbericht</h1>
+    <h2>Stärkenanalyse</h2>
+    
+    <div class="participant-box">
+        {{ participant.name }}
+    </div>
+    
+    <div class="info">
+        <p><strong>Gruppe:</strong> {{ group.name }}</p>
+        {% if group.date_from or group.date_to %}
+        <p><strong>Durchführungszeitraum:</strong>
+        {% if group.date_from and group.date_to %}
+            {{ group.date_from.strftime('%d.%m.%Y') }} - {{ group.date_to.strftime('%d.%m.%Y') }}
+        {% elif group.date_from %}
+            ab {{ group.date_from.strftime('%d.%m.%Y') }}
+        {% elif group.date_to %}
+            bis {{ group.date_to.strftime('%d.%m.%Y') }}
+        {% endif %}
+        </p>
+        {% endif %}
+        {% if group.location %}
+        <p><strong>Ort:</strong> {{ group.location }}</p>
+        {% endif %}
+        <p style="margin-top: 2em;">Erstellt am {{ current_date }}</p>
+    </div>
+</div>
+
+<!-- Seite 2+: Erklärungstexte -->
+{% if selected_blocks %}
+<div class="section-header">Erklärungstexte</div>
+
+{% for block in selected_blocks %}
+<div class="explanation-block no-break">
+    <h4>{{ block.title }}</h4>
+    <p>{{ block.content }}</p>
+</div>
+{% endfor %}
+
+<div class="page-break"></div>
+{% endif %}
+
+<!-- Seite 3+: Fremdeinschätzung -->
+<div class="section-header">Fremdeinschätzung (KI-Analyse)</div>
+
+{% if participant.ki_texts %}
+<div class="no-break">
+    {% for key, value in participant.ki_texts.items() %}
+    <div class="assessment-section">
+        <h4>{{ key|replace('_', ' ')|title }}</h4>
+        <p>{{ value }}</p>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="info-box warning">
+    <strong>Hinweis:</strong> Keine Fremdeinschätzung vorhanden.
+</div>
+{% endif %}
+
+<div class="page-break"></div>
+
+<!-- Seite 4+: Selbsteinschätzung -->
+<div class="section-header">Selbsteinschätzung</div>
+
+{% if self_assessment and self_assessment.content %}
+<div class="self-assessment no-break">
+    {{ self_assessment.content }}
+</div>
+{% else %}
+<div class="info-box warning">
+    <strong>Hinweis:</strong> Keine Selbsteinschätzung vorhanden.
+</div>
+{% endif %}
+
+<div class="page-break"></div>
+
+<!-- Seite 5: Unterschriften -->
+<div class="section-header">Unterschriften</div>
+
+<p style="margin: 1.5em 0;">
+    Hiermit bestätigen wir die Durchführung und Ergebnisse der Stärkenanalyse.
+</p>
+
+<div class="signature-grid">
+    <div class="signature-row">
+        <div class="signature-cell">
+            <div class="signature-label">Leitung Fremdeinschätzung:</div>
+            <div class="signature-line">{{ group.leitung_fremdeinschatzung or '' }}</div>
+            <div class="signature-hint">Unterschrift</div>
+        </div>
+        <div class="signature-cell">
+            <div class="signature-label">Leitung Selbsteinschätzung:</div>
+            <div class="signature-line">{{ group.leitung_selbsteinschatzung or '' }}</div>
+            <div class="signature-hint">Unterschrift</div>
+        </div>
+    </div>
+    <div class="signature-row">
+        <div class="signature-cell">
+            <div class="signature-label">Teilnehmer/in:</div>
+            <div class="signature-line">{{ participant.name }}</div>
+            <div class="signature-hint">Unterschrift</div>
+        </div>
+        <div class="signature-cell">
+            <div class="signature-label">Datum:</div>
+            <div class="signature-line">{{ current_date }}</div>
+            <div class="signature-hint"></div>
+        </div>
+    </div>
+</div>
+
+<div style="margin-top: 4em; font-size: 9pt; color: #999; text-align: center;">
+    Dieser Bericht wurde automatisch generiert am {{ current_date }}.
+</div>
+
+</body>
+</html>

@@ -9,7 +9,8 @@ class Group(db.Model):
     __tablename__ = 'groups'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    date = db.Column(db.Date, nullable=True)
+    date_from = db.Column(db.Date, nullable=True)
+    date_to = db.Column(db.Date, nullable=True)
     location = db.Column(db.String(100), nullable=True)
     # --- GEÄNDERT ---
     leitung_fremdeinschatzung = db.Column(db.String(100), nullable=True)
@@ -64,4 +65,13 @@ class SelfAssessment(db.Model):
 
     # Relationship zum Teilnehmer
     participant = db.relationship('Participant', back_populates='self_assessment')
+
+class ExplanationBlock(db.Model):
+    __tablename__ = 'explanation_blocks'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    order = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.now(UTC))
+    updated_at = db.Column(db.DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC))
 

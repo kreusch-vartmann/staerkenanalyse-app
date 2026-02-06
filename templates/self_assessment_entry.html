@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Selbsteinschätzung - {{ participant.name }}{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <h2 class="text-3xl font-bold text-gray-800">Selbsteinschätzung</h2>
+    <div class="flex gap-2">
+        <button onclick="saveSelfAssessment()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+            <i class="fas fa-save me-2"></i>Speichern
+        </button>
+        <a href="{{ url_for('participants.manage_self_assessments') }}" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
+            <i class="fas fa-arrow-left me-2"></i>Zurück
+        </a>
+    </div>
+</div>
+
+<div class="bg-white shadow-md rounded-lg p-6">
+    <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Teilnehmer</label>
+        <input type="text" value="{{ participant.name }}" readonly 
+               class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700">
+    </div>
+    
+    <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Gruppe</label>
+        <input type="text" value="{{ group.name }}" readonly 
+               class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700">
+    </div>
+    
+    <hr class="my-6">
+    
+    <div class="mb-4">
+        <label for="self_assessment_content" class="block text-lg font-semibold text-gray-800 mb-3">
+            Selbsteinschätzung
+        </label>
+        <textarea id="self_assessment_content" 
+                  class="w-full h-96 px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                  placeholder="Geben Sie hier Ihre Selbsteinschätzung ein...">{{ self_assessment.content if self_assessment else '' }}</textarea>
+        <p class="text-sm text-gray-500 mt-2">
+            <i class="fas fa-info-circle"></i> Die Eingabe wird automatisch gespeichert.
+        </p>
+    </div>
+</div>
+
+<div id="save-status" class="fixed bottom-4 right-4 px-4 py-2 rounded-md shadow-lg hidden">
+    <span id="save-status-text"></span>
+</div>
+
+<script>
+let saveTimeout;
+const participantId = {{ participant.id }};
+
+function saveSelfAssessment() {
+    const content = document.getElementById('self_assessment_content').value;
+    
+    fetch(`/save_self_assessment/${participantId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: content })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showSaveStatus('✅ Gespeichert', 'bg-green-500 text-white');
+        } else {
+            showSaveStatus('❌ Fehler: ' + data.message, 'bg-red-500 text-white');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showSaveStatus('❌ Speichern fehlgeschlagen', 'bg-red-500 text-white');
+    });
+}
+
+function showSaveStatus(message, className) {
+    const statusDiv = document.getElementById('save-status');
+    const statusText = document.getElementById('save-status-text');
+    
+    statusText.textContent = message;
+    statusDiv.className = 'fixed bottom-4 right-4 px-4 py-2 rounded-md shadow-lg ' + className;
+    statusDiv.classList.remove('hidden');
+    
+    setTimeout(() => {
+        statusDiv.classList.add('hidden');
+    }, 3000);
+}
+
+// Auto-Save bei Eingabe (mit Debounce)
+document.getElementById('self_assessment_content').addEventListener('input', function() {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+        saveSelfAssessment();
+    }, 2000); // 2 Sekunden nach letzter Eingabe
+});
+
+// Save bei Strg+S
+document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        saveSelfAssessment();
+    }
+});
+</script>
+
+{% endblock %}
