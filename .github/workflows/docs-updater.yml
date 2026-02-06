@@ -134,7 +134,14 @@ jobs:
       - name: Check for README changes
         id: check_readme
         run: |
-          git diff --exit-code README.md || echo "changed=true" >> $GITHUB_OUTPUT
+          if git diff --quiet README.md 2>/dev/null; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "✅ README.md unverändert"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "📝 README.md wurde aktualisiert"
+          fi
+          exit 0
       
       - name: Create PR for README update
         if: steps.check_readme.outputs.changed == 'true'
