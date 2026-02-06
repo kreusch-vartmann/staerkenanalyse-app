@@ -1,6 +1,6 @@
 # PROJECT_OVERVIEW.md
 
-**Generiert am**: 2026-02-06 11:00:25
+**Generiert am**: 2026-02-06 17:02:59
 
 ---
 
@@ -16,9 +16,9 @@ Flask-basierte Web-Applikation für **Stärkenanalyse** mit KI-gestützter Beric
 
 ## 📊 Projektstatistik
 
-- **Python-Dateien**: 17
+- **Python-Dateien**: 21
 - **Blueprints**: 5 (groups, participants, analysis, data_io, prompts)
-- **Templates**: 19
+- **Templates**: 26
 - **Datenbank-Models**: 0
 
 ---
