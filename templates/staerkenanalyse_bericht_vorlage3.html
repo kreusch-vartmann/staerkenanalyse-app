@@ -64,7 +64,7 @@
         <div class="bg-white p-6 shadow-md rounded-lg">
             <h3 class="text-xl font-bold text-gray-700 mb-4">PDF-Rahmendaten</h3>
             <div class="space-y-3 text-sm metadata">
-                <p><strong>Durchführungsdatum:</strong> <span contenteditable="true" data-key="date" class="editable-field">{{ group.date | datetimeformat }}</span></p>
+                <p><strong>Durchführungszeitraum:</strong> <span contenteditable="true" data-key="date" class="editable-field">{% if group.date_from and group.date_to %}{{ group.date_from | datetimeformat }} - {{ group.date_to | datetimeformat }}{% elif group.date_from %}ab {{ group.date_from | datetimeformat }}{% elif group.date_to %}bis {{ group.date_to | datetimeformat }}{% else %}-{% endif %}</span></p>
                 <p><strong>Durchführungsort:</strong> <span contenteditable="true" data-key="location" class="editable-field">{{ group.location }}</span></p>
                 <p><strong>Leitung:</strong> <span contenteditable="true" data-key="leitung" class="editable-field">{{ group.leitung }}</span></p>
                 <p><strong>Beobachter 1:</strong> <span contenteditable="true" data-key="beobachter1" class="editable-field">{{ group.beobachter1 }}</span></p>
@@ -214,7 +214,7 @@
         };
         
         try {
-            const response = await fetch("{{ url_for('participants.save_report', participant_id=participant.id) }}", { 
+            const response = await fetch("{{ url_for('analysis.save_report', participant_id=participant.id) }}", { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' }, 
                 body: JSON.stringify(reportData) 

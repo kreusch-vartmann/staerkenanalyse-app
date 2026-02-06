@@ -5,7 +5,7 @@ import json
 from flask import Blueprint, request, redirect, url_for, flash, render_template, jsonify
 
 from extensions import db
-from models import Participant, Group
+from models import Participant, Group, SelfAssessment
 
 participants_bp = Blueprint('participants', __name__)
 
@@ -38,7 +38,7 @@ def manage_participants():
     
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
-        {"text": "Teilnehmer"},
+        {"text": "KI-Bericht FE"},
     ]
     return render_template(
         "manage_participants.html",
@@ -117,19 +117,23 @@ def show_data_entry(participant_id):
     participant_data = {
         'id': participant.id,
         'name': participant.name,
+        'group_id': participant.group_id,
         'observations': json.loads(participant.observations) if participant.observations else {}
     }
+
+    has_ki_report = bool(participant.ki_texts and participant.ki_texts != '{}')
 
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
         {"link": url_for("groups.manage_groups"), "text": "Gruppen"},
         {"link": url_for("groups.show_group_participants", group_id=group.id), "text": group.name},
-        {"text": f"Dateneingabe: {participant.name}"},
+        {"text": f"Beobachtungsdaten: {participant.name}"},
     ]
     return render_template(
         "data_entry.html",
         participant=participant_data,
         group=group,
+        has_ki_report=has_ki_report,
         breadcrumbs=breadcrumbs
     )
 
@@ -145,3 +149,77 @@ def save_observations(participant_id):
         return jsonify({"status": "success", "message": "Beobachtungen gespeichert!"})
         
     return jsonify({"status": "error", "message": "Keine Daten erhalten."}), 400
+
+
+# --- ROUTEN FÜR SELBSTEINSCHÄTZUNG ---
+
+@participants_bp.route("/self-assessments")
+def manage_self_assessments():
+    """Zeigt die Übersicht aller Teilnehmer mit Selbsteinschätzungsstatus an."""
+    groups = db.session.execute(
+        db.select(Group).order_by(Group.name)
+    ).scalars().all()
+    
+    breadcrumbs = [
+        {"link": url_for("dashboard"), "text": "Dashboard"},
+        {"text": "Selbsteinschätzung"}
+    ]
+    
+    return render_template(
+        "manage_self_assessments.html",
+        groups=groups,
+        breadcrumbs=breadcrumbs
+    )
+
+@participants_bp.route("/participant/<int:participant_id>/self_assessment")
+def show_self_assessment(participant_id):
+    """Zeigt die Selbsteinschätzungs-Eingabeseite für einen Teilnehmer an."""
+    participant = db.get_or_404(Participant, participant_id)
+    group = participant.group
+    
+    # Hole oder erstelle SelfAssessment
+    self_assessment = db.session.execute(
+        db.select(SelfAssessment).where(SelfAssessment.participant_id == participant_id)
+    ).scalar_one_or_none()
+    
+    if not self_assessment:
+        self_assessment = SelfAssessment(participant_id=participant_id, content='')
+        db.session.add(self_assessment)
+        db.session.commit()
+    
+    breadcrumbs = [
+        {"link": url_for("dashboard"), "text": "Dashboard"},
+        {"link": url_for("participants.manage_self_assessments"), "text": "Selbsteinschätzung"},
+        {"text": participant.name}
+    ]
+    
+    return render_template(
+        "self_assessment_entry.html",
+        participant=participant,
+        group=group,
+        self_assessment=self_assessment,
+        breadcrumbs=breadcrumbs
+    )
+
+@participants_bp.route("/save_self_assessment/<int:participant_id>", methods=["POST"])
+def save_self_assessment(participant_id):
+    """Speichert die Selbsteinschätzung für einen Teilnehmer (API-Endpunkt)."""
+    participant = db.get_or_404(Participant, participant_id)
+    data = request.get_json()
+    
+    if not data or 'content' not in data:
+        return jsonify({"status": "error", "message": "Keine Daten erhalten."}), 400
+    
+    # Hole oder erstelle SelfAssessment
+    self_assessment = db.session.execute(
+        db.select(SelfAssessment).where(SelfAssessment.participant_id == participant_id)
+    ).scalar_one_or_none()
+    
+    if not self_assessment:
+        self_assessment = SelfAssessment(participant_id=participant_id)
+        db.session.add(self_assessment)
+    
+    self_assessment.content = data['content']
+    db.session.commit()
+    
+    return jsonify({"status": "success", "message": "Selbsteinschätzung gespeichert!"})

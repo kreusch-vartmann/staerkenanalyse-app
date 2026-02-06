@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Abschlussberichte{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h2 class="text-3xl font-bold text-gray-800">Abschlussberichte</h2>
+    <p class="text-gray-600 mt-2">Erstellen Sie finale Berichte mit Fremdeinschätzung und Selbsteinschätzung</p>
+</div>
+
+<div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+    <p class="text-blue-800">
+        <i class="fas fa-info-circle me-2"></i>
+        Ein Abschlussbericht kann nur erstellt werden, wenn sowohl die <strong>Fremdeinschätzung (KI-Analyse)</strong> 
+        als auch die <strong>Selbsteinschätzung</strong> vorhanden sind.
+    </p>
+</div>
+
+{% if participants %}
+<div class="bg-white shadow-md rounded-lg overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Teilnehmer</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gruppe</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Fremdeinschätzung</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Selbsteinschätzung</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aktion</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            {% for item in participants %}
+            <tr>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {{ item.participant.name }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ item.group.name }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
+                    {% if item.has_foreign_assessment %}
+                        <span class="text-green-600">✅</span>
+                    {% else %}
+                        <span class="text-red-600">❌</span>
+                    {% endif %}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
+                    {% if item.has_self_assessment %}
+                        <span class="text-green-600">✅</span>
+                    {% else %}
+                        <span class="text-red-600">❌</span>
+                    {% endif %}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div class="flex flex-col gap-2">
+                        {% if item.has_foreign_assessment %}
+                        <a href="{{ url_for('analysis.edit_report', participant_id=item.participant.id) }}" 
+                           class="text-indigo-600 hover:text-indigo-900">
+                            <i class="fas fa-edit me-1"></i>KI-Bericht bearbeiten
+                        </a>
+                        {% endif %}
+                        
+                        {% if item.can_create_report %}
+                        <a href="{{ url_for('analysis.final_report', participant_id=item.participant.id) }}" 
+                           class="text-blue-600 hover:text-blue-900">
+                            <i class="fas fa-file-alt me-1"></i>Abschlussbericht erstellen
+                        </a>
+                        {% elif not item.has_foreign_assessment or not item.has_self_assessment %}
+                        <span class="text-gray-400">
+                            <i class="fas fa-ban me-1"></i>Abschlussbericht nicht verfügbar
+                        </span>
+                        <span class="text-xs text-gray-500">
+                            {% if not item.has_foreign_assessment %}Keine KI-Analyse{% endif %}
+                            {% if not item.has_foreign_assessment and not item.has_self_assessment %} | {% endif %}
+                            {% if not item.has_self_assessment %}Keine Selbsteinschätzung{% endif %}
+                        </span>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+    <h3 class="text-lg font-semibold text-yellow-800 mb-2">Keine Teilnehmer vorhanden</h3>
+    <p class="text-yellow-700">Bitte legen Sie zuerst Gruppen und Teilnehmer an.</p>
+</div>
+{% endif %}
+
+<div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+    <a href="{{ url_for('analysis.ai_analysis_select_group') }}" 
+       class="block p-4 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100">
+        <h3 class="font-semibold text-green-800">🤖 KI-Analyse durchführen</h3>
+        <p class="text-sm text-green-700 mt-1">Erstellen Sie Fremdeinschätzungen mit KI</p>
+    </a>
+    
+    <a href="{{ url_for('participants.manage_self_assessments') }}" 
+       class="block p-4 bg-yellow-50 border border-yellow-200 rounded-lg hover:bg-yellow-100">
+        <h3 class="font-semibold text-yellow-800">📋 Selbsteinschätzung eingeben</h3>
+        <p class="text-sm text-yellow-700 mt-1">Teilnehmer können ihre Selbsteinschätzung eingeben</p>
+    </a>
+</div>
+
+{% endblock %}

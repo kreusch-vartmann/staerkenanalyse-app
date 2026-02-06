@@ -18,6 +18,21 @@ data_io_bp = Blueprint('data_io', __name__)
 
 # --- HILFSFUNKTIONEN FÜR EXPORT (ANGEPASST AN SQLAlchemy-OBJEKTE) ---
 
+def _format_date_range(group):
+    """Formatiert den Datumszeitraum einer Gruppe für den Export."""
+    if not group:
+        return ""
+
+    if group.date_from and group.date_to:
+        return f"{group.date_from.strftime('%Y-%m-%d')} - {group.date_to.strftime('%Y-%m-%d')}"
+    elif group.date_from:
+        return f"ab {group.date_from.strftime('%Y-%m-%d')}"
+    elif group.date_to:
+        return f"bis {group.date_to.strftime('%Y-%m-%d')}"
+    else:
+        return ""
+
+
 def _create_participant_export_dict(participant):
     """Erstellt ein flaches Dictionary für einen Teilnehmer für den Export."""
     # TODO: Diese Funktion muss noch angepasst werden, wenn Export getestet wird
@@ -28,7 +43,7 @@ def _create_participant_export_dict(participant):
     participant_export = {
         "Name": participant.name,
         "Gruppe": group.name if group else "",
-        "Datum": group.date.strftime('%Y-%m-%d') if group and group.date else "",
+        "Zeitraum": _format_date_range(group) if group else "",
         "Ort": group.location if group else "",
         # TODO: Entscheiden zwischen leitung_fremdeinschatzung / leitung_selbsteinschatzung
         "Leitung (Fremd)": group.leitung_fremdeinschatzung if group else "",
@@ -97,7 +112,7 @@ def data_entry_rework():
     groups = db.session.execute(db.select(Group).order_by(Group.name)).scalars().all()
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
-        {"text": "Dateneingabe"},
+        {"text": "Beobachtungsdaten"},
     ]
     return render_template("data_entry_rework.html", groups=groups, breadcrumbs=breadcrumbs)
 
@@ -162,7 +177,7 @@ def import_page():
     """Zeigt die Import-Seite an."""
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
-        {"text": "Daten importieren"}
+        {"text": "Import"}
     ]
     return render_template("import_page.html", breadcrumbs=breadcrumbs)
 
@@ -207,7 +222,7 @@ def export_selection():
     
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
-        {"text": "Datenexport"}
+        {"text": "Export"}
     ]
     return render_template("export_selection.html",
                            groups=groups,

@@ -77,22 +77,84 @@
 
     <div class="container-fluid">
         <div class="row">
-            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+            {% if request.endpoint != 'dashboard' %}
+            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-none d-md-block bg-light sidebar">
                 <div class="sidebar-sticky pt-3">
+                    <!-- Haupt-Workflow -->
+                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-2 mb-1 text-muted text-uppercase">
+                        <span style="font-size: 0.7rem; font-weight: 600;">Workflow</span>
+                    </h6>
                     <ul class="nav flex-column">
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}"><span data-feather="home"></span> Dashboard</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('groups.manage_groups') }}"><span data-feather="users"></span> Gruppen</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('participants.manage_participants') }}"><span data-feather="user"></span> Teilnehmer</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('data_io.data_entry_rework') }}"><span data-feather="edit"></span> Dateneingabe</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('analysis.ai_analysis_select_group') }}"><span data-feather="cpu"></span> KI-Analyse</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('prompts.manage_prompts') }}"><span data-feather="file-text"></span> Prompts</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('data_io.import_page') }}"><span data-feather="upload"></span> Import</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('data_io.export_selection') }}"><span data-feather="download"></span> Export</a></li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint and 'groups' in request.endpoint %}active{% endif %}" href="{{ url_for('groups.manage_groups') }}">
+                                <span style="font-size: 1.2rem;">👥</span> Gruppen & Teilnehmer
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint and 'self_assessment' in request.endpoint %}active{% endif %}" href="{{ url_for('participants.manage_self_assessments') }}">
+                                <span style="font-size: 1.2rem;">📋</span> Selbsteinschätzung
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint and 'data_entry' in request.endpoint %}active{% endif %}" href="{{ url_for('data_io.data_entry_rework') }}">
+                                <span style="font-size: 1.2rem;">📝</span> Beobachtungsdaten
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint and 'ai_analysis' in request.endpoint %}active{% endif %}" href="{{ url_for('analysis.ai_analysis_select_group') }}">
+                                <span style="font-size: 1.2rem;">🤖</span> KI-Analyse
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint and 'edit_report' in request.endpoint or 'bericht' in request.endpoint %}active{% endif %}" href="{{ url_for('participants.manage_participants') }}">
+                                <span style="font-size: 1.2rem;">📄</span> KI-Bericht FE
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint and 'final_report' in request.endpoint %}active{% endif %}" href="{{ url_for('analysis.manage_final_reports') }}">
+                                <span style="font-size: 1.2rem;">📘</span> Abschlussberichte
+                            </a>
+                        </li>
                     </ul>
+
+                    <!-- Verwaltung -->
+                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted text-uppercase">
+                        <span style="font-size: 0.7rem; font-weight: 600;">Verwaltung</span>
+                    </h6>
+                    <ul class="nav flex-column mb-2">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint and 'prompts' in request.endpoint %}active{% endif %}" href="{{ url_for('prompts.manage_prompts') }}">
+                                <span style="font-size: 1.2rem;">🔄</span> Prompts
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint and 'explanation_blocks' in request.endpoint %}active{% endif %}" href="{{ url_for('explanation_blocks.manage_explanation_blocks') }}">
+                                <span style="font-size: 1.2rem;">📝</span> Text
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint and 'import' in request.endpoint %}active{% endif %}" href="{{ url_for('data_io.import_page') }}">
+                                <span style="font-size: 1.2rem;">📥</span> Import
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint and 'export' in request.endpoint %}active{% endif %}" href="{{ url_for('data_io.export_selection') }}">
+                                <span style="font-size: 1.2rem;">📦</span> Export
+                            </a>
+                        </li>
+                    </ul>
+
+                    <!-- Zurück zum Dashboard -->
+                    <div class="mt-4 px-3">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-outline-secondary btn-block">
+                            ← Zurück zum Dashboard
+                        </a>
+                    </div>
                 </div>
             </nav>
+            {% endif %}
 
-            <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4 bg-gray-50">
+            <main role="main" class="{% if request.endpoint == 'dashboard' %}col-12{% else %}col-md-9 ml-sm-auto col-lg-10{% endif %} px-md-4 bg-gray-50">
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         <div class="mt-3">

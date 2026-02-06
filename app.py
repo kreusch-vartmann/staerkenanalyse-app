@@ -19,6 +19,7 @@ from blueprints.participants import participants_bp
 from blueprints.analysis import analysis_bp
 from blueprints.data_io import data_io_bp
 from blueprints.prompts import prompts_bp
+from blueprints.explanation_blocks import explanation_blocks_bp
 
 # App-Initialisierung
 app = Flask(__name__)
@@ -39,6 +40,7 @@ app.register_blueprint(participants_bp)
 app.register_blueprint(analysis_bp)
 app.register_blueprint(data_io_bp)
 app.register_blueprint(prompts_bp)
+app.register_blueprint(explanation_blocks_bp)
 
 
 # --- ZENTRALE FUNKTIONEN ---
@@ -47,6 +49,15 @@ app.register_blueprint(prompts_bp)
 def inject_now():
     """Fügt das aktuelle Jahr in alle Templates ein."""
     return {"current_year": datetime.now(UTC).year}
+
+@app.template_filter('datetimeformat')
+def datetimeformat_filter(value, format='%d.%m.%Y'):
+    """Formatiert ein date-Objekt ins deutsche Datumsformat."""
+    if value is None:
+        return ''
+    if isinstance(value, str):
+        return value
+    return value.strftime(format)
 
 # Die alten Filter und teardown-Funktionen sind durch SQLAlchemy nicht mehr nötig
 

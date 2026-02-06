@@ -42,5 +42,16 @@
                 checkbox.checked = e.target.checked;
             });
         });
+
+        // Automatische Vorauswahl aus URL-Parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const preselectId = urlParams.get('preselect');
+        if (preselectId) {
+            const checkbox = document.getElementById('p-' + preselectId);
+            if (checkbox) {
+                checkbox.checked = true;
+                checkbox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
     </script>
 {% endblock %}

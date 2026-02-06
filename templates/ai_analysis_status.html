@@ -20,7 +20,7 @@
     </div>
 
     <div class="mt-8">
-        <a id="finish-button" href="{{ url_for('groups.show_group_participants', group_id=group.id) }}" class="hidden py-3 px-8 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold text-lg">
+        <a id="finish-button" href="{{ url_for('analysis.manage_final_reports') }}" class="hidden py-3 px-8 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold text-lg">
             <i class="fas fa-check-circle me-2"></i>Alle Berichte ansehen
         </a>
     </div>
@@ -33,6 +33,7 @@
         const participantRows = document.querySelectorAll('.participant-row');
         // Die Konfiguration wird sicher aus dem Script-Tag ausgelesen
         const analysisConfig = JSON.parse(document.getElementById('analysis-config').textContent);
+        const editReportUrlBase = "{{ url_for('analysis.edit_report', participant_id=0) }}".replace('/0', '');
 
         async function runAnalysisForParticipant(participantRow) {
             const participantId = participantRow.dataset.participantId;
@@ -54,6 +55,12 @@
                     indicator.innerHTML = '<i class="fas fa-check-circle me-2"></i> Erfolgreich';
                     indicator.className = 'status-indicator text-green-600 font-semibold';
                     participantRow.classList.replace('bg-gray-50', 'bg-green-50');
+
+                    const reportLink = document.createElement('a');
+                    reportLink.href = `${editReportUrlBase}/${participantId}`;
+                    reportLink.className = 'ml-3 text-sm text-blue-600 hover:text-blue-800 font-semibold whitespace-nowrap';
+                    reportLink.innerHTML = '<i class="fas fa-edit me-1"></i>Bericht bearbeiten';
+                    participantRow.appendChild(reportLink);
                 } else {
                     indicator.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i> Fehler: ${result.message}`;
                     indicator.className = 'status-indicator text-red-600 font-semibold';
