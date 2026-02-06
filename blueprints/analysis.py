@@ -16,7 +16,7 @@ from flask import (Blueprint, request, redirect, url_for, flash, render_template
                    jsonify, Response)
 from weasyprint import HTML
 
-from extensions import db
+from extensions import db, csrf
 from models import Participant, Group, Prompt, SelfAssessment, ExplanationBlock
 from ki_services import generate_report_with_ai
 from utils import clean_json_response, get_file_content
@@ -350,6 +350,7 @@ def run_ki_analysis(participant_id):
 
 
 @analysis_bp.route("/api/run_single_analysis/<int:participant_id>", methods=["POST"])
+@csrf.exempt
 def run_single_analysis_api(participant_id):
     """API-Endpunkt, um die KI-Analyse für die Batch-Verarbeitung auszuführen."""
     data = request.get_json()

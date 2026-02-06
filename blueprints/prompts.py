@@ -3,7 +3,7 @@
 
 from flask import (Blueprint, request, redirect, url_for, flash, render_template,
                    jsonify)
-from extensions import db
+from extensions import db, csrf
 from models import Prompt
 
 # Ein Blueprint-Objekt für die Prompt-Verwaltung
@@ -112,6 +112,7 @@ def delete_prompt(prompt_id):
 # --- API-ROUTE FÜR PROMPTS ---
 
 @prompts_bp.route("/api/prompt/<int:prompt_id>")
+@csrf.exempt
 def get_prompt_content_api(prompt_id):
     """Gibt den Inhalt eines bestimmten Prompts zurück."""
     prompt = db.session.get(Prompt, prompt_id)

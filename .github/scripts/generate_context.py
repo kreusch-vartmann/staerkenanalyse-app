@@ -57,6 +57,11 @@ class ContextGenerator:
         """Extrahiert SQLAlchemy-Modelle aus models.py"""
         models = []
         try:
+            # Prüfe ob models.py existiert
+            if not self.models_file.exists():
+                print("⚠️ models.py nicht gefunden")
+                return models
+
             with open(self.models_file, 'r', encoding='utf-8') as f:
                 tree = ast.parse(f.read())
             

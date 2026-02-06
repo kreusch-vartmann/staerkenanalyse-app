@@ -113,17 +113,20 @@ jobs:
             echo "⚠️ README.md nicht gefunden - wird übersprungen"
             exit 0
           fi
-          
-          # Erstelle/Update Statistik-Badge-Section
-          cat >> README.md <<'EOF'
-          
+
+          # Entferne alte Stats-Section falls vorhanden
+          sed -i '/<!-- AUTO-GENERATED STATS/,/<!-- END AUTO-GENERATED STATS -->/d' README.md
+
+          # Füge neue Stats-Section hinzu (ohne Quotes um EOF für Variable Expansion!)
+          cat >> README.md <<EOF
+
           <!-- AUTO-GENERATED STATS - DO NOT EDIT MANUALLY -->
           ## 📊 Projekt-Statistiken
-          
+
           ![Python Files](https://img.shields.io/badge/Python_Files-${{ steps.stats.outputs.py_files }}-blue)
           ![Templates](https://img.shields.io/badge/Templates-${{ steps.stats.outputs.html_files }}-green)
           ![Blueprints](https://img.shields.io/badge/Blueprints-${{ steps.stats.outputs.blueprints }}-orange)
-          
+
           *Automatisch aktualisiert am: $(date '+%Y-%m-%d %H:%M:%S')*
           <!-- END AUTO-GENERATED STATS -->
           EOF
