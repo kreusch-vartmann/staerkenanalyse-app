@@ -1,3 +1,8 @@
+-- ⚠️ DEPRECATED: Diese Datei wird nicht mehr verwendet!
+-- SQLAlchemy models.py ist die Source of Truth.
+-- Migrations werden über Alembic (flask db) verwaltet.
+-- Diese Datei existiert nur noch für Referenzzwecke.
+
 -- Löscht bestehende Tabellen, um einen sauberen Neuaufbau zu gewährleisten.
 DROP TABLE IF EXISTS groups;
 DROP TABLE IF EXISTS participants;

@@ -5,7 +5,7 @@ import json
 from flask import Blueprint, request, redirect, url_for, flash, render_template, jsonify
 
 from extensions import db
-from models import Participant, Group, Prompt
+from models import Participant, Group
 
 participants_bp = Blueprint('participants', __name__)
 
@@ -117,7 +117,6 @@ def show_data_entry(participant_id):
     participant_data = {
         'id': participant.id,
         'name': participant.name,
-        'general_data': json.loads(participant.general_data) if participant.general_data else {},
         'observations': json.loads(participant.observations) if participant.observations else {}
     }
 
@@ -134,20 +133,6 @@ def show_data_entry(participant_id):
         breadcrumbs=breadcrumbs
     )
 
-@participants_bp.route("/participant/<int:participant_id>/save_general_data", methods=["POST"])
-def save_general_data(participant_id):
-    """Speichert die allgemeinen Stammdaten eines Teilnehmers."""
-    participant = db.get_or_404(Participant, participant_id)
-    data = request.get_json()
-    
-    if data:
-        participant.general_data = json.dumps(data)
-        db.session.commit()
-        return jsonify({"status": "success", "message": "Stammdaten gespeichert!"})
-        
-    return jsonify({"status": "error", "message": "Keine Daten erhalten."}), 400
-
-
 @participants_bp.route("/participant/<int:participant_id>/save_observations", methods=["POST"])
 def save_observations(participant_id):
     """Speichert die Beobachtungen für einen Teilnehmer."""
@@ -160,4 +145,3 @@ def save_observations(participant_id):
         return jsonify({"status": "success", "message": "Beobachtungen gespeichert!"})
         
     return jsonify({"status": "error", "message": "Keine Daten erhalten."}), 400
-
