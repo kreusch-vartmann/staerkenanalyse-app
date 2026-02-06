@@ -7,6 +7,9 @@
 
     <!-- Altes Bootstrap CSS für Kompatibilität -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <!-- NEU: Tailwind CSS für das neue Design -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -65,6 +68,129 @@
     <!-- Quill.js Rich-Text-Editor -->
     <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.3.7/quill.js"></script>
+
+    <!-- Globaler Undo/Redo Manager (muss vor dem content-Block verfügbar sein) -->
+    <script>
+    window.undoRedoManager = {
+        _lastFocusedTarget: null,
+        _sliderUndoStack: [],
+        _sliderRedoStack: [],
+
+        registerQuill(editor) {
+            const container = editor.root;
+            container.addEventListener('focus', () => {
+                this._lastFocusedTarget = { type: 'quill', ref: editor };
+                this._updateButtons();
+            });
+            editor.on('text-change', () => this._updateButtons());
+        },
+
+        registerTextarea(textarea) {
+            textarea.addEventListener('focus', () => {
+                this._lastFocusedTarget = { type: 'textarea', ref: textarea };
+                this._updateButtons();
+            });
+        },
+
+        registerContentEditable(element) {
+            element.addEventListener('focus', () => {
+                this._lastFocusedTarget = { type: 'contenteditable', ref: element };
+                this._updateButtons();
+            });
+        },
+
+        registerSlider(slider, onRestore) {
+            let lastValue = parseFloat(slider.value);
+            slider.addEventListener('input', () => {
+                const newValue = parseFloat(slider.value);
+                this._sliderUndoStack.push({ slider, oldValue: lastValue, newValue, onRestore });
+                this._sliderRedoStack = [];
+                lastValue = newValue;
+                this._lastFocusedTarget = { type: 'slider', ref: slider };
+                this._updateButtons();
+            });
+            slider.addEventListener('focus', () => {
+                this._lastFocusedTarget = { type: 'slider', ref: slider };
+                this._updateButtons();
+            });
+        },
+
+        undo() {
+            if (!this._lastFocusedTarget) return;
+            const t = this._lastFocusedTarget;
+
+            if (t.type === 'quill') {
+                t.ref.history.undo();
+            } else if (t.type === 'textarea' || t.type === 'contenteditable') {
+                t.ref.focus();
+                document.execCommand('undo');
+            } else if (t.type === 'slider') {
+                if (this._sliderUndoStack.length > 0) {
+                    const action = this._sliderUndoStack.pop();
+                    this._sliderRedoStack.push(action);
+                    action.slider.value = action.oldValue;
+                    if (action.onRestore) action.onRestore(action.slider, action.oldValue);
+                }
+            }
+            this._updateButtons();
+        },
+
+        redo() {
+            if (!this._lastFocusedTarget) return;
+            const t = this._lastFocusedTarget;
+
+            if (t.type === 'quill') {
+                t.ref.history.redo();
+            } else if (t.type === 'textarea' || t.type === 'contenteditable') {
+                t.ref.focus();
+                document.execCommand('redo');
+            } else if (t.type === 'slider') {
+                if (this._sliderRedoStack.length > 0) {
+                    const action = this._sliderRedoStack.pop();
+                    this._sliderUndoStack.push(action);
+                    action.slider.value = action.newValue;
+                    if (action.onRestore) action.onRestore(action.slider, action.newValue);
+                }
+            }
+            this._updateButtons();
+        },
+
+        show() {
+            const controls = document.getElementById('undo-redo-controls');
+            if (controls) controls.style.display = 'flex';
+        },
+
+        _updateButtons() {
+            const undoBtn = document.getElementById('btn-undo');
+            const redoBtn = document.getElementById('btn-redo');
+            if (!undoBtn || !redoBtn) return;
+
+            const t = this._lastFocusedTarget;
+            let canUndo = false;
+            let canRedo = false;
+
+            if (t) {
+                if (t.type === 'quill') {
+                    canUndo = t.ref.history.stack.undo.length > 0;
+                    canRedo = t.ref.history.stack.redo.length > 0;
+                } else if (t.type === 'slider') {
+                    canUndo = this._sliderUndoStack.length > 0;
+                    canRedo = this._sliderRedoStack.length > 0;
+                } else {
+                    canUndo = true;
+                    canRedo = true;
+                }
+            }
+
+            undoBtn.disabled = !canUndo;
+            redoBtn.disabled = !canRedo;
+            undoBtn.style.opacity = canUndo ? '1' : '0.4';
+            redoBtn.style.opacity = canRedo ? '1' : '0.4';
+            undoBtn.style.cursor = canUndo ? 'pointer' : 'default';
+            redoBtn.style.cursor = canRedo ? 'pointer' : 'default';
+        }
+    };
+    </script>
 </head>
 <body>
     <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
@@ -72,6 +198,16 @@
         <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-toggle="collapse" data-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
+        <!-- Undo/Redo Buttons (nur auf Edit-Seiten sichtbar) -->
+        <div class="d-flex align-items-center ml-auto mr-2" id="undo-redo-controls" style="display: none !important;">
+            <button id="btn-undo" onclick="window.undoRedoManager.undo()"
+                    class="nav-link btn btn-link text-light p-1 mx-1 border-0" title="Rückgängig (Strg+Z)" disabled
+                    style="font-size: 1.4rem; line-height: 1; opacity: 0.5; background: none;">&#8630;</button>
+            <button id="btn-redo" onclick="window.undoRedoManager.redo()"
+                    class="nav-link btn btn-link text-light p-1 mx-1 border-0" title="Wiederholen (Strg+Y)" disabled
+                    style="font-size: 1.4rem; line-height: 1; opacity: 0.5; background: none;">&#8631;</button>
+        </div>
+
         <ul class="navbar-nav px-3">
             <li class="nav-item text-nowrap">
                 <a class="nav-link" href="{{ url_for('info') }}" title="Informationen" style="font-size: 1.5rem;">ℹ️</a>
@@ -91,7 +227,12 @@
                     <ul class="nav flex-column">
                         <li class="nav-item">
                             <a class="nav-link {% if request.endpoint and 'groups' in request.endpoint %}active{% endif %}" href="{{ url_for('groups.manage_groups') }}">
-                                <span style="font-size: 1.2rem;">👥</span> Gruppen & Teilnehmer
+                                <span style="font-size: 1.2rem;">👥</span> Gruppen
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint and 'manage_participants' in request.endpoint %}active{% endif %}" href="{{ url_for('participants.manage_participants') }}">
+                                <span style="font-size: 1.2rem;">👤</span> Teilnehmer
                             </a>
                         </li>
                         <li class="nav-item">
@@ -110,8 +251,8 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint and 'edit_report' in request.endpoint or 'bericht' in request.endpoint %}active{% endif %}" href="{{ url_for('participants.manage_participants') }}">
-                                <span style="font-size: 1.2rem;">📄</span> KI-Bericht FE
+                            <a class="nav-link {% if request.endpoint and 'foreign_assessment' in request.endpoint %}active{% endif %}" href="{{ url_for('analysis.manage_foreign_assessments') }}">
+                                <span style="font-size: 1.2rem;">📄</span> Fremdeinschätzung
                             </a>
                         </li>
                         <li class="nav-item">

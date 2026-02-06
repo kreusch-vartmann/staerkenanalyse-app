@@ -82,6 +82,10 @@ document.addEventListener('DOMContentLoaded', function() {
             saveSelfAssessment();
         }, 2000); // 2 Sekunden nach letzter Eingabe
     });
+
+    // Undo/Redo Registrierung
+    window.undoRedoManager.show();
+    window.undoRedoManager.registerQuill(quillEditor);
 });
 
 function saveSelfAssessment() {

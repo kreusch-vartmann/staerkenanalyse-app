@@ -19,6 +19,7 @@
 
 <!-- Formular für PDF-Generierung -->
 <form id="pdf-form" method="POST" action="{{ url_for('analysis.final_report_pdf', participant_id=participant.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     <!-- Hidden inputs für ausgewählte Textblöcke -->
     <div id="selected-blocks-inputs"></div>
     

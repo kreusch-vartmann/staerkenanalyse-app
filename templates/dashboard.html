@@ -50,8 +50,13 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
 
         <a href="{{ url_for('groups.manage_groups') }}" class="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 transition-colors">
-            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">👥 Gruppen & Teilnehmer</h5>
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">👥 Gruppen</h5>
             <p class="font-normal text-gray-700">Startpunkt: Legen Sie Gruppen an und fügen Sie die Teilnehmer hinzu.</p>
+        </a>
+
+        <a href="{{ url_for('participants.manage_participants') }}" class="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 transition-colors">
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">👤 Teilnehmer</h5>
+            <p class="font-normal text-gray-700">Alle Teilnehmer im Überblick - Selbsteinschätzung, Beobachtungsdaten, KI-Analyse und Berichte.</p>
         </a>
 
         <a href="{{ url_for('participants.manage_self_assessments') }}" class="block p-6 bg-white border border-yellow-200 rounded-lg shadow hover:bg-yellow-100">
@@ -69,9 +74,9 @@
             <p class="font-normal text-gray-700">Führen Sie die KI-gestützte Auswertung für mehrere Teilnehmer gleichzeitig durch.</p>
         </a>
 
-        <a href="{{ url_for('participants.manage_participants') }}" class="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 transition-colors">
-            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">📄 KI-Bericht FE</h5>
-            <p class="font-normal text-gray-700">Sehen Sie sich die Fremdeinschätzungs-Berichte (FE) an, bearbeiten Sie sie und exportieren Sie sie.</p>
+        <a href="{{ url_for('analysis.manage_foreign_assessments') }}" class="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 transition-colors">
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">📄 Fremdeinschätzung</h5>
+            <p class="font-normal text-gray-700">KI-generierte Fremdeinschätzungen ansehen und bearbeiten.</p>
         </a>
 
         <a href="{{ url_for('analysis.manage_final_reports') }}" class="block p-6 bg-white border border-indigo-200 rounded-lg shadow hover:bg-indigo-100">

@@ -99,11 +99,20 @@ def edit_report(participant_id):
         'date_from': group.date_from if group else None,
         'date_to': group.date_to if group else None,
         'location': group.location if group else '',
+        'leitung': group.leitung_fremdeinschatzung if group else '',
         'leitung_fremdeinschatzung': group.leitung_fremdeinschatzung if group else '',
         'leitung_selbsteinschatzung': group.leitung_selbsteinschatzung if group else '',
         'beobachter1': group.beobachter1 if group else '',
         'beobachter2': group.beobachter2 if group else '',
     }
+
+    # KI-Original-Daten parsen für Reset-Funktion
+    ki_original = {}
+    if participant.ki_raw_response:
+        try:
+            ki_original = json.loads(clean_json_response(participant.ki_raw_response))
+        except (json.JSONDecodeError, ValueError):
+            ki_original = {}
 
     german_tz = pytz.timezone('Europe/Berlin')
     current_date = datetime.now(pytz.utc).astimezone(german_tz).strftime("%d.%m.%Y")
@@ -112,6 +121,7 @@ def edit_report(participant_id):
     return render_template('staerkenanalyse_bericht_vorlage3.html',
                            participant=participant_dict,
                            group=group_dict,
+                           ki_original=ki_original,
                            current_date=current_date,
                            current_location=current_location)
 
@@ -400,44 +410,118 @@ def run_single_analysis_api(participant_id):
         })
 
 
+# --- ROUTEN FÜR FREMDEINSCHÄTZUNG ---
+
+@analysis_bp.route("/foreign-assessments")
+def manage_foreign_assessments():
+    """Zeigt die Übersicht aller Teilnehmer gruppiert nach Gruppen mit Fremdeinschätzungs-Status an."""
+    groups = db.session.execute(
+        db.select(Group).order_by(Group.name)
+    ).scalars().all()
+
+    groups_with_participants = []
+    for group in groups:
+        participants_with_status = []
+        group_stats = {
+            'total': 0,
+            'with_foreign': 0,
+        }
+
+        for participant in group.participants:
+            has_foreign_assessment = bool(participant.ki_texts and participant.ki_texts != '{}')
+
+            participants_with_status.append({
+                'participant': participant,
+                'has_foreign_assessment': has_foreign_assessment,
+            })
+
+            group_stats['total'] += 1
+            if has_foreign_assessment:
+                group_stats['with_foreign'] += 1
+
+        if participants_with_status:
+            groups_with_participants.append({
+                'group': group,
+                'participants': participants_with_status,
+                'stats': group_stats
+            })
+
+    breadcrumbs = [
+        {"link": url_for("dashboard"), "text": "Dashboard"},
+        {"text": "Fremdeinschätzung"}
+    ]
+
+    return render_template(
+        "manage_foreign_assessments.html",
+        groups_data=groups_with_participants,
+        breadcrumbs=breadcrumbs
+    )
+
+
 # --- ROUTEN FÜR ABSCHLUSSBERICHTE ---
 
 @analysis_bp.route("/final-reports")
 def manage_final_reports():
-    """Zeigt die Übersicht aller Teilnehmer mit Abschlussberichts-Status an."""
+    """Zeigt die Übersicht aller Teilnehmer gruppiert nach Gruppen mit Abschlussberichts-Status an."""
     groups = db.session.execute(
         db.select(Group).order_by(Group.name)
     ).scalars().all()
-    
-    # Erweitere Participants mit Status-Informationen
-    participants_with_status = []
+
+    # Gruppiere Participants mit Status-Informationen nach Gruppen
+    groups_with_participants = []
     for group in groups:
+        participants_with_status = []
+        group_stats = {
+            'total': 0,
+            'with_foreign': 0,
+            'with_self': 0,
+            'ready': 0
+        }
+
         for participant in group.participants:
             # Prüfe ob Fremdeinschätzung (ki_texts) vorhanden
             has_foreign_assessment = bool(participant.ki_texts and participant.ki_texts != '{}')
-            
+
             # Prüfe ob Selbsteinschätzung vorhanden
             self_assessment = db.session.execute(
                 db.select(SelfAssessment).where(SelfAssessment.participant_id == participant.id)
             ).scalar_one_or_none()
             has_self_assessment = bool(self_assessment and self_assessment.content.strip())
-            
+
+            can_create_report = has_foreign_assessment and has_self_assessment
+
             participants_with_status.append({
                 'participant': participant,
-                'group': group,
                 'has_foreign_assessment': has_foreign_assessment,
                 'has_self_assessment': has_self_assessment,
-                'can_create_report': has_foreign_assessment and has_self_assessment
+                'can_create_report': can_create_report
             })
-    
+
+            # Update group statistics
+            group_stats['total'] += 1
+            if has_foreign_assessment:
+                group_stats['with_foreign'] += 1
+            if has_self_assessment:
+                group_stats['with_self'] += 1
+            if can_create_report:
+                group_stats['ready'] += 1
+
+        # Only add groups that have participants
+        if participants_with_status:
+            groups_with_participants.append({
+                'group': group,
+                'participants': participants_with_status,
+                'stats': group_stats
+            })
+
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
         {"text": "Abschlussberichte"}
     ]
-    
+
     return render_template(
         "manage_final_reports.html",
-        participants=participants_with_status,
+        groups_data=groups_with_participants,
         breadcrumbs=breadcrumbs
     )
 
