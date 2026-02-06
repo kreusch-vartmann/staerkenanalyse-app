@@ -28,7 +28,7 @@
 
 ### Blueprints (6 total)
 
-#### analysis.py (11 Routes)
+#### analysis.py (12 Routes)
 - `GET /edit_report/<int:participant_id>` → `edit_report()`
 - `POST /save_report/<int:participant_id>` → `save_report()`
 - `GET /bericht/<int:participant_id>/pdf` → `bericht_pdf()`
@@ -37,6 +37,7 @@
 - `POST /ai_analysis/configure` → `configure_batch_ai_analysis()`
 - `POST /ai_analysis/execute` → `execute_batch_ai_analysis()`
 - `POST /run_ki_analysis/<int:participant_id>` → `run_ki_analysis()`
+- `GET /foreign-assessments` → `manage_foreign_assessments()`
 - `GET /final-reports` → `manage_final_reports()`
 - `GET /final_report/<int:participant_id>` → `final_report()`
 - `POST /final_report/<int:participant_id>/pdf` → `final_report_pdf()`
@@ -82,7 +83,7 @@
 - `GET, POST /prompt/edit/<int:prompt_id>` → `edit_prompt()`
 - `POST /prompt/delete/<int:prompt_id>` → `delete_prompt()`
 
-### Templates (26 HTML-Dateien)
+### Templates (27 HTML-Dateien)
 - ai_analysis_select_group.html
 - ai_analysis_select_participants.html
 - ai_analysis_status.html
@@ -100,6 +101,7 @@
 - info.html
 - manage_explanation_blocks.html
 - manage_final_reports.html
+- manage_foreign_assessments.html
 - manage_groups.html
 - manage_participants.html
 - manage_prompts.html
@@ -154,11 +156,17 @@
 3. → `analysis.run_ki_analysis_api()` → Mistral API Call
 4. Weiterleitung → `analysis.edit_report()` → staerkenanalyse_bericht_vorlage3.html
 
-### 3. Bericht bearbeiten/exportieren
-1. Dashboard → "Berichte bearbeiten" (manage_participants.html)
-2. "Bericht ansehen" Button (nur wenn `ki_texts` vorhanden)
+### 3. Fremdeinschätzung bearbeiten/exportieren
+1. Dashboard → "Fremdeinschätzung" oder "Teilnehmer" → Teilnehmer auswählen
+2. "Fremdeinschätzung" Button (nur wenn `ki_texts` vorhanden)
 3. → `analysis.edit_report()` → HTML-Bericht editieren
 4. PDF-Export → `analysis.bericht_pdf()` → WeasyPrint → PDF
+
+### 4. Abschlussbericht erstellen
+1. Dashboard → "Abschlussberichte" → Teilnehmer auswählen
+2. Voraussetzung: Fremdeinschätzung + Selbsteinschätzung vorhanden
+3. → `analysis.final_report()` → Kombinierter Bericht (Fremd + Selbst)
+4. PDF-Export → `analysis.final_report_pdf()` → WeasyPrint → PDF
 
 ---
 
@@ -172,4 +180,4 @@
 
 ---
 
-**Letzte Aktualisierung**: {self._get_timestamp()}
+**Letzte Aktualisierung**: 2026-02-06

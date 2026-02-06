@@ -1,159 +1,200 @@
 {% extends 'base.html' %}
 
-{% block title %}KI-Bericht FE{% endblock %}
+{% block title %}Teilnehmer{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-6">
-    <!-- Breadcrumbs -->
-    <nav class="mb-6">
-        <ol class="flex items-center space-x-2 text-sm text-gray-600">
-            <li><a href="{{ url_for('dashboard') }}" class="hover:text-blue-600">Dashboard</a><span class="mx-2">/</span></li>
-            <li class="text-blue-600 font-medium">KI-Bericht FE</li>
-        </ol>
-    </nav>
+<div class="mb-6">
+    <h2 class="text-3xl font-bold text-gray-800">Teilnehmer</h2>
+    <p class="text-gray-600 mt-2">Alle Teilnehmer im Überblick - Selbsteinschätzung, Beobachtungsdaten, KI-Analyse und Berichte</p>
+</div>
 
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-3xl font-bold text-gray-800">KI-Bericht FE</h2>
+<!-- Suchfeld mit Autocomplete -->
+<div class="mb-6">
+    <div class="relative">
+        <input type="text" id="participant-search"
+               class="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+               placeholder="Teilnehmer oder Gruppe suchen..." autocomplete="off">
+        <i class="fas fa-search absolute left-3 top-4 text-gray-400"></i>
+        <button id="clear-search" class="absolute right-3 top-4 hidden text-gray-400 hover:text-gray-600">
+            <i class="fas fa-times"></i>
+        </button>
     </div>
-
-    <!-- Such- und Filterleiste -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-        <form method="GET" action="{{ url_for('participants.manage_participants') }}">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                <div>
-                    <label for="q" class="block text-sm font-medium text-gray-700">Suchen</label>
-                    <input type="text" name="q" id="q" value="{{ search_query or '' }}" placeholder="Name oder Gruppe..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                </div>
-                <div>
-                    <label for="sort" class="block text-sm font-medium text-gray-700">Sortieren nach</label>
-                    <select id="sort" name="sort" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                        <option value="name_asc" {% if sort_order == 'name_asc' %}selected{% endif %}>Name (A-Z)</option>
-                        <option value="name_desc" {% if sort_order == 'name_desc' %}selected{% endif %}>Name (Z-A)</option>
-                        <option value="group_asc" {% if sort_order == 'group_asc' %}selected{% endif %}>Gruppe (A-Z)</option>
-                        <option value="group_desc" {% if sort_order == 'group_desc' %}selected{% endif %}>Gruppe (Z-A)</option>
-                    </select>
-                </div>
-                <div class="md:col-span-1">
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">Anwenden</button>
-                </div>
-            </div>
-        </form>
-    </div>
-
-    <!-- Teilnehmer Tabelle -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        {% if participants %}
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Teilnehmer</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gruppe</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aktionen</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        {% for participant in participants %}
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">{{ participant.name }}</div>
-                                <div class="text-sm text-gray-500">ID: {{ participant.id }}</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <a href="{{ url_for('groups.show_group_participants', group_id=participant.group.id) }}" class="text-sm text-blue-600 hover:text-blue-900">{{ participant.group.name }}</a>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <div class="flex items-center justify-end space-x-2">
-                                    {% if participant.ki_texts and participant.ki_texts != '{}' %}
-                                    <a href="{{ url_for('analysis.edit_report', participant_id=participant.id) }}" class="flex items-center px-2.5 py-1.5 border border-blue-300 shadow-sm text-xs font-medium rounded text-blue-700 bg-blue-50 hover:bg-blue-100">
-                                        <svg class="w-4 h-4 text-blue-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                        Bericht ansehen
-                                    </a>
-                                    {% endif %}
-                                    <a href="{{ url_for('participants.show_data_entry', participant_id=participant.id) }}" class="flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
-                                        <svg class="w-4 h-4 text-gray-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L14.732 3.732z"></path></svg>
-                                        Beobachtungsdaten
-                                    </a>
-                                    <button onclick="openEditParticipantModal({{ participant.id }}, '{{ participant.name|e }}')" class="flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
-                                         <svg class="w-4 h-4 text-gray-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                        Bearbeiten
-                                    </button>
-                                     <form method="POST" action="{{ url_for('participants.delete_participant', participant_id=participant.id) }}" onsubmit="return confirm('Sind Sie sicher, dass Sie &quot;{{ participant.name|e }}&quot; löschen möchten?')" class="inline">
-                                        <input type="hidden" name="redirect_url" value="{{ request.url }}">
-                                        <button type="submit" class="flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-red-600 hover:bg-red-700">
-                                            <svg class="w-4 h-4 text-white mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                            Löschen
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            
-            <!-- Pagination -->
-            {% if pagination.pages > 1 %}
-            <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                    <div>
-                        <p class="text-sm text-gray-700">
-                            Zeige
-                            <span class="font-medium">{{ (pagination.page - 1) * pagination.per_page + 1 }}</span>
-                            bis
-                            <span class="font-medium">{{ pagination.page * pagination.per_page if pagination.page * pagination.per_page < pagination.total else pagination.total }}</span>
-                            von
-                            <span class="font-medium">{{ pagination.total }}</span>
-                            Ergebnissen
-                        </p>
-                    </div>
-                    <div>
-                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                            {% if pagination.has_prev %}
-                                <a href="{{ url_for('participants.manage_participants', page=pagination.prev_num, q=search_query, sort=sort_order) }}" 
-                                   class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                    <span class="sr-only">Zurück</span>
-                                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                                </a>
-                            {% endif %}
-
-                            {% for page_num in pagination.iter_pages() %}
-                                {% if page_num %}
-                                    {% if page_num != pagination.page %}
-                                        <a href="{{ url_for('participants.manage_participants', page=page_num, q=search_query, sort=sort_order) }}" 
-                                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                                            {{ page_num }}
-                                        </a>
-                                    {% else %}
-                                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-50 text-sm font-medium text-blue-600">
-                                            {{ page_num }}
-                                        </span>
-                                    {% endif %}
-                                {% else %}
-                                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>
-                                {% endif %}
-                            {% endfor %}
-
-                            {% if pagination.has_next %}
-                                <a href="{{ url_for('participants.manage_participants', page=pagination.next_num, q=search_query, sort=sort_order) }}" 
-                                   class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                    <span class="sr-only">Weiter</span>
-                                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
-                                </a>
-                            {% endif %}
-                        </nav>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-        {% else %}
-            <div class="text-center py-12 text-gray-500">
-                Keine Teilnehmer gefunden.
-            </div>
-        {% endif %}
+    <div id="autocomplete-results"
+         class="absolute z-10 hidden w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-64 overflow-y-auto"></div>
+    <div id="search-info" class="mt-2 text-sm text-gray-600 hidden">
+        <span id="search-count"></span>
     </div>
 </div>
+
+{% if groups %}
+    {% for group in groups %}
+    {% if group.participants.count() > 0 %}
+    <div class="group-accordion bg-white shadow-md rounded-lg mb-4"
+         data-group-id="{{ group.id }}" data-group-name="{{ group.name|lower }}">
+
+        <!-- Accordion Header -->
+        <div class="accordion-header cursor-pointer hover:bg-gray-50 px-6 py-4 transition-colors"
+             onclick="toggleAccordion({{ group.id }})">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4 flex-1">
+                    <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                        <i class="fas fa-users text-blue-600"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">{{ group.name }}</h3>
+                        <div class="flex space-x-4 text-sm text-gray-600 mt-1">
+                            <span>
+                                <i class="fas fa-user-friends me-1"></i>
+                                {{ group.participants.count() }} Teilnehmer
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <i class="fas fa-chevron-down transition-transform duration-200"
+                   id="icon-{{ group.id }}"></i>
+            </div>
+        </div>
+
+        <!-- Accordion Content -->
+        <div id="accordion-content-{{ group.id }}"
+             class="accordion-content hidden border-t border-gray-200">
+            <div class="divide-y divide-gray-200">
+                {% for participant in group.participants %}
+                <div class="participant-row px-6 py-5 hover:bg-gray-50 transition-colors"
+                     data-participant-name="{{ participant.name|lower }}"
+                     data-participant-id="{{ participant.id }}">
+                    <!-- Teilnehmer-Info + Status -->
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-base font-semibold text-gray-900">{{ participant.name }}</span>
+                            <!-- Status-Indikatoren -->
+                            <div class="flex items-center space-x-2">
+                                {% if participant.self_assessment and participant.self_assessment.content %}
+                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700" title="Selbsteinschätzung vorhanden">
+                                    <i class="fas fa-clipboard-list me-1"></i>SE
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-400" title="Selbsteinschätzung fehlt">
+                                    <i class="fas fa-clipboard-list me-1"></i>SE
+                                </span>
+                                {% endif %}
+
+                                {% if participant.observations and participant.observations != '{}' %}
+                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700" title="Beobachtungsdaten vorhanden">
+                                    <i class="fas fa-pen me-1"></i>BD
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-400" title="Beobachtungsdaten fehlen">
+                                    <i class="fas fa-pen me-1"></i>BD
+                                </span>
+                                {% endif %}
+
+                                {% if participant.ki_texts and participant.ki_texts != '{}' %}
+                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700" title="KI-Analyse vorhanden">
+                                    <i class="fas fa-brain me-1"></i>KI
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-400" title="KI-Analyse fehlt">
+                                    <i class="fas fa-brain me-1"></i>KI
+                                </span>
+                                {% endif %}
+
+                                {% if participant.ki_texts and participant.ki_texts != '{}' and participant.self_assessment and participant.self_assessment.content %}
+                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700" title="Abschlussbericht möglich">
+                                    <i class="fas fa-book me-1"></i>AB
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-400" title="Abschlussbericht nicht möglich">
+                                    <i class="fas fa-book me-1"></i>AB
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Aktionsbuttons -->
+                    <div class="flex flex-wrap gap-2">
+                        <!-- Selbsteinschätzung -->
+                        <a href="{{ url_for('participants.show_self_assessment', participant_id=participant.id) }}"
+                           class="flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
+                           title="Selbsteinschätzung">
+                            <i class="fas fa-clipboard-list me-1"></i>Selbsteinschätzung
+                        </a>
+
+                        <!-- Beobachtungsdaten -->
+                        <a href="{{ url_for('participants.show_data_entry', participant_id=participant.id) }}"
+                           class="flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
+                           title="Beobachtungsdaten">
+                            <i class="fas fa-pen me-1"></i>Beobachtungsdaten
+                        </a>
+
+                        <!-- KI-Analyse -->
+                        <a href="{{ url_for('analysis.ai_analysis_select_participants', group_id=group.id) }}?preselect={{ participant.id }}"
+                           class="flex items-center px-3 py-1.5 border border-purple-300 shadow-sm text-sm font-medium rounded text-purple-700 bg-purple-50 hover:bg-purple-100"
+                           title="KI-Analyse starten">
+                            <i class="fas fa-brain me-1"></i>KI-Analyse
+                        </a>
+
+                        <!-- Fremdeinschätzung (nur wenn vorhanden) -->
+                        {% if participant.ki_texts and participant.ki_texts != '{}' %}
+                        <a href="{{ url_for('analysis.edit_report', participant_id=participant.id) }}"
+                           class="flex items-center px-3 py-1.5 border border-blue-300 shadow-sm text-sm font-medium rounded text-blue-700 bg-blue-50 hover:bg-blue-100"
+                           title="Fremdeinschätzung ansehen/bearbeiten">
+                            <i class="fas fa-file-alt me-1"></i>Fremdeinschätzung
+                        </a>
+                        {% endif %}
+
+                        <!-- Abschlussbericht -->
+                        {% if participant.ki_texts and participant.ki_texts != '{}' and participant.self_assessment and participant.self_assessment.content %}
+                        <a href="{{ url_for('analysis.final_report', participant_id=participant.id) }}"
+                           class="flex items-center px-3 py-1.5 border border-indigo-300 shadow-sm text-sm font-medium rounded text-indigo-700 bg-indigo-50 hover:bg-indigo-100"
+                           title="Abschlussbericht">
+                            <i class="fas fa-book me-1"></i>Abschlussbericht
+                        </a>
+                        {% else %}
+                        <span class="flex items-center px-3 py-1.5 border border-gray-200 shadow-sm text-sm font-medium rounded text-gray-400 bg-gray-50 cursor-not-allowed"
+                              title="Abschlussbericht nicht verfügbar (Fremdeinschätzung und Selbsteinschätzung erforderlich)">
+                            <i class="fas fa-book me-1"></i>Abschlussbericht
+                        </span>
+                        {% endif %}
+
+                        <!-- Bearbeiten -->
+                        <button onclick="openEditParticipantModal({{ participant.id }}, '{{ participant.name|e }}')"
+                                class="flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
+                                title="Teilnehmer umbenennen">
+                            <i class="fas fa-edit me-1"></i>Bearbeiten
+                        </button>
+
+                        <!-- Löschen -->
+                        <form method="POST" action="{{ url_for('participants.delete_participant', participant_id=participant.id) }}"
+                              onsubmit="return confirm('Sind Sie sicher, dass Sie &quot;{{ participant.name|e }}&quot; löschen möchten?')" class="inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <input type="hidden" name="redirect_url" value="{{ request.url }}">
+                            <button type="submit"
+                                    class="flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded shadow-sm text-white bg-red-600 hover:bg-red-700"
+                                    title="Teilnehmer löschen">
+                                <i class="fas fa-trash me-1"></i>Löschen
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+
+    <div id="no-results-message" class="hidden bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-yellow-800 mb-2">Keine Ergebnisse gefunden</h3>
+        <p class="text-yellow-700">Ihre Suche ergab keine Treffer. Versuchen Sie einen anderen Suchbegriff.</p>
+    </div>
+
+{% else %}
+    <div class="text-center py-12 text-gray-500">
+        Keine Gruppen oder Teilnehmer vorhanden.
+    </div>
+{% endif %}
 
 <!-- Teilnehmer bearbeiten Modal -->
 <div id="editParticipantModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
@@ -161,6 +202,7 @@
         <div class="mt-3 text-center">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Teilnehmer umbenennen</h3>
             <form method="POST" id="editParticipantForm" class="space-y-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="text-left">
                     <label for="participant_name" class="block text-sm font-medium text-gray-700 mb-1">Name des Teilnehmers *</label>
                     <input type="text" id="participant_name" name="participant_name" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
@@ -175,7 +217,22 @@
     </div>
 </div>
 
+{% endblock %}
+
+{% block scripts %}
 <script>
+function toggleAccordion(groupId) {
+    const content = document.getElementById(`accordion-content-${groupId}`);
+    const icon = document.getElementById(`icon-${groupId}`);
+    if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        icon.classList.add('rotate-180');
+    } else {
+        content.classList.add('hidden');
+        icon.classList.remove('rotate-180');
+    }
+}
+
 function openEditParticipantModal(id, name) {
     document.getElementById('editParticipantForm').action = `{{ url_for('participants.edit_participant', participant_id=0) }}`.replace('0', id);
     document.getElementById('participant_name').value = name;
@@ -186,11 +243,140 @@ function closeEditParticipantModal() {
     document.getElementById('editParticipantModal').classList.add('hidden');
 }
 
-window.onclick = function(event) {
+window.addEventListener('click', function(event) {
     if (event.target == document.getElementById('editParticipantModal')) {
         closeEditParticipantModal();
     }
-}
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('participant-search');
+    const clearButton = document.getElementById('clear-search');
+    const autocompleteResults = document.getElementById('autocomplete-results');
+    const searchInfo = document.getElementById('search-info');
+    const searchCount = document.getElementById('search-count');
+    const noResultsMessage = document.getElementById('no-results-message');
+
+    const allParticipants = [];
+    document.querySelectorAll('.participant-row').forEach(row => {
+        const accordion = row.closest('.group-accordion');
+        allParticipants.push({
+            name: row.dataset.participantName,
+            id: row.dataset.participantId,
+            groupId: accordion.dataset.groupId,
+            groupName: accordion.dataset.groupName,
+            element: row
+        });
+    });
+
+    function getGroupName(groupId) {
+        const accordion = document.querySelector(`.group-accordion[data-group-id="${groupId}"]`);
+        return accordion ? accordion.querySelector('h3').textContent : 'Unbekannt';
+    }
+
+    searchInput.addEventListener('input', function(e) {
+        const term = e.target.value.toLowerCase().trim();
+        if (!term) {
+            clearButton.classList.add('hidden');
+            resetSearch();
+            return;
+        }
+        clearButton.classList.remove('hidden');
+        const matches = allParticipants.filter(p => p.name.includes(term) || p.groupName.includes(term));
+        if (matches.length > 0) showAutocomplete(matches, term);
+        else autocompleteResults.classList.add('hidden');
+        applySearchFilter(term, matches);
+    });
+
+    clearButton.addEventListener('click', function() {
+        searchInput.value = '';
+        clearButton.classList.add('hidden');
+        autocompleteResults.classList.add('hidden');
+        resetSearch();
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !autocompleteResults.contains(e.target)) {
+            autocompleteResults.classList.add('hidden');
+        }
+    });
+
+    function showAutocomplete(matches, term) {
+        autocompleteResults.innerHTML = '';
+        matches.slice(0, 10).forEach(match => {
+            const div = document.createElement('div');
+            div.className = 'px-4 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0';
+            const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`(${escapedTerm})`, 'gi');
+            const highlighted = match.name.replace(regex, '<strong class="text-blue-600">$1</strong>');
+            div.innerHTML = `
+                <div class="font-medium">${highlighted}</div>
+                <div class="text-xs text-gray-500 mt-1">Gruppe: ${getGroupName(match.groupId)}</div>
+            `;
+            div.addEventListener('click', function() {
+                searchInput.value = match.name;
+                autocompleteResults.classList.add('hidden');
+                applySearchFilter(match.name.toLowerCase(), [match]);
+                const content = document.getElementById(`accordion-content-${match.groupId}`);
+                const icon = document.getElementById(`icon-${match.groupId}`);
+                if (content.classList.contains('hidden')) {
+                    content.classList.remove('hidden');
+                    icon.classList.add('rotate-180');
+                }
+                setTimeout(() => {
+                    match.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    match.element.classList.add('bg-yellow-100');
+                    setTimeout(() => match.element.classList.remove('bg-yellow-100'), 2000);
+                }, 300);
+            });
+            autocompleteResults.appendChild(div);
+        });
+        autocompleteResults.classList.remove('hidden');
+    }
+
+    function applySearchFilter(term, matches) {
+        const matchingIds = new Set(matches.map(m => m.id));
+        const matchingGroupIds = new Set(matches.map(m => m.groupId));
+
+        document.querySelectorAll('.participant-row').forEach(row => {
+            row.classList.toggle('hidden', !matchingIds.has(row.dataset.participantId));
+        });
+
+        document.querySelectorAll('.group-accordion').forEach(accordion => {
+            const visibleRows = accordion.querySelectorAll('.participant-row:not(.hidden)');
+            if (visibleRows.length > 0) {
+                accordion.classList.remove('hidden');
+                const content = accordion.querySelector('.accordion-content');
+                const icon = accordion.querySelector('.fa-chevron-down');
+                if (content.classList.contains('hidden')) {
+                    content.classList.remove('hidden');
+                    icon.classList.add('rotate-180');
+                }
+            } else {
+                accordion.classList.add('hidden');
+            }
+        });
+
+        if (matches.length === 0) {
+            noResultsMessage.classList.remove('hidden');
+            searchInfo.classList.add('hidden');
+        } else {
+            noResultsMessage.classList.add('hidden');
+            searchCount.textContent = `${matches.length} Teilnehmer gefunden in ${matchingGroupIds.size} Gruppe(n)`;
+            searchInfo.classList.remove('hidden');
+        }
+    }
+
+    function resetSearch() {
+        document.querySelectorAll('.participant-row').forEach(row => row.classList.remove('hidden'));
+        document.querySelectorAll('.group-accordion').forEach(accordion => {
+            accordion.classList.remove('hidden');
+            accordion.querySelector('.accordion-content').classList.add('hidden');
+            accordion.querySelector('.fa-chevron-down').classList.remove('rotate-180');
+        });
+        searchInfo.classList.add('hidden');
+        noResultsMessage.classList.add('hidden');
+    }
+});
 </script>
 {% endblock %}
-

@@ -48,8 +48,8 @@ def generate_report_with_ai(prompt_text, ki_model):
             if not GenerativeModel:
                 raise ValueError("Die 'Google Generative AI'-Bibliothek ist nicht installiert.")
 
-            # KORREKTUR: Modellnamen auf das Standardmodell für AI Studio Keys geändert.
-            model_name = 'models/gemini-pro-latest'
+            # KORREKTUR: Flash-Modell verwenden (schneller, höheres Free-Tier-Kontingent)
+            model_name = 'models/gemini-flash-latest'
             try:
                 model = GenerativeModel(model_name)
                 response = model.generate_content(prompt_text)

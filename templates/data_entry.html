@@ -66,6 +66,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const toast = document.getElementById('toast');
+    let autosaveTimeout;
 
     // Funktion zum Anzeigen des Toasts
     function showToast() {
@@ -75,10 +76,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 3000);
     }
 
-    // Beobachtungen speichern
-    document.getElementById('observationsForm').addEventListener('submit', function(event) {
-        event.preventDefault();
-        const formData = new FormData(this);
+    // Speicherfunktion (wiederverwendbar für Autosave und manuelles Speichern)
+    function saveObservations() {
+        const formData = new FormData(document.getElementById('observationsForm'));
         const data = Object.fromEntries(formData.entries());
 
         fetch(`{{ url_for('participants.save_observations', participant_id=participant.id) }}`, {
@@ -97,6 +97,36 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => console.error('Error:', error));
+    }
+
+    // Autosave bei Textarea-Eingabe (2s Debounce)
+    document.querySelectorAll('#observationsForm textarea').forEach(textarea => {
+        textarea.addEventListener('input', () => {
+            clearTimeout(autosaveTimeout);
+            autosaveTimeout = setTimeout(saveObservations, 2000);
+        });
+    });
+
+    // Manuelles Speichern via Button
+    document.getElementById('observationsForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        clearTimeout(autosaveTimeout);
+        saveObservations();
+    });
+
+    // Ctrl+S zum Speichern
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            clearTimeout(autosaveTimeout);
+            saveObservations();
+        }
+    });
+
+    // Undo/Redo Registrierung
+    window.undoRedoManager.show();
+    document.querySelectorAll('#observationsForm textarea').forEach(textarea => {
+        window.undoRedoManager.registerTextarea(textarea);
     });
 });
 </script>

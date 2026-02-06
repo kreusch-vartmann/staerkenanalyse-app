@@ -6,7 +6,10 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <div class="flex items-center justify-between mb-6 flex-wrap gap-4">
-    <h2 class="text-3xl font-bold text-gray-800">{{ participant.first_name }}</h2>
+    <div>
+        <h2 class="text-3xl font-bold text-gray-800">Fremdeinschätzung</h2>
+        <p class="text-lg text-gray-600">für {{ participant.name }}</p>
+    </div>
 
     <div class="flex items-center flex-wrap gap-2">
         <button onclick="openModal()" class="py-2 px-5 rounded-md text-white bg-gray-600 hover:bg-gray-700 font-semibold">
@@ -29,40 +32,80 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-8">
 
+    <!-- Linke Spalte: Soziale Kompetenzen -->
     <div class="bg-white p-6 shadow-md rounded-lg">
-        <h3 class="text-xl font-bold text-gray-700 mb-4">Soziale Kompetenzen: Bewertung</h3>
-        <div class="chart-container-large mx-auto mb-6">
-            <canvas id="skRadarChart"></canvas>
+        <h3 class="text-xl font-bold text-gray-700 mb-6">Soziale Kompetenzen</h3>
+
+        <!-- Riemannkreuz -->
+        <div class="mb-6">
+            <div class="flex items-center justify-between mb-3">
+                <h4 class="text-lg font-semibold text-gray-600">Riemannkreuz</h4>
+                <button onclick="resetSection('sk_ratings')"
+                        class="reset-ki-btn inline-flex items-center px-2 py-1 text-xs font-medium text-gray-400 bg-gray-100 rounded hover:bg-amber-100 hover:text-amber-700 transition-colors"
+                        title="Auf KI-Original zurücksetzen">&#x21BA; KI-Original</button>
+            </div>
+            <div class="chart-container-large mx-auto mb-6">
+                <canvas id="skRadarChart"></canvas>
+            </div>
+            <div id="sk-sliders" class="space-y-4"></div>
         </div>
-        <div id="sk-sliders" class="space-y-4"></div>
-    </div>
 
-    <div class="bg-white p-6 shadow-md rounded-lg">
-        <h3 class="text-xl font-bold text-gray-700 mb-4">Verbale Kompetenzen: Bewertung</h3>
-        <div class="chart-container-large mx-auto mb-6">
-            <canvas id="vkRadarChart"></canvas>
+        <hr class="my-6 border-gray-200">
+
+        <!-- Beschreibung -->
+        <div>
+            <div class="flex items-center justify-between mb-3">
+                <h4 class="text-lg font-semibold text-gray-600">Beschreibung</h4>
+                <button onclick="resetSection('social_text')"
+                        class="reset-ki-btn inline-flex items-center px-2 py-1 text-xs font-medium text-gray-400 bg-gray-100 rounded hover:bg-amber-100 hover:text-amber-700 transition-colors"
+                        title="Auf KI-Original zurücksetzen">&#x21BA; KI-Original</button>
+            </div>
+            <div id="social_text_editor" class="border rounded-md" style="height: 192px;"></div>
+            <input type="hidden" id="social_text" value="{{ (participant.ki_texts or {}).social_text | e }}">
         </div>
-        <div id="vk-sliders" class="space-y-4"></div>
     </div>
 
+    <!-- Rechte Spalte: Verbale Kompetenzen -->
     <div class="bg-white p-6 shadow-md rounded-lg">
-        <h3 class="text-xl font-bold text-gray-700 mb-4">Text: Soziale Kompetenzen</h3>
-        <div id="social_text_editor" class="border rounded-md" style="height: 192px;"></div>
-        <input type="hidden" id="social_text" value="{{ (participant.ki_texts or {}).social_text | e }}">
+        <h3 class="text-xl font-bold text-gray-700 mb-6">Verbale Kompetenzen</h3>
+
+        <!-- Riemannkreuz -->
+        <div class="mb-6">
+            <div class="flex items-center justify-between mb-3">
+                <h4 class="text-lg font-semibold text-gray-600">Riemannkreuz</h4>
+                <button onclick="resetSection('vk_ratings')"
+                        class="reset-ki-btn inline-flex items-center px-2 py-1 text-xs font-medium text-gray-400 bg-gray-100 rounded hover:bg-amber-100 hover:text-amber-700 transition-colors"
+                        title="Auf KI-Original zurücksetzen">&#x21BA; KI-Original</button>
+            </div>
+            <div class="chart-container-large mx-auto mb-6">
+                <canvas id="vkRadarChart"></canvas>
+            </div>
+            <div id="vk-sliders" class="space-y-4"></div>
+        </div>
+
+        <hr class="my-6 border-gray-200">
+
+        <!-- Beschreibung -->
+        <div>
+            <div class="flex items-center justify-between mb-3">
+                <h4 class="text-lg font-semibold text-gray-600">Beschreibung</h4>
+                <button onclick="resetSection('verbal_text')"
+                        class="reset-ki-btn inline-flex items-center px-2 py-1 text-xs font-medium text-gray-400 bg-gray-100 rounded hover:bg-amber-100 hover:text-amber-700 transition-colors"
+                        title="Auf KI-Original zurücksetzen">&#x21BA; KI-Original</button>
+            </div>
+            <div id="verbal_text_editor" class="border rounded-md" style="height: 192px;"></div>
+            <input type="hidden" id="verbal_text" value="{{ (participant.ki_texts or {}).verbal_text | e }}">
+        </div>
     </div>
 
+    <!-- Zusammenfassung -->
     <div class="bg-white p-6 shadow-md rounded-lg">
-        <h3 class="text-xl font-bold text-gray-700 mb-4">Text: Verbale Kompetenzen</h3>
-        <div id="verbal_text_editor" class="border rounded-md" style="height: 192px;"></div>
-        <input type="hidden" id="verbal_text" value="{{ (participant.ki_texts or {}).verbal_text | e }}">
-    </div>
-
-    <div class="bg-white p-6 shadow-md rounded-lg">
-        <h3 class="text-xl font-bold text-gray-700 mb-4">Text: Zusammenfassung</h3>
+        <h3 class="text-xl font-bold text-gray-700 mb-4">Zusammenfassung</h3>
         <div id="summary_text_editor" class="border rounded-md" style="height: 128px;"></div>
         <input type="hidden" id="summary_text" value="{{ (participant.ki_texts or {}).summary_text | e }}">
     </div>
 
+    <!-- PDF-Rahmendaten + Fußzeile -->
     <div class="space-y-6">
         <div class="bg-white p-6 shadow-md rounded-lg">
             <h3 class="text-xl font-bold text-gray-700 mb-4">PDF-Rahmendaten</h3>
@@ -148,6 +191,10 @@
     </div>
 </div>
 
+<div id="autosave-status" class="fixed bottom-4 right-4 px-4 py-2 rounded-md shadow-lg hidden">
+    <span id="autosave-status-text"></span>
+</div>
+
 <script>
     // =================================================================================
     // KOMPLETTER, BEREINIGTER JAVASCRIPT-BLOCK
@@ -158,6 +205,7 @@
     // ---------------------------------------------------------------------------------
     let sk_ratings = {{ participant.sk_ratings | tojson | safe }};
     let vk_ratings = {{ participant.vk_ratings | tojson | safe }};
+    const kiOriginal = {{ ki_original | tojson | safe }};
     const sk_labels = ['Flexibilität', 'Teamorientierung', 'Prozessorientierung', 'Ergebnisorientierung'];
     const vk_labels = ['Flexibilität', 'Beratung', 'Sachlichkeit', 'Zielorientierung'];
     const sk_keys = ['flexibility', 'team_orientation', 'process_orientation', 'results_orientation'];
@@ -170,6 +218,25 @@
     const vkChart = new Chart(document.getElementById('vkRadarChart'), { type: 'radar', data: { labels: vk_labels, datasets: [vkDataset] }, options: chartOptions });
 
     let isDirty = false;
+    let autosaveTimeout;
+
+    function triggerAutosave() {
+        isDirty = true;
+        clearTimeout(autosaveTimeout);
+        autosaveTimeout = setTimeout(() => {
+            if (isDirty) saveReport(true);
+        }, 2000);
+    }
+
+    function showAutosaveStatus(message, type) {
+        const statusDiv = document.getElementById('autosave-status');
+        const statusText = document.getElementById('autosave-status-text');
+        statusText.textContent = (type === 'success' ? '✅ ' : '❌ ') + message;
+        statusDiv.className = 'fixed bottom-4 right-4 px-4 py-2 rounded-md shadow-lg ' +
+            (type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white');
+        statusDiv.classList.remove('hidden');
+        setTimeout(() => { statusDiv.classList.add('hidden'); }, 3000);
+    }
 
     // ---------------------------------------------------------------------------------
     // QUILL-EDITOREN FÜR KI-TEXTE
@@ -203,10 +270,16 @@
     if (verbalContent) verbalEditor.root.innerHTML = verbalContent;
     if (summaryContent) summaryEditor.root.innerHTML = summaryContent;
 
-    // Change Tracking für Quill-Editoren
+    // Change Tracking + Autosave für Quill-Editoren
     [socialEditor, verbalEditor, summaryEditor].forEach(editor => {
-        editor.on('text-change', () => { isDirty = true; });
+        editor.on('text-change', triggerAutosave);
     });
+
+    // Undo/Redo Registrierung
+    window.undoRedoManager.show();
+    window.undoRedoManager.registerQuill(socialEditor);
+    window.undoRedoManager.registerQuill(verbalEditor);
+    window.undoRedoManager.registerQuill(summaryEditor);
 
     // ---------------------------------------------------------------------------------
     // 2. FUNKTIONEN
@@ -224,47 +297,64 @@
             
             const slider = document.getElementById(sliderId);
             slider.addEventListener('input', (e) => {
-                isDirty = true;
                 const newValue = parseFloat(e.target.value);
                 document.getElementById(valueId).textContent = newValue.toFixed(1);
                 ratings[key] = newValue;
                 dataset.data = keys.map(k => ratings[k]);
                 chartInstance.update();
+                triggerAutosave();
+            });
+
+            // Undo/Redo für Slider registrieren
+            window.undoRedoManager.registerSlider(slider, (sliderEl, value) => {
+                document.getElementById(valueId).textContent = value.toFixed(1);
+                ratings[key] = value;
+                dataset.data = keys.map(k => ratings[k]);
+                chartInstance.update();
+                triggerAutosave();
             });
         });
     }
 
-    async function saveReport() {
+    async function saveReport(silent = false) {
         const groupDetails = {};
         document.querySelectorAll('.metadata [data-key]').forEach(el => { groupDetails[el.dataset.key] = el.textContent; });
-        
+
         const footerData = {};
         document.querySelectorAll('.main-content-footer [data-key]').forEach(el => { footerData[el.dataset.key] = el.textContent; });
-        
+
         const reportData = {
             sk_ratings: sk_ratings,
             vk_ratings: vk_ratings,
             ki_texts: {
-                social_text: socialEditor.root.innerHTML,   // HTML statt .value
-                verbal_text: verbalEditor.root.innerHTML,   // HTML statt .value
-                summary_text: summaryEditor.root.innerHTML  // HTML statt .value
+                social_text: socialEditor.root.innerHTML,
+                verbal_text: verbalEditor.root.innerHTML,
+                summary_text: summaryEditor.root.innerHTML
             },
             group_details: groupDetails,
             footer_data: footerData
         };
-        
+
         try {
-            const response = await fetch("{{ url_for('analysis.save_report', participant_id=participant.id) }}", { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify(reportData) 
+            const response = await fetch("{{ url_for('analysis.save_report', participant_id=participant.id) }}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(reportData)
             });
             const result = await response.json();
-            alert(result.message);
+            if (silent) {
+                showAutosaveStatus('Gespeichert', 'success');
+            } else {
+                alert(result.message);
+            }
             isDirty = false;
-        } catch (error) { 
-            console.error('Save error:', error); 
-            alert('Fehler beim Speichern des Berichts.'); 
+        } catch (error) {
+            console.error('Save error:', error);
+            if (silent) {
+                showAutosaveStatus('Speichern fehlgeschlagen', 'error');
+            } else {
+                alert('Fehler beim Speichern des Berichts.');
+            }
         }
     }
 
@@ -292,6 +382,94 @@
         modal.classList.add('hidden');
         modal.classList.remove('flex');
     }
+
+    // ---------------------------------------------------------------------------------
+    // RESET AUF KI-ORIGINAL
+    // ---------------------------------------------------------------------------------
+    function resetSection(sectionId) {
+        if (!kiOriginal || Object.keys(kiOriginal).length === 0) {
+            alert('Kein KI-Original vorhanden.');
+            return;
+        }
+
+        // Prüfe ob die spezifischen Daten existieren
+        let hasData = false;
+        switch (sectionId) {
+            case 'sk_ratings':
+                hasData = kiOriginal.sk_ratings && Object.keys(kiOriginal.sk_ratings).length > 0;
+                break;
+            case 'vk_ratings':
+                hasData = kiOriginal.vk_ratings && Object.keys(kiOriginal.vk_ratings).length > 0;
+                break;
+            case 'social_text':
+                hasData = kiOriginal.ki_texts && kiOriginal.ki_texts.social_text;
+                break;
+            case 'verbal_text':
+                hasData = kiOriginal.ki_texts && kiOriginal.ki_texts.verbal_text;
+                break;
+        }
+
+        if (!hasData) {
+            alert('Für diesen Abschnitt ist kein KI-Original vorhanden.');
+            return;
+        }
+
+        if (!confirm('Möchten Sie diesen Abschnitt auf das KI-Original zurücksetzen?\nIhre Änderungen gehen verloren.')) {
+            return;
+        }
+
+        switch (sectionId) {
+            case 'sk_ratings': {
+                const orig = kiOriginal.sk_ratings;
+                sk_keys.forEach(key => {
+                    if (orig.hasOwnProperty(key)) {
+                        sk_ratings[key] = orig[key];
+                        const slider = document.getElementById(`sk_${key}-slider`);
+                        const valueSpan = document.getElementById(`sk_${key}-value`);
+                        if (slider) slider.value = sk_ratings[key];
+                        if (valueSpan) valueSpan.textContent = sk_ratings[key].toFixed(1);
+                    }
+                });
+                skDataset.data = sk_keys.map(k => sk_ratings[k]);
+                skChart.update();
+                break;
+            }
+            case 'vk_ratings': {
+                const orig = kiOriginal.vk_ratings;
+                vk_keys.forEach(key => {
+                    if (orig.hasOwnProperty(key)) {
+                        vk_ratings[key] = orig[key];
+                        const slider = document.getElementById(`vk_${key}-slider`);
+                        const valueSpan = document.getElementById(`vk_${key}-value`);
+                        if (slider) slider.value = vk_ratings[key];
+                        if (valueSpan) valueSpan.textContent = vk_ratings[key].toFixed(1);
+                    }
+                });
+                vkDataset.data = vk_keys.map(k => vk_ratings[k]);
+                vkChart.update();
+                break;
+            }
+            case 'social_text': {
+                const origText = kiOriginal.ki_texts.social_text;
+                socialEditor.root.innerHTML = origText;
+                break;
+            }
+            case 'verbal_text': {
+                const origText = kiOriginal.ki_texts.verbal_text;
+                verbalEditor.root.innerHTML = origText;
+                break;
+            }
+        }
+
+        triggerAutosave();
+    }
+
+    // Reset-Buttons ausblenden wenn kein KI-Original vorhanden
+    if (!kiOriginal || Object.keys(kiOriginal).length === 0) {
+        document.querySelectorAll('.reset-ki-btn').forEach(btn => {
+            btn.style.display = 'none';
+        });
+    }
     
     // ---------------------------------------------------------------------------------
     // 4. EVENT LISTENERS UND INITIALISIERUNG
@@ -300,7 +478,17 @@
     createSliders('vk-sliders', vk_keys, vk_labels, vk_ratings, vkChart, vkDataset, 'vk');
 
     document.querySelectorAll('[contenteditable="true"]').forEach(item => {
-        item.addEventListener('input', () => { isDirty = true; });
+        item.addEventListener('input', triggerAutosave);
+        window.undoRedoManager.registerContentEditable(item);
+    });
+
+    // Ctrl+S zum manuellen Speichern
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            clearTimeout(autosaveTimeout);
+            saveReport();
+        }
     });
 
     window.addEventListener('beforeunload', (event) => {

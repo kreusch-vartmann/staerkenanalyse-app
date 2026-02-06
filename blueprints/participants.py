@@ -13,40 +13,18 @@ participants_bp = Blueprint('participants', __name__)
 
 @participants_bp.route("/participants")
 def manage_participants():
-    """Zeigt die Seite zur Verwaltung aller Teilnehmer an."""
-    page = request.args.get("page", 1, type=int)
-    search_query = request.args.get("q", "")
-    sort_order = request.args.get("sort", "name_asc")
+    """Zeigt die Seite zur Verwaltung aller Teilnehmer an, gruppiert nach Gruppen."""
+    groups = db.session.execute(
+        db.select(Group).order_by(Group.name)
+    ).scalars().all()
 
-    # Basis-Abfrage mit SQLAlchemy
-    query = db.select(Participant).join(Group)
-
-    if search_query:
-        search_term = f"%{search_query}%"
-        # Logik für 'OR' in SQLAlchemy
-        query = query.filter(db.or_(Participant.name.ilike(search_term), Group.name.ilike(search_term)))
-
-    sort_map = {
-        'name_asc': Participant.name.asc(),
-        'name_desc': Participant.name.desc(),
-        'group_asc': Group.name.asc(),
-        'group_desc': Group.name.desc(),
-    }
-    order_clause = sort_map.get(sort_order, Participant.name.asc())
-    query = query.order_by(order_clause)
-
-    pagination = db.paginate(query, page=page, per_page=15)
-    
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
-        {"text": "KI-Bericht FE"},
+        {"text": "Teilnehmer"},
     ]
     return render_template(
         "manage_participants.html",
-        participants=pagination.items,
-        pagination=pagination,
-        search_query=search_query,
-        sort_order=sort_order,
+        groups=groups,
         breadcrumbs=breadcrumbs,
     )
 
@@ -69,7 +47,7 @@ def add_participant(group_id):
     else:
         flash("Keine gültigen Namen eingegeben.", "warning")
 
-    return redirect(url_for("groups.show_group_participants", group_id=group_id))
+    return redirect(url_for("groups.manage_groups"))
 
 
 @participants_bp.route("/participant/edit/<int:participant_id>", methods=["POST"])
@@ -139,6 +117,7 @@ def show_data_entry(participant_id):
     )
 
 @participants_bp.route("/participant/<int:participant_id>/save_observations", methods=["POST"])
+@csrf.exempt
 def save_observations(participant_id):
     """Speichert die Beobachtungen für einen Teilnehmer."""
     participant = db.get_or_404(Participant, participant_id)

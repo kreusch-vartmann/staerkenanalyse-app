@@ -17,9 +17,9 @@ Flask-basierte Web-Applikation für **Stärkenanalyse** mit KI-gestützter Beric
 ## 📊 Projektstatistik
 
 - **Python-Dateien**: 21
-- **Blueprints**: 5 (groups, participants, analysis, data_io, prompts)
-- **Templates**: 26
-- **Datenbank-Models**: 0
+- **Blueprints**: 6 (groups, participants, analysis, data_io, prompts, explanation_blocks)
+- **Templates**: 27
+- **Datenbank-Models**: 4 (Group, Participant, Prompt, SelfAssessment)
 
 ---
 
@@ -27,11 +27,12 @@ Flask-basierte Web-Applikation für **Stärkenanalyse** mit KI-gestützter Beric
 
 | Blueprint | Routen-Anzahl | Zweck |
 |-----------|---------------|-------|
-| groups | 4 | Gruppenverwaltung |
-| participants | 6 | Teilnehmerverwaltung |
-| analysis | 9 | KI-Analyse & Berichte |
-| data_io | 10 | Import/Export, Dateneingabe |
-| prompts | 7 | Prompt-Management |
+| groups | 5 | Gruppenverwaltung |
+| participants | 9 | Teilnehmerverwaltung & Selbsteinschätzung |
+| analysis | 12 | KI-Analyse, Fremdeinschätzung & Abschlussberichte |
+| data_io | 9 | Import/Export, Dateneingabe |
+| prompts | 4 | Prompt-Management |
+| explanation_blocks | 4 | Erklärungstexte für Berichte |
 
 ---
 
@@ -39,8 +40,8 @@ Flask-basierte Web-Applikation für **Stärkenanalyse** mit KI-gestützter Beric
 
 **app.py importiert**:
 - extensions (db, migrate)
-- models (Group, Participant, Prompt)
-- blueprints (alle 5)
+- models (Group, Participant, Prompt, SelfAssessment)
+- blueprints (alle 6)
 
 **Blueprints importieren**:
 - models.py (für ORM-Queries)

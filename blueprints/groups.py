@@ -13,10 +13,9 @@ groups_bp = Blueprint('groups', __name__)
 @groups_bp.route("/groups")
 def manage_groups():
     """Zeigt die Seite zur Verwaltung von Gruppen an."""
-    page = request.args.get("page", 1, type=int)
-    
-    pagination = db.paginate(db.select(Group).order_by(Group.name), page=page, per_page=10)
-    groups = pagination.items
+    groups = db.session.execute(
+        db.select(Group).order_by(Group.name)
+    ).scalars().all()
 
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
@@ -25,7 +24,6 @@ def manage_groups():
     return render_template(
         "manage_groups.html",
         groups=groups,
-        pagination=pagination,
         breadcrumbs=breadcrumbs,
     )
 

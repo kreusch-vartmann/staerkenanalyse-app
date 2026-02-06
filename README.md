@@ -14,14 +14,15 @@ Wichtig: Einige KI-Bibliotheken sind optional und/oder haben schwerere Abhängig
 ## Projektstruktur (wichtigste Dateien)
 
 - `app.py` — App-Initialisierung und zentrale Routen; registriert Blueprints
-- `database.py` — DB-Verbindung und Abfragemethoden (SQLite)
+- `models.py` — SQLAlchemy-Modelle (Group, Participant, Prompt, SelfAssessment)
+- `extensions.py` — db, migrate Objekte (verhindert circular imports)
+- `database.py` — Legacy-DB-Verbindung und Abfragemethoden (SQLite)
 - `ki_services.py` — Hilfsfunktionen für KI-Aufrufe (Modelle sind optional)
 - `utils.py` — Hilfsroutinen für Dateitypen, PDFs, DOCX usw.
-- `blueprints/` — modulare Routengruppen (groups, participants, analysis, data_io, prompts)
+- `blueprints/` — modulare Routengruppen (groups, participants, analysis, data_io, prompts, explanation_blocks)
 - `templates/` — Jinja2 HTML-Vorlagen für UI
 - `static/` — statische Assets
 - `requirements.txt` — vollständige Liste der Python-Abhängigkeiten
-- `schema.sql` — SQL-Skript zur Initialisierung der Datenbank
 
 ## Voraussetzungen
 
@@ -112,10 +113,11 @@ python -m flask run --port 5002
 
 - `blueprints/` enthält die modularen Routen. Schauen Sie in diese Dateien, wenn Sie Features erweitern möchten:
   - `blueprints/groups.py` — Gruppen anlegen/anzeigen
-  - `blueprints/participants.py` — Teilnehmer CRUD & Dateneingabe
-  - `blueprints/analysis.py` — KI-Analyse-Routen
-  - `blueprints/data_io.py` — Import/Export-Funktionen
+  - `blueprints/participants.py` — Teilnehmer CRUD, Dateneingabe & Selbsteinschätzung
+  - `blueprints/analysis.py` — KI-Analyse, Fremdeinschätzung & Abschlussberichte
+  - `blueprints/data_io.py` — Import/Export-Funktionen & Beobachtungsdaten
   - `blueprints/prompts.py` — Verwaltung von KI-Prompts
+  - `blueprints/explanation_blocks.py` — Erklärungstexte für Abschlussberichte
 
 - `database.py` enthält helper-Funktionen zum Zugriff und zur Paginierung. Falls Sie Probleme mit Such- oder Pagination-Features haben, beginnen Sie hier.
 
