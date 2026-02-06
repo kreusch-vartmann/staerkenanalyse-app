@@ -1,0 +1,22 @@
+************* Module database
+database.py:337:0: C0305: Trailing newlines (trailing-newlines)
+************* Module blueprints.analysis
+blueprints/analysis.py:11:0: C0413: Import "import matplotlib.pyplot as plt" should be placed at the top of the module (wrong-import-position)
+blueprints/analysis.py:12:0: C0413: Import "import numpy as np" should be placed at the top of the module (wrong-import-position)
+blueprints/analysis.py:13:0: C0413: Import "from flask import Blueprint, request, redirect, url_for, flash, render_template, jsonify, Response" should be placed at the top of the module (wrong-import-position)
+blueprints/analysis.py:15:0: C0413: Import "from weasyprint import HTML" should be placed at the top of the module (wrong-import-position)
+blueprints/analysis.py:17:0: C0413: Import "import database as db" should be placed at the top of the module (wrong-import-position)
+blueprints/analysis.py:18:0: C0413: Import "from ki_services import generate_report_with_ai" should be placed at the top of the module (wrong-import-position)
+blueprints/analysis.py:19:0: C0413: Import "from utils import clean_json_response, get_file_content" should be placed at the top of the module (wrong-import-position)
+blueprints/analysis.py:76:0: R0914: Too many local variables (17/15) (too-many-locals)
+************* Module blueprints.data_io
+blueprints/data_io.py:80:4: W0621: Redefining name 'export_data' from outer scope (line 200) (redefined-outer-name)
+blueprints/data_io.py:94:4: W0621: Redefining name 'export_data' from outer scope (line 200) (redefined-outer-name)
+blueprints/data_io.py:141:11: W0718: Catching too general exception Exception (broad-exception-caught)
+blueprints/data_io.py:167:11: W0718: Catching too general exception Exception (broad-exception-caught)
+blueprints/data_io.py:253:11: W0718: Catching too general exception Exception (broad-exception-caught)
+blueprints/data_io.py:4:0: W0611: Unused import json (unused-import)
+
+------------------------------------------------------------------
+Your code has been rated at 9.79/10 (previous run: 8.60/10, +1.19)
+

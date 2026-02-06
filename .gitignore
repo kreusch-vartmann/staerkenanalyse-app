@@ -1,21 +1,50 @@
-Python
-
-pycache/
+# Python Byte-Code und Caches
+__pycache__/
 *.pyc
 *.pyo
 *.pyd
-Virtuelle Umgebung
 
+# Virtuelle Umgebung
 venv/
 .venv/
 env/
-Datenbank-Datei
 
+# Datenbank-Dateien
 database.db
-Umgebungs-Variablen
+*.sqlite
+*.sqlite3
 
+# Umgebungs-Variablen
 .env
-Alte Daten-Datei
+*.env.*
 
+# Projekt-spezifische Daten-Dateien
 data.json
 settings.json
+
+### NEUE EMPFEHLUNGEN ###
+
+# IDE- / Editor-Konfiguration
+.vscode/
+.idea/
+
+# Flask-spezifischer Instanz-Ordner
+# Gut für Konfigurationen oder die DB, die nicht versioniert werden sollen
+instance/
+
+# Test-Artefakte
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build- / Verteilungs-Artefakte
+build/
+dist/
+*.egg-info/
+
+# Log-Dateien
+*.log
+
+# Betriebssystem-spezifische Dateien
+.DS_Store
+Thumbs.db

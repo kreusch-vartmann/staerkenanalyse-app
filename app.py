@@ -22,7 +22,7 @@ from blueprints.prompts import prompts_bp
 
 # App-Initialisierung
 app = Flask(__name__)
-app.secret_key = os.urandom(24)
+app.secret_key = os.getenv('SECRET_KEY', os.urandom(24).hex())
 
 # --- NEUE KONFIGURATION ---
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
@@ -92,8 +92,37 @@ def info():
     return render_template("info.html", breadcrumbs=breadcrumbs)
 
 
+# --- ERROR HANDLERS ---
+
+@app.errorhandler(404)
+def not_found(error):
+    """404 Not Found Handler."""
+    breadcrumbs = [{"link": url_for("dashboard"), "text": "Dashboard"}]
+    return render_template('base.html', breadcrumbs=breadcrumbs, 
+                         error_message="Seite nicht gefunden (404)"), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    """500 Internal Server Error Handler."""
+    db.session.rollback()
+    breadcrumbs = [{"link": url_for("dashboard"), "text": "Dashboard"}]
+    return render_template('base.html', breadcrumbs=breadcrumbs,
+                         error_message="Interner Serverfehler (500)"), 500
+
+@app.route('/health')
+def health():
+    """Health Check für Monitoring und Docker."""
+    try:
+        # Teste DB-Verbindung
+        db.session.execute(db.select(db.func.count(models.Group.id)))
+        return {'status': 'healthy', 'database': 'connected'}, 200
+    except Exception as e:
+        return {'status': 'unhealthy', 'error': str(e)}, 500
+
+
 # --- ANWENDUNG STARTEN ---
 
 if __name__ == "__main__":
-    app.run(port=5001, debug=True)
+    debug_mode = os.getenv('FLASK_DEBUG', 'False') == 'True'
+    app.run(port=5001, debug=debug_mode)
 

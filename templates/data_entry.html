@@ -4,7 +4,6 @@
 
 {% block content %}
 <div class="container mx-auto px-4 py-6">
-    <!-- Breadcrumbs -->
     <nav class="mb-6">
         <ol class="flex items-center space-x-2 text-sm text-gray-600">
             <li><a href="{{ url_for('dashboard') }}" class="hover:text-blue-600">Dashboard</a><span class="mx-2">/</span></li>
@@ -14,7 +13,6 @@
         </ol>
     </nav>
 
-    <!-- Header -->
     <div class="flex justify-between items-center mb-6">
         <div>
             <h2 class="text-3xl font-bold text-gray-800">Dateneingabe</h2>
@@ -26,66 +24,29 @@
         </a>
     </div>
 
-    <!-- Stammdaten & Beobachtungen -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Stammdaten -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div class="p-6 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">Stammdaten</h3>
-            </div>
-            <div class="p-6">
-                <form id="generalDataForm" class="space-y-4">
-                    <div>
-                        <label for="position" class="block text-sm font-medium text-gray-700">Position</label>
-                        <input type="text" id="position" name="position" value="{{ participant.general_data.position or '' }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                    </div>
-                    <div>
-                        <label for="age" class="block text-sm font-medium text-gray-700">Alter</label>
-                        <input type="number" id="age" name="age" value="{{ participant.general_data.age or '' }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                    </div>
-                    <div>
-                        <label for="gender" class="block text-sm font-medium text-gray-700">Geschlecht</label>
-                        <select id="gender" name="gender" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                            <option value="m" {% if participant.general_data.gender == 'm' %}selected{% endif %}>Männlich</option>
-                            <option value="w" {% if participant.general_data.gender == 'w' %}selected{% endif %}>Weiblich</option>
-                            <option value="d" {% if participant.general_data.gender == 'd' %}selected{% endif %}>Divers</option>
-                        </select>
-                    </div>
-                    <div class="text-right pt-2">
-                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
-                            Stammdaten speichern
-                        </button>
-                    </div>
-                </form>
-            </div>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Beobachtungen (Fremdeinschätzung)</h3>
         </div>
-
-        <!-- Beobachtungen -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div class="p-6 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">Beobachtungen (Fremdeinschätzung)</h3>
-            </div>
-            <div class="p-6">
-                <form id="observationsForm" class="space-y-4">
-                     <div>
-                        <label for="social" class="block text-sm font-medium text-gray-700">Soziale Kompetenzen</label>
-                        <textarea id="social" name="social" rows="5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">{{ participant.observations.social or '' }}</textarea>
-                    </div>
-                    <div>
-                        <label for="verbal" class="block text-sm font-medium text-gray-700">Verbale Kompetenzen</label>
-                        <textarea id="verbal" name="verbal" rows="5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">{{ participant.observations.verbal or '' }}</textarea>
-                    </div>
-                    <div class="text-right pt-2">
-                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
-                            Beobachtungen speichern
-                        </button>
-                    </div>
-                </form>
-            </div>
+        <div class="p-6">
+            <form id="observationsForm" class="space-y-4">
+                 <div>
+                    <label for="social" class="block text-sm font-medium text-gray-700">Soziale Kompetenzen</label>
+                    <textarea id="social" name="social" rows="5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">{{ participant.observations.social or '' }}</textarea>
+                </div>
+                <div>
+                    <label for="verbal" class="block text-sm font-medium text-gray-700">Verbale Kompetenzen</label>
+                    <textarea id="verbal" name="verbal" rows="5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">{{ participant.observations.verbal or '' }}</textarea>
+                </div>
+                <div class="text-right pt-2">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                        Beobachtungen speichern
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
     
-    <!-- Toast-Benachrichtigung für Speichererfolg -->
     <div id="toast" class="fixed bottom-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg hidden">
         Daten erfolgreich gespeichert!
     </div>
@@ -96,7 +57,6 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const participantId = {{ participant.id }};
     const toast = document.getElementById('toast');
 
     // Funktion zum Anzeigen des Toasts
@@ -107,37 +67,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 3000);
     }
 
-    // Stammdaten speichern
-    document.getElementById('generalDataForm').addEventListener('submit', function(event) {
-        event.preventDefault();
-        const formData = new FormData(this);
-        const data = Object.fromEntries(formData.entries());
-
-        fetch(`{{ url_for('participants.save_general_data', participant_id=participantId) }}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-        })
-        .then(response => response.json())
-        .then(result => {
-            if (result.status === 'success') {
-                showToast();
-            } else {
-                alert('Fehler beim Speichern: ' + result.message);
-            }
-        })
-        .catch(error => console.error('Error:', error));
-    });
-
     // Beobachtungen speichern
     document.getElementById('observationsForm').addEventListener('submit', function(event) {
         event.preventDefault();
         const formData = new FormData(this);
         const data = Object.fromEntries(formData.entries());
 
-        fetch(`{{ url_for('participants.save_observations', participant_id=participantId) }}`, {
+        fetch(`{{ url_for('participants.save_observations', participant_id=participant.id) }}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

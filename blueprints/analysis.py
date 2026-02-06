@@ -16,7 +16,8 @@ from flask import (Blueprint, request, redirect, url_for, flash, render_template
                    jsonify, Response)
 from weasyprint import HTML
 
-import database as db
+from extensions import db
+from models import Participant, Group, Prompt
 from ki_services import generate_report_with_ai
 from utils import clean_json_response, get_file_content
 
@@ -76,18 +77,40 @@ def _prepare_pdf_data(participant):
 @analysis_bp.route('/edit_report/<int:participant_id>')
 def edit_report(participant_id):
     """Zeigt die bearbeitbare Version des Berichts an."""
-    participant = db.get_participant_by_id(participant_id)
-    if not participant:
-        return "Teilnehmer nicht gefunden", 404
-    group = db.get_group_by_id(participant['group_id'])
+    participant = db.get_or_404(Participant, participant_id)
+    group = participant.group
+    
+    # Konvertiere in dict-Format für Template-Kompatibilität
+    participant_dict = {
+        'id': participant.id,
+        'name': participant.name,
+        'group_id': participant.group_id,
+        'observations': json.loads(participant.observations) if participant.observations else {},
+        'sk_ratings': json.loads(participant.sk_ratings) if participant.sk_ratings else {},
+        'vk_ratings': json.loads(participant.vk_ratings) if participant.vk_ratings else {},
+        'ki_texts': json.loads(participant.ki_texts) if participant.ki_texts else {},
+        'ki_raw_response': participant.ki_raw_response,
+        'footer_data': json.loads(participant.footer_data) if participant.footer_data else {},
+    }
+    
+    group_dict = {
+        'id': group.id if group else None,
+        'name': group.name if group else '',
+        'date': group.date if group else None,
+        'location': group.location if group else '',
+        'leitung_fremdeinschatzung': group.leitung_fremdeinschatzung if group else '',
+        'leitung_selbsteinschatzung': group.leitung_selbsteinschatzung if group else '',
+        'beobachter1': group.beobachter1 if group else '',
+        'beobachter2': group.beobachter2 if group else '',
+    }
 
     german_tz = pytz.timezone('Europe/Berlin')
     current_date = datetime.now(pytz.utc).astimezone(german_tz).strftime("%d.%m.%Y")
-    current_location = group['location'] if group else "Unbekannter Ort"
+    current_location = group_dict['location'] if group_dict else "Unbekannter Ort"
 
     return render_template('staerkenanalyse_bericht_vorlage3.html',
-                           participant=participant,
-                           group=group,
+                           participant=participant_dict,
+                           group=group_dict,
                            current_date=current_date,
                            current_location=current_location)
 
@@ -95,19 +118,31 @@ def edit_report(participant_id):
 @analysis_bp.route('/bericht/<int:participant_id>/pdf')
 def bericht_pdf(participant_id):
     """Generiert eine PDF-Version des Berichts serverseitig."""
-    participant = db.get_participant_by_id(participant_id)
-    if not participant:
-        return "Teilnehmer nicht gefunden", 404
-
-    group = db.get_group_by_id(participant['group_id'])
+    participant = db.get_or_404(Participant, participant_id)
+    group = participant.group
+    
+    # Konvertiere für Template
+    participant_dict = {
+        'id': participant.id,
+        'name': participant.name,
+        'sk_ratings': json.loads(participant.sk_ratings) if participant.sk_ratings else {},
+        'vk_ratings': json.loads(participant.vk_ratings) if participant.vk_ratings else {},
+        'ki_texts': json.loads(participant.ki_texts) if participant.ki_texts else {},
+    }
+    
+    group_dict = {
+        'id': group.id if group else None,
+        'name': group.name if group else '',
+        'location': group.location if group else '',
+    }
     german_tz = pytz.timezone('Europe/Berlin')
     current_date = datetime.now(pytz.utc).astimezone(german_tz).strftime("%d.%m.%Y")
     current_location = "Lingen (Ems)"
 
-    sk_chart_image, vk_chart_image = _prepare_pdf_data(participant)
+    sk_chart_image, vk_chart_image = _prepare_pdf_data(participant_dict)
 
     html_string = render_template('bericht_pdf_vorlage.html',
-                                  participant=participant, group=group,
+                                  participant=participant_dict, group=group_dict,
                                   current_date=current_date,
                                   current_location=current_location,
                                   sk_chart_image=sk_chart_image,
@@ -115,7 +150,7 @@ def bericht_pdf(participant_id):
 
     pdf_bytes = HTML(string=html_string, base_url=request.base_url).write_pdf()
 
-    safe_name = "".join(c for c in participant.get('name', 'Unbekannt')
+    safe_name = "".join(c for c in participant_dict.get('name', 'Unbekannt')
                         if c.isalnum() or c in (' ', '_')).rstrip()
     filename = f"Staerkenanalyse_{safe_name.replace(' ', '_')}.pdf"
 
@@ -131,7 +166,7 @@ def bericht_pdf(participant_id):
 @analysis_bp.route("/ai_analysis/select_group")
 def ai_analysis_select_group():
     """Zeigt die Seite zur Auswahl der Gruppe für die KI-Analyse an."""
-    groups = db.get_all_groups()
+    groups = db.session.execute(db.select(Group).order_by(Group.name)).scalars().all()
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
         {"text": "KI-Analyse"},
@@ -144,12 +179,12 @@ def ai_analysis_select_group():
 @analysis_bp.route("/ai_analysis/group/<int:group_id>")
 def ai_analysis_select_participants(group_id):
     """Zeigt die Seite zur Auswahl der Teilnehmer für die KI-Analyse an."""
-    group = db.get_group_by_id(group_id)
-    participants = db.get_participants_by_group(group_id)
+    group = db.get_or_404(Group, group_id)
+    participants = group.participants.order_by(Participant.name).all()
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
         {"link": url_for("analysis.ai_analysis_select_group"), "text": "KI-Analyse"},
-        {"text": f"Auswahl für: {group['name']}"},
+        {"text": f"Auswahl für: {group.name}"},
     ]
     return render_template(
         "ai_analysis_select_participants.html",
@@ -167,23 +202,27 @@ def configure_batch_ai_analysis():
         flash("Keine Teilnehmer ausgewählt.", "warning")
         return redirect(url_for("analysis.ai_analysis_select_group"))
 
-    participants = [db.get_participant_by_id(pid) for pid in participant_ids]
-    group = db.get_group_by_id(participants[0]["group_id"]) if participants else None
+    participants = db.session.execute(
+        db.select(Participant).filter(Participant.id.in_(participant_ids))
+    ).scalars().all()
+    group = participants[0].group if participants else None
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
         {"link": url_for("analysis.ai_analysis_select_group"), "text": "KI-Analyse"},
         {
-            "link": url_for("analysis.ai_analysis_select_participants", group_id=group["id"]),
-            "text": f"Auswahl für: {group['name']}",
+            "link": url_for("analysis.ai_analysis_select_participants", group_id=group.id),
+            "text": f"Auswahl für: {group.name}",
         },
         {"text": "Analyse konfigurieren"},
     ]
 
+    prompts = db.session.execute(db.select(Prompt).order_by(Prompt.name)).scalars().all()
+    
     return render_template(
         "run_batch_ai.html",
         participants=participants,
         group=group,
-        prompts=db.get_all_prompts(),
+        prompts=prompts,
         breadcrumbs=breadcrumbs,
     )
 
@@ -204,8 +243,10 @@ def execute_batch_ai_analysis():
         ),
     }
 
-    participants = [db.get_participant_by_id(pid) for pid in participant_ids]
-    group = db.get_group_by_id(participants[0]["group_id"]) if participants else None
+    participants = db.session.execute(
+        db.select(Participant).filter(Participant.id.in_(participant_ids))
+    ).scalars().all()
+    group = participants[0].group if participants else None
 
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
@@ -227,16 +268,16 @@ def execute_batch_ai_analysis():
 @analysis_bp.route("/run_ki_analysis/<int:participant_id>", methods=["POST"])
 def run_ki_analysis(participant_id):
     """Führt die KI-Analyse für einen einzelnen Teilnehmer durch (aus der Dateneingabe)."""
-    participant = db.get_participant_by_id(participant_id)
+    participant = db.get_or_404(Participant, participant_id)
     final_prompt = request.form.get("ki_prompt", "")
     ki_model = request.form.get("ki_model", "mistral")
 
-    full_name = participant.get("name", "")
+    full_name = participant.name
     first_name = full_name.split(" ")[0] if full_name else ""
 
     final_prompt = final_prompt.replace("{{name}}", first_name).replace("{{vorname}}", first_name)
 
-    observations = participant.get("observations", {})
+    observations = json.loads(participant.observations) if participant.observations else {}
     social_obs = observations.get("social", "")
     verbal_obs = observations.get("verbal", "")
     final_prompt = final_prompt.replace(
@@ -253,25 +294,23 @@ def run_ki_analysis(participant_id):
     final_prompt = final_prompt.replace("{{additional_content}}", additional_content)
 
     ki_response_str = generate_report_with_ai(final_prompt, ki_model)
-    db.save_ki_raw_response(participant_id, ki_response_str)
+    participant.ki_raw_response = ki_response_str
+    db.session.commit()
 
     try:
         ki_data = json.loads(clean_json_response(ki_response_str))
         if "error" in ki_data:
             return jsonify({"status": "error", "message": f"KI-Fehler: {ki_data['error']}"})
 
-        db.save_participant_data(
-            participant_id,
-            {
-                "sk_ratings": ki_data.get("sk_ratings", {}),
-                "vk_ratings": ki_data.get("vk_ratings", {}),
-                "ki_texts": ki_data.get("ki_texts", {}),
-            },
-        )
+        participant.sk_ratings = json.dumps(ki_data.get("sk_ratings", {}))
+        participant.vk_ratings = json.dumps(ki_data.get("vk_ratings", {}))
+        participant.ki_texts = json.dumps(ki_data.get("ki_texts", {}))
+        db.session.commit()
+        
         return jsonify({
             "status": "success",
             "message": "KI-Analyse erfolgreich. Bericht wird geladen...",
-            "redirect_url": url_for("participants.show_report", participant_id=participant_id),
+            "redirect_url": url_for("analysis.edit_report", participant_id=participant_id),
         })
     except json.JSONDecodeError as e:
         return jsonify({
@@ -285,13 +324,13 @@ def run_ki_analysis(participant_id):
 def run_single_analysis_api(participant_id):
     """API-Endpunkt, um die KI-Analyse für die Batch-Verarbeitung auszuführen."""
     data = request.get_json()
-    participant = db.get_participant_by_id(participant_id)
+    participant = db.session.get(Participant, participant_id)
     if not participant:
         return jsonify({"status": "error", "message": "Teilnehmer nicht gefunden."}), 404
 
-    full_name = participant.get("name", "")
+    full_name = participant.name
     first_name = full_name.split(" ")[0] if full_name else ""
-    obs = participant.get("observations", {})
+    obs = json.loads(participant.observations) if participant.observations else {}
 
     context_block = (
         f"ANALYSE-SUBJEKT:\n- Vorname: {first_name}\n- Ganzer Name: {full_name}\n\n"
@@ -303,21 +342,19 @@ def run_single_analysis_api(participant_id):
     prompt = data.get("prompt_template", "").replace("{{context}}", context_block)
 
     response_str = generate_report_with_ai(prompt, data.get("ki_model"))
-    db.save_ki_raw_response(participant_id, response_str)
+    participant.ki_raw_response = response_str
+    db.session.commit()
 
     try:
         ki_data = json.loads(clean_json_response(response_str))
         if "error" in ki_data:
             return jsonify({"status": "error", "message": f"KI-Fehler: {ki_data['error']}"})
 
-        db.save_participant_data(
-            participant_id,
-            {
-                "sk_ratings": ki_data.get("sk_ratings", {}),
-                "vk_ratings": ki_data.get("vk_ratings", {}),
-                "ki_texts": ki_data.get("ki_texts", {}),
-            },
-        )
+        participant.sk_ratings = json.dumps(ki_data.get("sk_ratings", {}))
+        participant.vk_ratings = json.dumps(ki_data.get("vk_ratings", {}))
+        participant.ki_texts = json.dumps(ki_data.get("ki_texts", {}))
+        db.session.commit()
+        
         return jsonify({"status": "success", "message": "Analyse erfolgreich."})
     except json.JSONDecodeError as e:
         return jsonify({
