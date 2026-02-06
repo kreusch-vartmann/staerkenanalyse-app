@@ -31,12 +31,14 @@
     <hr class="my-6">
     
     <div class="mb-4">
-        <label for="self_assessment_content" class="block text-lg font-semibold text-gray-800 mb-3">
+        <label for="self_assessment_editor" class="block text-lg font-semibold text-gray-800 mb-3">
             Selbsteinschätzung
         </label>
-        <textarea id="self_assessment_content" 
-                  class="w-full h-96 px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
-                  placeholder="Geben Sie hier Ihre Selbsteinschätzung ein...">{{ self_assessment.content if self_assessment else '' }}</textarea>
+        <!-- Quill-Editor Container -->
+        <div id="self_assessment_editor"
+             class="bg-white border border-gray-300 rounded-md"
+             style="height: 384px;"></div>
+        <input type="hidden" id="self_assessment_content" value="{{ self_assessment.content | e if self_assessment else '' }}">
         <p class="text-sm text-gray-500 mt-2">
             <i class="fas fa-info-circle"></i> Die Eingabe wird automatisch gespeichert.
         </p>
@@ -49,17 +51,48 @@
 
 <script>
 let saveTimeout;
+let quillEditor;
 const participantId = {{ participant.id }};
 
+// Quill-Editor initialisieren nach DOM load
+document.addEventListener('DOMContentLoaded', function() {
+    quillEditor = new Quill('#self_assessment_editor', {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                ['bold', 'italic', 'underline'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                [{ 'header': [2, 3, false] }],
+                ['clean']
+            ]
+        },
+        placeholder: 'Geben Sie hier Ihre Selbsteinschätzung ein...'
+    });
+
+    // Bestehenden Inhalt laden (HTML-safe)
+    const existingContent = document.getElementById('self_assessment_content').value;
+    if (existingContent) {
+        quillEditor.root.innerHTML = existingContent;
+    }
+
+    // Auto-save bei Änderungen (Text-Change Event)
+    quillEditor.on('text-change', function() {
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+            saveSelfAssessment();
+        }, 2000); // 2 Sekunden nach letzter Eingabe
+    });
+});
+
 function saveSelfAssessment() {
-    const content = document.getElementById('self_assessment_content').value;
-    
+    const htmlContent = quillEditor.root.innerHTML;  // HTML statt Plain Text
+
     fetch(`/save_self_assessment/${participantId}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ content: content })
+        body: JSON.stringify({ content: htmlContent })
     })
     .then(response => response.json())
     .then(data => {
@@ -78,23 +111,15 @@ function saveSelfAssessment() {
 function showSaveStatus(message, className) {
     const statusDiv = document.getElementById('save-status');
     const statusText = document.getElementById('save-status-text');
-    
+
     statusText.textContent = message;
     statusDiv.className = 'fixed bottom-4 right-4 px-4 py-2 rounded-md shadow-lg ' + className;
     statusDiv.classList.remove('hidden');
-    
+
     setTimeout(() => {
         statusDiv.classList.add('hidden');
     }, 3000);
 }
-
-// Auto-Save bei Eingabe (mit Debounce)
-document.getElementById('self_assessment_content').addEventListener('input', function() {
-    clearTimeout(saveTimeout);
-    saveTimeout = setTimeout(() => {
-        saveSelfAssessment();
-    }, 2000); // 2 Sekunden nach letzter Eingabe
-});
 
 // Save bei Strg+S
 document.addEventListener('keydown', function(e) {

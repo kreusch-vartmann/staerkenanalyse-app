@@ -243,7 +243,7 @@
 
 {% if self_assessment and self_assessment.content %}
 <div class="self-assessment no-break">
-    {{ self_assessment.content }}
+    {{ self_assessment.content | safe }}
 </div>
 {% else %}
 <div class="info-box warning">

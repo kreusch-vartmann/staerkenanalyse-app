@@ -19,7 +19,7 @@ from weasyprint import HTML
 from extensions import db, csrf
 from models import Participant, Group, Prompt, SelfAssessment, ExplanationBlock
 from ki_services import generate_report_with_ai
-from utils import clean_json_response, get_file_content
+from utils import clean_json_response, get_file_content, sanitize_html
 
 analysis_bp = Blueprint('analysis', __name__)
 
@@ -129,7 +129,12 @@ def save_report(participant_id):
         if 'vk_ratings' in data:
             participant.vk_ratings = json.dumps(data['vk_ratings'])
         if 'ki_texts' in data:
-            participant.ki_texts = json.dumps(data['ki_texts'])
+            # Sanitize HTML in each text field
+            sanitized_ki_texts = {
+                key: sanitize_html(value) if isinstance(value, str) else value
+                for key, value in data['ki_texts'].items()
+            }
+            participant.ki_texts = json.dumps(sanitized_ki_texts)
         if 'footer_data' in data:
             participant.footer_data = json.dumps(data['footer_data'])
         

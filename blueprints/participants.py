@@ -6,6 +6,7 @@ from flask import Blueprint, request, redirect, url_for, flash, render_template,
 
 from extensions import db
 from models import Participant, Group, SelfAssessment
+from utils import sanitize_html
 
 participants_bp = Blueprint('participants', __name__)
 
@@ -219,7 +220,7 @@ def save_self_assessment(participant_id):
         self_assessment = SelfAssessment(participant_id=participant_id)
         db.session.add(self_assessment)
     
-    self_assessment.content = data['content']
+    self_assessment.content = sanitize_html(data['content'])
     db.session.commit()
     
     return jsonify({"status": "success", "message": "Selbsteinschätzung gespeichert!"})
