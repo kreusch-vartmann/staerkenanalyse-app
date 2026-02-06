@@ -46,42 +46,77 @@
     </div>
 </div>
 
-<h2 class="text-2xl font-bold text-gray-700 mb-4">Aktionen</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<h2 class="text-2xl font-bold text-gray-700 mb-4">Workflow</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
 
         <a href="{{ url_for('groups.manage_groups') }}" class="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 transition-colors">
-            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">👥 Gruppen & Teilnehmer</h5>
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">👥 Gruppen</h5>
             <p class="font-normal text-gray-700">Startpunkt: Legen Sie Gruppen an und fügen Sie die Teilnehmer hinzu.</p>
         </a>
 
+        <a href="{{ url_for('participants.manage_participants') }}" class="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 transition-colors">
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">👤 Teilnehmer</h5>
+            <p class="font-normal text-gray-700">Alle Teilnehmer im Überblick - Selbsteinschätzung, Beobachtungsdaten, KI-Analyse und Berichte.</p>
+        </a>
+
+        <a href="{{ url_for('participants.manage_self_assessments') }}" class="block p-6 bg-white border border-yellow-200 rounded-lg shadow hover:bg-yellow-100">
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">📋 Selbsteinschätzung</h5>
+            <p class="font-normal text-gray-700">Teilnehmer können ihre eigene Einschätzung in Textform eingeben.</p>
+        </a>
+
         <a href="{{ url_for('data_io.data_entry_rework') }}" class="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 transition-colors">
-            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">📝 Beobachtungen eingeben</h5>
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">📝 Beobachtungsdaten</h5>
             <p class="font-normal text-gray-700">Geben Sie die gesammelten Beobachtungen für einzelne Teilnehmer ein.</p>
         </a>
-        
+
         <a href="{{ url_for('analysis.ai_analysis_select_group') }}" class="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 transition-colors">
-            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">🤖 KI-Analyse starten</h5>
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">🤖 KI-Analyse</h5>
             <p class="font-normal text-gray-700">Führen Sie die KI-gestützte Auswertung für mehrere Teilnehmer gleichzeitig durch.</p>
         </a>
 
-        <a href="{{ url_for('participants.manage_participants') }}" class="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 transition-colors">
-            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">📄 Berichte bearbeiten</h5>
-            <p class="font-normal text-gray-700">Sehen Sie sich die fertigen Berichte an, bearbeiten Sie sie und exportieren Sie sie.</p>
+        <a href="{{ url_for('analysis.manage_foreign_assessments') }}" class="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 transition-colors">
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">📄 Fremdeinschätzung</h5>
+            <p class="font-normal text-gray-700">KI-generierte Fremdeinschätzungen ansehen und bearbeiten.</p>
         </a>
 
-        <a href="{{ url_for('data_io.export_selection') }}" class="block p-6 bg-white border border-green-200 rounded-lg shadow hover:bg-green-100">
-            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">📦 Daten exportieren</h5>
-            <p class="font-normal text-gray-700">Wählen Sie Teilnehmer- und Gruppendaten zum Export als xslx oder csv aus.</p>
+        <a href="{{ url_for('analysis.manage_final_reports') }}" class="block p-6 bg-white border border-indigo-200 rounded-lg shadow hover:bg-indigo-100">
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">📘 Abschlussberichte</h5>
+            <p class="font-normal text-gray-700">Erstellen Sie den finalen Bericht mit Deckblatt, Fremd- und Selbsteinschätzung.</p>
+        </a>
+
+    </div>
+
+<h2 class="text-2xl font-bold text-gray-700 mb-4">Verwaltung</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+
+        <a href="{{ url_for('prompts.manage_prompts') }}" class="block p-6 bg-white border border-purple-200 rounded-lg shadow hover:bg-purple-100">
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">🔄 Prompts</h5>
+            <p class="font-normal text-gray-700">KI-Analyseanweisungen erstellen, bearbeiten und verwalten.</p>
+        </a>
+
+        <a href="{{ url_for('explanation_blocks.manage_explanation_blocks') }}" class="block p-6 bg-white border border-orange-200 rounded-lg shadow hover:bg-orange-100">
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">📝 Text</h5>
+            <p class="font-normal text-gray-700">Erklärungstexte für Abschlussberichte erstellen und verwalten.</p>
         </a>
 
         <a href="{{ url_for('data_io.import_page') }}" class="block p-6 bg-white border border-blue-200 rounded-lg shadow hover:bg-blue-100">
-            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">📥 Daten importieren</h5>
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">📥 Import</h5>
             <p class="font-normal text-gray-700">Daten wiederherstellen oder neue Gruppen aus einer Namensliste erstellen.</p>
         </a>
 
-        <a href="{{ url_for('prompts.manage_prompts') }}" class="block p-6 bg-white border border-purple-200 rounded-lg shadow hover:bg-purple-100">
-            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">🔄 Prompts verwalten</h5>
-            <p class="font-normal text-gray-700">KI-Analyseanweisungen erstellen, bearbeiten und verwalten.</p>
+        <a href="{{ url_for('data_io.export_selection') }}" class="block p-6 bg-white border border-green-200 rounded-lg shadow hover:bg-green-100">
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">📦 Export</h5>
+            <p class="font-normal text-gray-700">Wählen Sie Teilnehmer- und Gruppendaten zum Export als xslx oder csv aus.</p>
+        </a>
+
+    </div>
+
+<h2 class="text-2xl font-bold text-gray-700 mb-4">Sonstiges</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <a href="{{ url_for('info') }}" class="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 transition-colors">
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">ℹ️ Informationen</h5>
+            <p class="font-normal text-gray-700">Hilfe und Informationen zur Stärkenanalyse-Anwendung.</p>
         </a>
 
     </div>

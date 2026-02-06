@@ -1,0 +1,72 @@
+name: AI Code Review (Mistral)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+    paths:
+      - '**.py'
+      - 'requirements.txt'
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  ai-review:
+    name: Mistral AI Code Review
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    
+    steps:
+      - name: Checkout PR Branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Get Changed Python Files
+        id: changed_files
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          CHANGED_FILES=$(git diff --name-only --diff-filter=ACMRT origin/${{ github.event.pull_request.base.ref }}...HEAD | grep '\.py$' | head -20 || echo "")
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "has_python_changes=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ Keine Python-Dateien geändert"
+          else
+            echo "has_python_changes=true" >> $GITHUB_OUTPUT
+            echo "files<<EOF" >> $GITHUB_OUTPUT
+            echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "📝 Geänderte Python-Dateien:"
+            echo "$CHANGED_FILES"
+          fi
+      
+      - name: Set up Python 3.12
+        if: steps.changed_files.outputs.has_python_changes == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install Dependencies
+        if: steps.changed_files.outputs.has_python_changes == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pip install mistralai PyGithub requests
+      
+      - name: Run AI Code Review
+        if: steps.changed_files.outputs.has_python_changes == 'true'
+        env:
+          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          CHANGED_FILES: ${{ steps.changed_files.outputs.files }}
+        run: |
+          python .github/scripts/ai_code_review.py
+      
+      - name: Review Completed
+        if: steps.changed_files.outputs.has_python_changes == 'true'
+        run: |
+          echo "✅ AI Code Review abgeschlossen"
+          echo "💬 Review-Kommentar wurde zur PR hinzugefügt"

@@ -14,14 +14,15 @@ Wichtig: Einige KI-Bibliotheken sind optional und/oder haben schwerere Abhängig
 ## Projektstruktur (wichtigste Dateien)
 
 - `app.py` — App-Initialisierung und zentrale Routen; registriert Blueprints
-- `database.py` — DB-Verbindung und Abfragemethoden (SQLite)
+- `models.py` — SQLAlchemy-Modelle (Group, Participant, Prompt, SelfAssessment)
+- `extensions.py` — db, migrate Objekte (verhindert circular imports)
+- `database.py` — Legacy-DB-Verbindung und Abfragemethoden (SQLite)
 - `ki_services.py` — Hilfsfunktionen für KI-Aufrufe (Modelle sind optional)
 - `utils.py` — Hilfsroutinen für Dateitypen, PDFs, DOCX usw.
-- `blueprints/` — modulare Routengruppen (groups, participants, analysis, data_io, prompts)
+- `blueprints/` — modulare Routengruppen (groups, participants, analysis, data_io, prompts, explanation_blocks)
 - `templates/` — Jinja2 HTML-Vorlagen für UI
 - `static/` — statische Assets
 - `requirements.txt` — vollständige Liste der Python-Abhängigkeiten
-- `schema.sql` — SQL-Skript zur Initialisierung der Datenbank
 
 ## Voraussetzungen
 
@@ -112,10 +113,11 @@ python -m flask run --port 5002
 
 - `blueprints/` enthält die modularen Routen. Schauen Sie in diese Dateien, wenn Sie Features erweitern möchten:
   - `blueprints/groups.py` — Gruppen anlegen/anzeigen
-  - `blueprints/participants.py` — Teilnehmer CRUD & Dateneingabe
-  - `blueprints/analysis.py` — KI-Analyse-Routen
-  - `blueprints/data_io.py` — Import/Export-Funktionen
+  - `blueprints/participants.py` — Teilnehmer CRUD, Dateneingabe & Selbsteinschätzung
+  - `blueprints/analysis.py` — KI-Analyse, Fremdeinschätzung & Abschlussberichte
+  - `blueprints/data_io.py` — Import/Export-Funktionen & Beobachtungsdaten
   - `blueprints/prompts.py` — Verwaltung von KI-Prompts
+  - `blueprints/explanation_blocks.py` — Erklärungstexte für Abschlussberichte
 
 - `database.py` enthält helper-Funktionen zum Zugriff und zur Paginierung. Falls Sie Probleme mit Such- oder Pagination-Features haben, beginnen Sie hier.
 
@@ -129,6 +131,70 @@ python -m flask run --port 5002
 1. Entfernen oder optionalisieren Sie große KI-Abhängigkeiten in `requirements.txt`, wenn Sie die App lokal mit eingeschränkten Features betreiben möchten.
 2. Falls Sie PDF-Generierung benötigen, installieren Sie die Systempakete für `weasyprint` (distribution-spezifisch).
 3. Fügen Sie ein CLI-Kommando `flask init-db` (oder ein kleines `manage.py`) hinzu, das `schema.sql` benutzt, damit die DB-Initialisierung benutzerfreundlicher wird.
+
+## GitHub Actions & CI/CD
+
+Dieses Projekt nutzt GitHub Actions für automatische Code-Qualitätsprüfungen und Dokumentations-Updates:
+
+### Workflows
+
+1. **CI - Code Quality** (`.github/workflows/ci-quality.yml`)
+   - Läuft bei jedem Push auf `main` oder `feature/*` Branches
+   - Prüft Code-Formatierung mit `black`, `isort`, `flake8`, `pylint`
+   - Security-Checks mit `bandit` und `pip-audit`
+   - Code-Komplexitäts-Analyse mit `radon`
+
+2. **Context Generator** (`.github/workflows/context-generator.yml`)
+   - Erstellt automatisch `CONTEXT.md` und `PROJECT_OVERVIEW.md`
+   - Analysiert Projektstruktur, Routen, Modelle
+   - Erstellt PR mit aktualisierten Kontext-Dateien
+
+3. **AI Code Review** (`.github/workflows/ai-code-review.yml`)
+   - Läuft bei Pull Requests auf `main`
+   - Nutzt Mistral AI für intelligente Code-Reviews
+   - Postet Review-Kommentare direkt im PR
+
+4. **Documentation Updater** (`.github/workflows/docs-updater.yml`)
+   - Synchronisiert `requirements.txt` mit `pip freeze`
+   - Aktualisiert Projekt-Statistiken in README.md
+
+### GitHub Secrets Konfiguration
+
+Für die Workflows werden folgende Secrets benötigt (in Repository Settings → Secrets and variables → Actions):
+
+| Secret Name | Beschreibung | Benötigt für |
+|-------------|--------------|--------------|
+| `MISTRAL_API_KEY` | Mistral AI API Key | AI Code Review Workflow |
+| `GITHUB_TOKEN` | Automatisch verfügbar | PR-Erstellung (kein Setup nötig) |
+
+**Setup-Anleitung**:
+1. Gehe zu Repository Settings → Secrets and variables → Actions
+2. Klicke "New repository secret"
+3. Name: `MISTRAL_API_KEY`
+4. Value: Dein Mistral API Key (aus `.env`)
+5. Speichern
+
+### Lokale Umgebung
+
+Für die lokale Entwicklung benötigst du eine `.env`-Datei:
+
+```bash
+# Kopiere die Beispiel-Konfiguration
+cp .env.example .env
+
+# Fülle die Werte aus:
+# - DATABASE_URL (z.B. sqlite:///instance/database.db)
+# - MISTRAL_API_KEY (optional, für KI-Analysen)
+# - SECRET_KEY (generiere mit: python -c "import os; print(os.urandom(24).hex())")
+```
+
+**⚠️ Wichtig**: Die `.env`-Datei **NIEMALS** in Git committen! Sie ist bereits in `.gitignore` gelistet.
+
+### Workflow-Trigger
+
+- **Push auf `main` oder `feature/*`**: Alle Quality-Checks + Context-Generator laufen
+- **Pull Request auf `main`**: AI Code Review + Quality-Checks laufen
+- **Manuell**: Context Generator kann manuell in Actions-Tab gestartet werden
 
 ## Kontakt
 

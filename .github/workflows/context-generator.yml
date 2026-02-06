@@ -1,0 +1,82 @@
+name: Context Generator
+
+on:
+  push:
+    branches: [main, feature/*]
+    paths:
+      - '**.py'
+      - 'models.py'
+      - 'app.py'
+      - 'blueprints/**'
+      - 'templates/**'
+      - '.github/scripts/generate_context.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  generate-context:
+    name: Generate CONTEXT.md & PROJECT_OVERVIEW.md
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Run Context Generator
+        run: |
+          python .github/scripts/generate_context.py || {
+            echo "❌ Context-Generierung fehlgeschlagen"
+            exit 1
+          }
+      
+      - name: Check for Changes
+        id: check_changes
+        run: |
+          if git diff --quiet CONTEXT.md PROJECT_OVERVIEW.md 2>/dev/null; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "✅ Keine Änderungen in Context-Dateien"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "📝 Context-Dateien wurden aktualisiert"
+          fi
+          exit 0
+      
+      - name: Create Pull Request
+        if: steps.check_changes.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: '🤖 Auto-Update: CONTEXT.md und PROJECT_OVERVIEW.md'
+          title: '🤖 Automatische Dokumentations-Aktualisierung'
+          body: |
+            ## 🤖 Automatisch generierte Änderungen
+            
+            Diese PR enthält automatisch generierte Aktualisierungen der Projekt-Kontext-Dateien:
+            - `CONTEXT.md`: Vollständiger Projekt-Kontext für KI-Assistenten
+            - `PROJECT_OVERVIEW.md`: Schneller Projekt-Überblick
+            
+            **Ausgelöst durch**: ${{ github.event_name }} auf Branch `${{ github.ref_name }}`
+            **Commit**: ${{ github.sha }}
+            
+            ### ✅ Review-Checklist
+            - [ ] CONTEXT.md ist vollständig und aktuell
+            - [ ] Routing-Tabelle ist korrekt
+            - [ ] Datenbank-Schema passt zu models.py
+            - [ ] Keine sensiblen Informationen enthalten
+            
+            **Nach Review: Merge diese PR manuell**
+          branch: auto-update-context-${{ github.run_number }}
+          delete-branch: true
+          labels: |
+            automated
+            documentation

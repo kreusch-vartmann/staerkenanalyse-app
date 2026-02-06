@@ -57,7 +57,15 @@
                 <div class="sidebar-spacer"></div>
                 <div class="metadata">
                     <h2 class="metadata-title">RAHMENDATEN</h2>
-                    <p><strong>Durchführungsdatum:</strong> <span>{{ group.date | datetimeformat }}</span></p>
+                    <p><strong>Durchführungszeitraum:</strong>
+                    {% if group.date_from and group.date_to %}
+                        <span>{{ group.date_from | datetimeformat }} - {{ group.date_to | datetimeformat }}</span>
+                    {% elif group.date_from %}
+                        <span>ab {{ group.date_from | datetimeformat }}</span>
+                    {% else %}
+                        <span>-</span>
+                    {% endif %}
+                    </p>
                     <p><strong>Durchführungsort:</strong> <span>{{ group.location }}</span></p>
                     <p><strong>Leitung:</strong> <span>{{ group.leitung }}</span></p>
                     <p><strong>Beobachter:</strong> <span>{{ group.beobachter1 }}</span>, <span>{{ group.beobachter2 }}</span></p>
@@ -68,7 +76,7 @@
                 <h2 class="subtitle">Soziale Kompetenz & Verbale Kompetenz</h2>
                 <section class="content-section">
                     <h3 class="section-title">Soziale Kompetenzen</h3>
-                    <div class="text-content-for-pdf">{{ (participant.ki_texts or {}).social_text | replace('\n', '<br>') | safe }}</div>
+                    <div class="text-content-for-pdf">{{ (participant.ki_texts or {}).social_text | safe }}</div>
                     <div class="chart-container">
                         <img src="{{ sk_chart_image }}" alt="Radardiagramm Soziale Kompetenzen">
                     </div>
@@ -85,14 +93,14 @@
             <main class="main-content">
                 <section class="content-section">
                     <h3 class="section-title">Verbale Kompetenzen</h3>
-                    <div class="text-content-for-pdf">{{ (participant.ki_texts or {}).verbal_text | replace('\n', '<br>') | safe }}</div>
+                    <div class="text-content-for-pdf">{{ (participant.ki_texts or {}).verbal_text | safe }}</div>
                     <div class="chart-container">
                         <img src="{{ vk_chart_image }}" alt="Radardiagramm Verbale Kompetenzen">
                     </div>
                 </section>
                 <section class="content-section">
                     <h3 class="section-title">Zusammenfassung</h3>
-                    <div class="text-content-for-pdf">{{ (participant.ki_texts or {}).summary_text | replace('\n', '<br>') | safe }}</div>
+                    <div class="text-content-for-pdf">{{ (participant.ki_texts or {}).summary_text | safe }}</div>
                 </section>
                 <div class="footer-spacer"></div>
                 <footer class="main-content-footer">

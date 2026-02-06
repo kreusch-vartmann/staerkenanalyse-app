@@ -1,126 +1,267 @@
 {% extends 'base.html' %}
 
-{% block title %}Dateneingabe{% endblock %}
+{% block title %}Beobachtungsdaten - Teilnehmer auswählen{% endblock %}
 
 {% block content %}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div>
-            <label for="group-select" class="block mb-2 text-sm font-medium text-gray-900">1. Gruppe auswählen</label>
-            <select id="group-select" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                <option selected disabled>Bitte eine Gruppe wählen...</option>
-                {% for group in groups %}
-                    <option value="{{ group.id }}">{{ group.name }}</option>
-                {% endfor %}
-            </select>
+<div class="mb-6">
+    <h2 class="text-3xl font-bold text-gray-800">Beobachtungsdaten eingeben</h2>
+    <p class="text-gray-600 mt-2">Wählen Sie einen Teilnehmer aus, um dessen Beobachtungsdaten zu bearbeiten</p>
+</div>
+
+<!-- Suchfeld mit Autocomplete -->
+<div class="mb-6">
+    <div class="relative">
+        <input type="text" id="participant-search"
+               class="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+               placeholder="Teilnehmer oder Gruppe suchen..." autocomplete="off">
+        <i class="fas fa-search absolute left-3 top-4 text-gray-400"></i>
+        <button id="clear-search" class="absolute right-3 top-4 hidden text-gray-400 hover:text-gray-600">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <div id="autocomplete-results"
+         class="absolute z-10 hidden w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-64 overflow-y-auto"></div>
+    <div id="search-info" class="mt-2 text-sm text-gray-600 hidden">
+        <span id="search-count"></span>
+    </div>
+</div>
+
+{% if groups %}
+    {% for group in groups %}
+    {% if group.participants.count() > 0 %}
+    <div class="group-accordion bg-white shadow-md rounded-lg mb-4"
+         data-group-id="{{ group.id }}" data-group-name="{{ group.name|lower }}">
+
+        <!-- Accordion Header -->
+        <div class="accordion-header cursor-pointer hover:bg-gray-50 px-6 py-4 transition-colors"
+             onclick="toggleAccordion({{ group.id }})">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4 flex-1">
+                    <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                        <i class="fas fa-users text-blue-600"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">{{ group.name }}</h3>
+                        <div class="flex space-x-4 text-sm text-gray-600 mt-1">
+                            <span>
+                                <i class="fas fa-user-friends me-1"></i>
+                                {{ group.participants.count() }} Teilnehmer
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <i class="fas fa-chevron-down transition-transform duration-200"
+                   id="icon-{{ group.id }}"></i>
+            </div>
         </div>
-        <div>
-            <label for="participant-select" class="block mb-2 text-sm font-medium text-gray-900">2. Teilnehmer auswählen</label>
-            <select id="participant-select" disabled class="bg-gray-200 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                <option selected disabled>Zuerst Gruppe wählen...</option>
-            </select>
+
+        <!-- Accordion Content -->
+        <div id="accordion-content-{{ group.id }}"
+             class="accordion-content hidden border-t border-gray-200">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Teilnehmer</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Beobachtungen</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aktion</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for participant in group.participants %}
+                        <tr class="participant-row hover:bg-gray-50 transition-colors"
+                            data-participant-name="{{ participant.name|lower }}"
+                            data-participant-id="{{ participant.id }}">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {{ participant.name }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                {% if participant.observations and participant.observations != '{}' %}
+                                    <span class="text-green-600 text-xl">✅</span>
+                                {% else %}
+                                    <span class="text-gray-400 text-xl">❌</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div class="flex flex-col gap-2">
+                                    <a href="{{ url_for('participants.show_data_entry', participant_id=participant.id) }}"
+                                       class="text-blue-600 hover:text-blue-900">
+                                        <i class="fas fa-edit me-1"></i>Beobachtungsdaten bearbeiten
+                                    </a>
+                                    {% if participant.ki_texts and participant.ki_texts != '{}' %}
+                                    <a href="{{ url_for('analysis.edit_report', participant_id=participant.id) }}"
+                                       class="text-indigo-600 hover:text-indigo-900">
+                                        <i class="fas fa-file-alt me-1"></i>Fremdeinschätzung ansehen
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
+    {% endif %}
+    {% endfor %}
 
-    <div id="data-entry-section" class="hidden">
-        <div id="participant-headline-container" class="text-center mb-6">
-            </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <label for="social_observations" class="block mb-2 text-sm font-medium text-gray-900">Soziale Kompetenzen</label>
-                <textarea id="social_observations" rows="10" class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"></textarea>
-            </div>
-            <div>
-                <label for="verbal_observations" class="block mb-2 text-sm font-medium text-gray-900">Verbale Kompetenzen</label>
-                <textarea id="verbal_observations" rows="10" class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"></textarea>
-            </div>
-        </div>
-
-        <div class="mt-8 flex justify-between items-center">
-             <button id="save-button" class="py-2 px-6 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold">
-                <i class="fas fa-save me-2"></i>Beobachtungen speichern
-            </button>
-            <a id="ai-analysis-link" href="#" class="py-2 px-6 rounded-md text-white bg-green-600 hover:bg-green-700 font-semibold">
-                Zur KI-Analyse für diese Gruppe <i class="fas fa-arrow-right ms-2"></i>
-            </a>
-        </div>
-        <div id="save-status" class="mt-4 text-sm text-gray-600"></div>
+    <div id="no-results-message" class="hidden bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-yellow-800 mb-2">Keine Ergebnisse gefunden</h3>
+        <p class="text-yellow-700">Ihre Suche ergab keine Treffer. Versuchen Sie einen anderen Suchbegriff.</p>
     </div>
 
-    <script>
-        const groupSelect = document.getElementById('group-select');
-        const participantSelect = document.getElementById('participant-select');
-        const dataEntrySection = document.getElementById('data-entry-section');
-        const socialObsTextarea = document.getElementById('social_observations');
-        const verbalObsTextarea = document.getElementById('verbal_observations');
-        const headlineContainer = document.getElementById('participant-headline-container');
-        const saveButton = document.getElementById('save-button');
-        const saveStatus = document.getElementById('save-status');
-        const aiAnalysisLink = document.getElementById('ai-analysis-link');
+{% else %}
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-yellow-800 mb-2">Keine Gruppen vorhanden</h3>
+        <p class="text-yellow-700">Bitte legen Sie zuerst Gruppen und Teilnehmer an.</p>
+    </div>
+{% endif %}
 
-        let currentParticipantId = null;
+{% endblock %}
 
-        // 1. Wenn eine Gruppe ausgewählt wird
-        groupSelect.addEventListener('change', async (e) => {
-            const groupId = e.target.value;
-            dataEntrySection.classList.add('hidden');
-            participantSelect.disabled = true;
-            participantSelect.innerHTML = '<option selected disabled>Lade Teilnehmer...</option>';
-            aiAnalysisLink.href = `/ai_analysis/group/${groupId}`;
+{% block scripts %}
+<script>
+function toggleAccordion(groupId) {
+    const content = document.getElementById(`accordion-content-${groupId}`);
+    const icon = document.getElementById(`icon-${groupId}`);
+    if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        icon.classList.add('rotate-180');
+    } else {
+        content.classList.add('hidden');
+        icon.classList.remove('rotate-180');
+    }
+}
 
-            const response = await fetch(`/api/group/${groupId}/participants`);
-            const participants = await response.json();
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('participant-search');
+    const clearButton = document.getElementById('clear-search');
+    const autocompleteResults = document.getElementById('autocomplete-results');
+    const searchInfo = document.getElementById('search-info');
+    const searchCount = document.getElementById('search-count');
+    const noResultsMessage = document.getElementById('no-results-message');
 
-            participantSelect.innerHTML = '<option selected disabled>2. Teilnehmer auswählen</option>';
-            participants.forEach(p => {
-                const option = new Option(p.name, p.id);
-                participantSelect.add(option);
-            });
-            participantSelect.disabled = false;
+    const allParticipants = [];
+    document.querySelectorAll('.participant-row').forEach(row => {
+        const accordion = row.closest('.group-accordion');
+        allParticipants.push({
+            name: row.dataset.participantName,
+            id: row.dataset.participantId,
+            groupId: accordion.dataset.groupId,
+            groupName: accordion.dataset.groupName,
+            element: row
         });
+    });
 
-        // 2. Wenn ein Teilnehmer ausgewählt wird
-        participantSelect.addEventListener('change', async (e) => {
-            currentParticipantId = e.target.value;
-            const participantName = e.target.options[e.target.selectedIndex].text;
-            
-            headlineContainer.innerHTML = `<h2 class="text-3xl font-bold text-gray-800">Dateneingabe für: ${participantName}</h2>`;
-            
-            const response = await fetch(`/api/participant/${currentParticipantId}/observations`);
-            const observations = await response.json();
+    function getGroupName(groupId) {
+        const accordion = document.querySelector(`.group-accordion[data-group-id="${groupId}"]`);
+        return accordion ? accordion.querySelector('h3').textContent : 'Unbekannt';
+    }
 
-            socialObsTextarea.value = observations.social || '';
-            verbalObsTextarea.value = observations.verbal || '';
-            
-            dataEntrySection.classList.remove('hidden');
-            saveStatus.textContent = '';
-        });
+    searchInput.addEventListener('input', function(e) {
+        const term = e.target.value.toLowerCase().trim();
+        if (!term) {
+            clearButton.classList.add('hidden');
+            resetSearch();
+            return;
+        }
+        clearButton.classList.remove('hidden');
+        const matches = allParticipants.filter(p => p.name.includes(term) || p.groupName.includes(term));
+        if (matches.length > 0) showAutocomplete(matches, term);
+        else autocompleteResults.classList.add('hidden');
+        applySearchFilter(term, matches);
+    });
 
-        // 3. Wenn der Speichern-Button geklickt wird
-        saveButton.addEventListener('click', async () => {
-            if (!currentParticipantId) return;
+    clearButton.addEventListener('click', function() {
+        searchInput.value = '';
+        clearButton.classList.add('hidden');
+        autocompleteResults.classList.add('hidden');
+        resetSearch();
+    });
 
-            saveStatus.textContent = 'Speichere...';
-            const data = {
-                social: socialObsTextarea.value,
-                verbal: verbalObsTextarea.value
-            };
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !autocompleteResults.contains(e.target)) {
+            autocompleteResults.classList.add('hidden');
+        }
+    });
 
-            try {
-                const response = await fetch(`/save_observations/${currentParticipantId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const result = await response.json();
-                if (result.status === 'success') {
-                    saveStatus.textContent = `Erfolgreich gespeichert um ${new Date().toLocaleTimeString()}.`;
-                } else {
-                    saveStatus.textContent = `Fehler: ${result.message}`;
+    function showAutocomplete(matches, term) {
+        autocompleteResults.innerHTML = '';
+        matches.slice(0, 10).forEach(match => {
+            const div = document.createElement('div');
+            div.className = 'px-4 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0';
+            const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`(${escapedTerm})`, 'gi');
+            const highlighted = match.name.replace(regex, '<strong class="text-blue-600">$1</strong>');
+            div.innerHTML = `
+                <div class="font-medium">${highlighted}</div>
+                <div class="text-xs text-gray-500 mt-1">Gruppe: ${getGroupName(match.groupId)}</div>
+            `;
+            div.addEventListener('click', function() {
+                searchInput.value = match.name;
+                autocompleteResults.classList.add('hidden');
+                applySearchFilter(match.name.toLowerCase(), [match]);
+                const content = document.getElementById(`accordion-content-${match.groupId}`);
+                const icon = document.getElementById(`icon-${match.groupId}`);
+                if (content.classList.contains('hidden')) {
+                    content.classList.remove('hidden');
+                    icon.classList.add('rotate-180');
                 }
-            } catch (error) {
-                saveStatus.textContent = 'Ein Netzwerkfehler ist aufgetreten.';
+                setTimeout(() => {
+                    match.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    match.element.classList.add('bg-yellow-100');
+                    setTimeout(() => match.element.classList.remove('bg-yellow-100'), 2000);
+                }, 300);
+            });
+            autocompleteResults.appendChild(div);
+        });
+        autocompleteResults.classList.remove('hidden');
+    }
+
+    function applySearchFilter(term, matches) {
+        const matchingIds = new Set(matches.map(m => m.id));
+        const matchingGroupIds = new Set(matches.map(m => m.groupId));
+
+        document.querySelectorAll('.participant-row').forEach(row => {
+            row.classList.toggle('hidden', !matchingIds.has(row.dataset.participantId));
+        });
+
+        document.querySelectorAll('.group-accordion').forEach(accordion => {
+            const visibleRows = accordion.querySelectorAll('.participant-row:not(.hidden)');
+            if (visibleRows.length > 0) {
+                accordion.classList.remove('hidden');
+                const content = accordion.querySelector('.accordion-content');
+                const icon = accordion.querySelector('.fa-chevron-down');
+                if (content.classList.contains('hidden')) {
+                    content.classList.remove('hidden');
+                    icon.classList.add('rotate-180');
+                }
+            } else {
+                accordion.classList.add('hidden');
             }
         });
-    </script>
+
+        if (matches.length === 0) {
+            noResultsMessage.classList.remove('hidden');
+            searchInfo.classList.add('hidden');
+        } else {
+            noResultsMessage.classList.add('hidden');
+            searchCount.textContent = `${matches.length} Teilnehmer gefunden in ${matchingGroupIds.size} Gruppe(n)`;
+            searchInfo.classList.remove('hidden');
+        }
+    }
+
+    function resetSearch() {
+        document.querySelectorAll('.participant-row').forEach(row => row.classList.remove('hidden'));
+        document.querySelectorAll('.group-accordion').forEach(accordion => {
+            accordion.classList.remove('hidden');
+            accordion.querySelector('.accordion-content').classList.add('hidden');
+            accordion.querySelector('.fa-chevron-down').classList.remove('rotate-180');
+        });
+        searchInfo.classList.add('hidden');
+        noResultsMessage.classList.add('hidden');
+    }
+});
+</script>
 {% endblock %}

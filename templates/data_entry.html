@@ -1,107 +1,133 @@
 {% extends 'base.html' %}
 
-{% block title %}Dateneingabe für {{ participant.name }}{% endblock %}
+{% block title %}Beobachtungsdaten für {{ participant.name }}{% endblock %}
 
 {% block content %}
+<div class="container mx-auto px-4 py-6">
+    <nav class="mb-6">
+        <ol class="flex items-center space-x-2 text-sm text-gray-600">
+            <li><a href="{{ url_for('dashboard') }}" class="hover:text-blue-600">Dashboard</a><span class="mx-2">/</span></li>
+            <li><a href="{{ url_for('groups.manage_groups') }}" class="hover:text-blue-600">Gruppen</a><span class="mx-2">/</span></li>
+            <li><a href="{{ url_for('groups.show_group_participants', group_id=group.id) }}" class="hover:text-blue-600">{{ group.name }}</a><span class="mx-2">/</span></li>
+            <li class="text-blue-600 font-medium">{{ participant.name }}</li>
+        </ol>
+    </nav>
+
     <div class="flex justify-between items-center mb-6">
         <div>
-            <h2 class="text-3xl font-bold text-gray-800">Dateneingabe</h2>
-            <p class="text-lg text-gray-600">für <span class="font-semibold">{{ participant.name }}</span> in Gruppe <span class="font-semibold">{{ group.name }}</span></p>
+            <h2 class="text-3xl font-bold text-gray-800">Beobachtungsdaten</h2>
+            <p class="text-lg text-gray-600">für {{ participant.name }}</p>
         </div>
-        <a href="{{ url_for('groups.show_group_participants', group_id=group.id) }}" class="py-2 px-4 text-sm rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold">
-            ← Zurück zur Gruppenübersicht
+        <a href="{{ url_for('groups.show_group_participants', group_id=group.id) }}" class="text-blue-600 hover:text-blue-800 font-semibold flex items-center">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            Zurück zur Teilnehmerliste
         </a>
     </div>
 
-    <div class="bg-white p-8 rounded-lg shadow-md border border-gray-200">
-        <h3 class="text-xl font-semibold text-gray-700 mb-3">Beobachtungen</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <label for="social-observations" class="block mb-2 text-sm font-medium text-gray-900">Soziale Kompetenzen</label>
-                <textarea id="social-observations" rows="8" class="w-full rounded-md border-gray-300 shadow-sm p-3">{{ (participant.observations or {}).social or '' }}</textarea>
-            </div>
-            <div>
-                <label for="verbal-observations" class="block mb-2 text-sm font-medium text-gray-900">Verbale Kompetenzen</label>
-                <textarea id="verbal-observations" rows="8" class="w-full rounded-md border-gray-300 shadow-sm p-3">{{ (participant.observations or {}).verbal or '' }}</textarea>
-            </div>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Beobachtungen (Fremdeinschätzung)</h3>
         </div>
-        <div class="pt-6 flex justify-end">
-            <button type="button" onclick="saveObservations()" class="py-2 px-6 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold">
-                Beobachtungen speichern
-            </button>
+        <div class="p-6">
+            <form id="observationsForm" class="space-y-4">
+                 <div>
+                    <label for="social" class="block text-sm font-medium text-gray-700">Soziale Kompetenzen</label>
+                    <textarea id="social" name="social" rows="5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">{{ participant.observations.social or '' }}</textarea>
+                </div>
+                <div>
+                    <label for="verbal" class="block text-sm font-medium text-gray-700">Verbale Kompetenzen</label>
+                    <textarea id="verbal" name="verbal" rows="5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">{{ participant.observations.verbal or '' }}</textarea>
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                        Beobachtungen speichern
+                    </button>
+                    <a href="{{ url_for('analysis.ai_analysis_select_participants', group_id=participant.group_id) }}?preselect={{ participant.id }}" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors inline-flex items-center">
+                        <i class="fas fa-brain mr-2"></i>Zur KI-Analyse
+                    </a>
+                    {% if has_ki_report %}
+                    <a href="{{ url_for('analysis.edit_report', participant_id=participant.id) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors inline-flex items-center">
+                        <i class="fas fa-file-alt mr-2"></i>Bericht ansehen
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
         </div>
     </div>
-
-    <div class="mt-10 bg-white p-8 rounded-lg shadow-md border border-gray-200">
-        <h3 class="text-2xl font-bold text-gray-800 mb-4">Nächster Schritt</h3>
-        <p class="text-gray-600 mb-4">Nachdem Sie die Beobachtungen gespeichert haben, können Sie die KI-Analyse für diesen Teilnehmer konfigurieren und starten.</p>
-        
-        <form action="{{ url_for('analysis.configure_batch_ai_analysis') }}" method="post">
-            <input type="hidden" name="participant_ids" value="{{ participant.id }}">
-            <button type="submit" class="py-2 px-6 rounded-md text-white bg-green-600 hover:bg-green-700 font-semibold">
-                Analyse für {{ participant.name }} starten →
-            </button>
-        </form>
+    
+    <div id="toast" class="fixed bottom-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg hidden">
+        Daten erfolgreich gespeichert!
     </div>
+</div>
 
-    <script>
-        async function saveObservations() {
-            try {
-                const dataToSend = {
-                    social: document.getElementById('social-observations').value,
-                    verbal: document.getElementById('verbal-observations').value
-                };
+{% endblock %}
 
-                const response = await fetch(`{{ url_for('participants.save_observations', participant_id=participant.id) }}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dataToSend)
-                });
-                const result = await response.json();
-                
-                // Einfache Feedback-Meldung via alert
-                alert(result.message);
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toast = document.getElementById('toast');
+    let autosaveTimeout;
 
-            } catch (error) {
-                console.error('Fehler in saveObservations:', error);
-                alert('Speichern fehlgeschlagen. Prüfen Sie die Browser-Konsole für Details.');
+    // Funktion zum Anzeigen des Toasts
+    function showToast() {
+        toast.classList.remove('hidden');
+        setTimeout(() => {
+            toast.classList.add('hidden');
+        }, 3000);
+    }
+
+    // Speicherfunktion (wiederverwendbar für Autosave und manuelles Speichern)
+    function saveObservations() {
+        const formData = new FormData(document.getElementById('observationsForm'));
+        const data = Object.fromEntries(formData.entries());
+
+        fetch(`{{ url_for('participants.save_observations', participant_id=participant.id) }}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.status === 'success') {
+                showToast();
+            } else {
+                alert('Fehler beim Speichern: ' + result.message);
             }
-        }
-    </script>
+        })
+        .catch(error => console.error('Error:', error));
+    }
 
-    <script>
-        // --- Warnung bei ungespeicherten Änderungen ---
-        let isDirty = false;
-    
-        // Funktion, um den Zustand auf "geändert" zu setzen
-        function setDirty() {
-            isDirty = true;
-        }
-    
-        // Überwache die beiden Textareas
-        document.getElementById('social-observations').addEventListener('input', setDirty);
-        document.getElementById('verbal-observations').addEventListener('input', setDirty);
-    
-        // Wenn der Nutzer versucht, die Seite zu verlassen, prüfe den "dirty"-Status
-        window.addEventListener('beforeunload', (event) => {
-            if (isDirty) {
-                // Zeige den Standard-Dialog des Browsers an
-                event.preventDefault();
-                event.returnValue = '';
-            }
+    // Autosave bei Textarea-Eingabe (2s Debounce)
+    document.querySelectorAll('#observationsForm textarea').forEach(textarea => {
+        textarea.addEventListener('input', () => {
+            clearTimeout(autosaveTimeout);
+            autosaveTimeout = setTimeout(saveObservations, 2000);
         });
-    
-        // --- Bestehende Speicher-Funktion anpassen ---
-        // Wir "überschreiben" die bestehende saveObservations-Funktion, um den Status zurückzusetzen
-        const originalSaveObservations = window.saveObservations;
-        window.saveObservations = async function() {
-            // Rufe die ursprüngliche Speicherfunktion auf
-            const wasSuccessful = await originalSaveObservations();
-            
-            // Setze den Status NUR nach erfolgreichem Speichern zurück
-            if (wasSuccessful) {
-                isDirty = false;
-            }
-        };
-    </script>
+    });
+
+    // Manuelles Speichern via Button
+    document.getElementById('observationsForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        clearTimeout(autosaveTimeout);
+        saveObservations();
+    });
+
+    // Ctrl+S zum Speichern
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            clearTimeout(autosaveTimeout);
+            saveObservations();
+        }
+    });
+
+    // Undo/Redo Registrierung
+    window.undoRedoManager.show();
+    document.querySelectorAll('#observationsForm textarea').forEach(textarea => {
+        window.undoRedoManager.registerTextarea(textarea);
+    });
+});
+</script>
 {% endblock %}

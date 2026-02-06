@@ -1,0 +1,46 @@
+[MASTER]
+# Python Version
+py-version=3.12
+
+# Dateien/Verzeichnisse ignorieren
+ignore=venv,.venv,migrations,__pycache__,.github,instance
+
+# Parallele Jobs für schnellere Ausführung
+jobs=4
+
+[MESSAGES CONTROL]
+# Deaktiviere bestimmte Warnungen (angepasst an Flask-Projekte)
+disable=
+    missing-module-docstring,
+    missing-class-docstring,
+    too-few-public-methods,
+    too-many-locals,
+    too-many-arguments,
+    too-many-branches,
+    too-many-statements,
+    fixme,
+    broad-except,
+    invalid-name
+
+[FORMAT]
+# Max. Zeilenlänge (kompatibel mit Black)
+max-line-length=127
+
+# Einrückung: 4 Spaces
+indent-string='    '
+
+[BASIC]
+# Erlaubt kurze Variablennamen (häufig in Flask)
+good-names=i,j,k,e,db,id,_,pk,bp,f
+
+[DESIGN]
+# Max. Komplexität
+max-complexity=15
+
+[SIMILARITIES]
+# Minimum Zeilen für Duplikat-Erkennung
+min-similarity-lines=10
+
+[REFACTORING]
+# Max. verschachtelte Blöcke
+max-nested-blocks=6

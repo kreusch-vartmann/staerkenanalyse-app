@@ -1,0 +1,163 @@
+name: Documentation Updater
+
+on:
+  push:
+    branches: [main, feature/*]
+    paths:
+      - '**.py'
+      - 'requirements.txt'
+      - 'README.md'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync-requirements:
+    name: Sync requirements.txt with pip freeze
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+      
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt || echo "⚠️ Einige Packages konnten nicht installiert werden"; fi
+      
+      - name: Generate pip freeze
+        run: |
+          pip freeze > requirements_frozen.txt
+      
+      - name: Compare with current requirements.txt
+        id: compare
+        run: |
+          if diff -q requirements.txt requirements_frozen.txt > /dev/null 2>&1; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "✅ requirements.txt ist aktuell"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "⚠️ requirements.txt hat Unterschiede zu pip freeze"
+          fi
+          exit 0
+      
+      - name: Create PR if changed
+        if: steps.compare.outputs.changed == 'true'
+        continue-on-error: true
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: '📦 Sync requirements.txt mit pip freeze'
+          title: '📦 Requirements.txt Synchronisation'
+          body: |
+            ## 📦 Automatische Requirements-Synchronisation
+            
+            Diese PR synchronisiert `requirements.txt` mit dem aktuellen pip freeze Output.
+            
+            **Bitte prüfen**:
+            - [ ] Sind alle Versionen korrekt?
+            - [ ] Wurden unerwünschte Dependencies hinzugefügt?
+            - [ ] Ist mistralai==0.4.2 (NICHT 1.x)?
+            
+            **Nach Review: Merge diese PR manuell**
+          branch: auto-sync-requirements-${{ github.run_number }}
+          delete-branch: true
+
+  update-readme-stats:
+    name: Update README.md Statistics
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+      
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Count Project Statistics
+        id: stats
+        run: |
+          PY_FILES=$(find . -name "*.py" -not -path "./venv/*" -not -path "./.venv/*" -not -path "./.github/*" | wc -l)
+          HTML_FILES=$(find templates -name "*.html" 2>/dev/null | wc -l || echo 0)
+          BLUEPRINTS=$(find blueprints -name "*.py" -not -name "__init__.py" 2>/dev/null | wc -l || echo 0)
+          
+          echo "py_files=$PY_FILES" >> $GITHUB_OUTPUT
+          echo "html_files=$HTML_FILES" >> $GITHUB_OUTPUT
+          echo "blueprints=$BLUEPRINTS" >> $GITHUB_OUTPUT
+          
+          echo "📊 Statistiken:"
+          echo "- Python-Dateien: $PY_FILES"
+          echo "- Templates: $HTML_FILES"
+          echo "- Blueprints: $BLUEPRINTS"
+      
+      - name: Update README.md Stats Section
+        run: |
+          # Prüfe ob README.md existiert
+          if [ ! -f README.md ]; then
+            echo "⚠️ README.md nicht gefunden - wird übersprungen"
+            exit 0
+          fi
+
+          # Entferne alte Stats-Section falls vorhanden
+          sed -i '/<!-- AUTO-GENERATED STATS/,/<!-- END AUTO-GENERATED STATS -->/d' README.md
+
+          # Füge neue Stats-Section hinzu (ohne Quotes um EOF für Variable Expansion!)
+          cat >> README.md <<EOF
+
+          <!-- AUTO-GENERATED STATS - DO NOT EDIT MANUALLY -->
+          ## 📊 Projekt-Statistiken
+
+          ![Python Files](https://img.shields.io/badge/Python_Files-${{ steps.stats.outputs.py_files }}-blue)
+          ![Templates](https://img.shields.io/badge/Templates-${{ steps.stats.outputs.html_files }}-green)
+          ![Blueprints](https://img.shields.io/badge/Blueprints-${{ steps.stats.outputs.blueprints }}-orange)
+
+          *Automatisch aktualisiert am: $(date '+%Y-%m-%d %H:%M:%S')*
+          <!-- END AUTO-GENERATED STATS -->
+          EOF
+      
+      - name: Check for README changes
+        id: check_readme
+        run: |
+          if git diff --quiet README.md 2>/dev/null; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "✅ README.md unverändert"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "📝 README.md wurde aktualisiert"
+          fi
+          exit 0
+      
+      - name: Create PR for README update
+        if: steps.check_readme.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: '📝 Update README.md Statistiken'
+          title: '📝 README.md Statistik-Update'
+          body: |
+            ## 📝 Automatisches README-Update
+            
+            Diese PR aktualisiert die Projekt-Statistiken in README.md:
+            - Python-Dateien: ${{ steps.stats.outputs.py_files }}
+            - Templates: ${{ steps.stats.outputs.html_files }}
+            - Blueprints: ${{ steps.stats.outputs.blueprints }}
+            
+            **Nach Review: Merge diese PR manuell**
+          branch: auto-update-readme-${{ github.run_number }}
+          delete-branch: true
