@@ -12,6 +12,10 @@ on:
       - '.github/scripts/generate_context.py'
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   generate-context:
     name: Generate CONTEXT.md & PROJECT_OVERVIEW.md

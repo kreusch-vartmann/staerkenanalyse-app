@@ -9,6 +9,10 @@ on:
       - 'README.md'
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   sync-requirements:
     name: Sync requirements.txt with pip freeze
@@ -17,15 +21,20 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
       
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: 'pip'
       
       - name: Install Dependencies
         run: |
-          pip install -r requirements.txt
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt || echo "⚠️ Einige Packages konnten nicht installiert werden"; fi
       
       - name: Generate pip freeze
         run: |
@@ -34,7 +43,7 @@ jobs:
       - name: Compare with current requirements.txt
         id: compare
         run: |
-          if diff -q requirements.txt requirements_frozen.txt > /dev/null; then
+          if diff -q requirements.txt requirements_frozen.txt > /dev/null 2>&1; then
             echo "changed=false" >> $GITHUB_OUTPUT
             echo "✅ requirements.txt ist aktuell"
           else
@@ -70,6 +79,9 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
       
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -79,7 +91,7 @@ jobs:
       - name: Count Project Statistics
         id: stats
         run: |
-          PY_FILES=$(find . -name "*.py" -not -path "./venv/*" -not -path "./.github/*" | wc -l)
+          PY_FILES=$(find . -name "*.py" -not -path "./venv/*" -not -path "./.venv/*" -not -path "./.github/*" | wc -l)
           HTML_FILES=$(find templates -name "*.html" 2>/dev/null | wc -l || echo 0)
           BLUEPRINTS=$(find blueprints -name "*.py" -not -name "__init__.py" 2>/dev/null | wc -l || echo 0)
           

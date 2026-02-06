@@ -8,13 +8,16 @@ on:
       - '**.py'
       - 'requirements.txt'
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   ai-review:
     name: Mistral AI Code Review
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-      contents: read
+    if: github.event.pull_request.draft == false
     
     steps:
       - name: Checkout PR Branch
@@ -22,115 +25,46 @@ jobs:
         with:
           fetch-depth: 0
       
-      - name: Get Changed Files
+      - name: Get Changed Python Files
         id: changed_files
         run: |
-          git fetch origin ${{ github.base_ref }}
-          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E '\.py$|requirements\.txt$' | head -20)
-          echo "files<<EOF" >> $GITHUB_OUTPUT
-          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-      
-      - name: Get Diff Content
-        id: get_diff
-        run: |
-          git fetch origin ${{ github.base_ref }}
-          DIFF_CONTENT=$(git diff origin/${{ github.base_ref }}...HEAD -- ${{ steps.changed_files.outputs.files }} | head -c 10000)
-          echo "diff<<EOF" >> $GITHUB_OUTPUT
-          echo "$DIFF_CONTENT" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          CHANGED_FILES=$(git diff --name-only --diff-filter=ACMRT origin/${{ github.event.pull_request.base.ref }}...HEAD | grep '\.py$' | head -20 || echo "")
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "has_python_changes=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ Keine Python-Dateien geändert"
+          else
+            echo "has_python_changes=true" >> $GITHUB_OUTPUT
+            echo "files<<EOF" >> $GITHUB_OUTPUT
+            echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "📝 Geänderte Python-Dateien:"
+            echo "$CHANGED_FILES"
+          fi
       
       - name: Set up Python 3.12
+        if: steps.changed_files.outputs.has_python_changes == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       
-      - name: Install Mistral AI SDK
+      - name: Install Dependencies
+        if: steps.changed_files.outputs.has_python_changes == 'true'
         run: |
-          pip install mistralai==0.4.2
+          python -m pip install --upgrade pip
+          pip install mistralai PyGithub requests
       
-      - name: Run Mistral Code Review
-        id: mistral_review
+      - name: Run AI Code Review
+        if: steps.changed_files.outputs.has_python_changes == 'true'
         env:
           MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          CHANGED_FILES: ${{ steps.changed_files.outputs.files }}
         run: |
-          python - <<'PYTHON_SCRIPT'
-          import os
-          import json
-          from mistralai.client import MistralClient
-          
-          # Initialisiere Mistral Client
-          api_key = os.environ.get("MISTRAL_API_KEY")
-          if not api_key:
-              print("❌ MISTRAL_API_KEY nicht gefunden!")
-              exit(1)
-          
-          client = MistralClient(api_key=api_key)
-          
-          # Lade Prompt-Template
-          with open(".github/prompts/code-review-template.txt", "r") as f:
-              prompt_template = f.read()
-          
-          # Füge Diff-Content ein
-          diff_content = """${{ steps.get_diff.outputs.diff }}"""
-          prompt = prompt_template.replace("{diff_content}", diff_content)
-          
-          # Mistral API Call
-          try:
-              response = client.chat(
-                  model="mistral-large-latest",
-                  messages=[
-                      {"role": "user", "content": prompt}
-                  ],
-                  temperature=0.2,
-                  max_tokens=2000
-              )
-              
-              review_text = response.choices[0].message.content
-              
-              # Versuche JSON zu extrahieren
-              if "```json" in review_text:
-                  json_start = review_text.find("```json") + 7
-                  json_end = review_text.find("```", json_start)
-                  review_json = review_text[json_start:json_end].strip()
-              else:
-                  review_json = review_text
-              
-              # Parse JSON
-              review_data = json.loads(review_json)
-              
-              # Schreibe Output
-              with open("review_output.json", "w") as f:
-                  json.dump(review_data, f, indent=2)
-              
-              print("✅ Review erfolgreich!")
-              print(f"Summary: {review_data.get('summary', 'N/A')}")
-              
-          except Exception as e:
-              print(f"❌ Fehler bei Mistral API Call: {e}")
-              # Fallback: Leeres Review
-              fallback = {
-                  "summary": "Automatisches Review fehlgeschlagen",
-                  "severity": "info",
-                  "issues": [],
-                  "positive_notes": [],
-                  "recommendations": ["Bitte manuelles Review durchführen"]
-              }
-              with open("review_output.json", "w") as f:
-                  json.dump(fallback, f, indent=2)
-          PYTHON_SCRIPT
-      
-      - name: Format Review Comment
-        id: format_comment
-        run: |
-          REVIEW_DATA=$(cat review_output.json)
-          
-          COMMENT=$(python - <<'PYTHON_SCRIPT'
-          import json
-          import sys
-          
-          with open("review_output.json", "r") as f:
-              review = json.load(f)
+          python .github/scripts/ai_code_review.py
+
           
           # Formatiere Markdown-Kommentar
           severity_emoji = {
