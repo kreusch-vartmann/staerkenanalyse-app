@@ -12,6 +12,7 @@ from flask import (Blueprint, request, redirect, url_for, flash, render_template
 
 from extensions import db
 from models import Participant, Group
+from utils import validate_upload_file
 
 data_io_bp = Blueprint('data_io', __name__)
 
@@ -190,6 +191,14 @@ def import_names():
     if not group_name or not file or file.filename == "":
         flash("Bitte Gruppennamen angeben und eine Datei auswählen.", "warning")
         return redirect(url_for("data_io.import_page"))
+
+    # Validiere Upload-Datei
+    try:
+        validate_upload_file(file)
+    except ValueError as e:
+        flash(f"Datei-Validierung fehlgeschlagen: {e}", "error")
+        return redirect(url_for("data_io.import_page"))
+
     try:
         content = file.read().decode("utf-8")
         names = [name.strip() for name in content.splitlines() if name.strip()]

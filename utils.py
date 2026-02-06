@@ -2,19 +2,74 @@
 
 import io
 import mimetypes
+import os
 import re
 
 from docx import Document
 from pdfminer.high_level import extract_text as pdf_extract_text
 from pdfminer.layout import LAParams
 from pdfminer.pdfparser import PDFSyntaxError
+from werkzeug.utils import secure_filename
+
+
+# Konstanten für File Upload Security
+ALLOWED_EXTENSIONS = {'.pdf', '.docx', '.doc', '.txt', '.odt'}
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB pro Datei
+
+
+def validate_upload_file(file):
+    """
+    Validiert Upload-Dateien auf Sicherheit:
+    - Prüft ob Datei vorhanden
+    - Sanitisiert Dateinamen
+    - Validiert Dateityp gegen Whitelist
+    - Prüft Dateigröße (max 5MB)
+
+    Returns:
+        str: Sanitisierter Dateiname
+
+    Raises:
+        ValueError: Bei Validierungsfehlern
+    """
+    if not file or file.filename == '':
+        raise ValueError("Keine Datei ausgewählt")
+
+    # Sanitize filename
+    filename = secure_filename(file.filename)
+
+    if not filename:
+        raise ValueError("Ungültiger Dateiname")
+
+    # Check extension
+    ext = os.path.splitext(filename)[1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise ValueError(f"Dateityp {ext} nicht erlaubt. Erlaubt: {', '.join(sorted(ALLOWED_EXTENSIONS))}")
+
+    # Check file size (read position to get size)
+    file.seek(0, os.SEEK_END)
+    size = file.tell()
+    file.seek(0)
+
+    if size > MAX_FILE_SIZE:
+        raise ValueError(f"Datei zu groß ({size/1024/1024:.1f}MB). Maximum: 5MB")
+
+    if size == 0:
+        raise ValueError("Datei ist leer")
+
+    return filename
 
 
 def get_file_content(file):
     """
     Liest den Inhalt von hochgeladenen Dateien (PDF, DOCX, TXT) robust.
+    Validiert die Datei zuerst auf Sicherheit.
     """
-    filename = file.filename
+    # Validiere Datei zuerst
+    try:
+        filename = validate_upload_file(file)
+    except ValueError as e:
+        return f"--- FEHLER: Datei-Validierung fehlgeschlagen: {str(e)} ---"
+
     content = ""
     try:
         file_buffer = io.BytesIO(file.read())

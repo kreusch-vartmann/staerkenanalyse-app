@@ -34,7 +34,10 @@ jobs:
       
       - name: Run Context Generator
         run: |
-          python .github/scripts/generate_context.py
+          python .github/scripts/generate_context.py || {
+            echo "❌ Context-Generierung fehlgeschlagen"
+            exit 1
+          }
       
       - name: Check for Changes
         id: check_changes

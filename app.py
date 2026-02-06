@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 from flask import Flask, render_template, url_for
 
 # Neue Imports
-from extensions import db, migrate
+from extensions import db, migrate, csrf
 import models
 
 # Blueprints importieren
@@ -23,15 +23,17 @@ from blueprints.explanation_blocks import explanation_blocks_bp
 
 # App-Initialisierung
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', os.urandom(24).hex())
 
 # --- NEUE KONFIGURATION ---
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['WTF_CSRF_ENABLED'] = True
 
 # Erweiterungen initialisieren
 db.init_app(app)
 migrate.init_app(app, db)
+csrf.init_app(app)
 
 
 # Blueprints registrieren
