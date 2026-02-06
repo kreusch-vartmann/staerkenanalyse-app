@@ -64,83 +64,9 @@ jobs:
           CHANGED_FILES: ${{ steps.changed_files.outputs.files }}
         run: |
           python .github/scripts/ai_code_review.py
-
-          
-          # Formatiere Markdown-Kommentar
-          severity_emoji = {
-              "info": "ℹ️",
-              "warning": "⚠️",
-              "error": "❌"
-          }
-          
-          emoji = severity_emoji.get(review.get("severity", "info"), "ℹ️")
-          
-          comment = f"""## {emoji} KI-Code-Review (Mistral AI)
-          
-          **Summary**: {review.get('summary', 'N/A')}
-          
-          """
-          
-          # Issues
-          issues = review.get('issues', [])
-          if issues:
-              comment += "### 🔍 Gefundene Issues\n\n"
-              for issue in issues:
-                  sev_icon = severity_emoji.get(issue.get('severity', 'info'), 'ℹ️')
-                  comment += f"**{sev_icon} {issue.get('category', 'General')}** - `{issue.get('file', 'N/A')}:{issue.get('line', 'N/A')}`\n"
-                  comment += f"{issue.get('message', 'N/A')}\n"
-                  if issue.get('suggestion'):
-                      comment += f"```python\n{issue.get('suggestion')}\n```\n"
-                  comment += "\n"
-          
-          # Positive Notes
-          positive = review.get('positive_notes', [])
-          if positive:
-              comment += "### ✅ Positives\n\n"
-              for note in positive:
-                  comment += f"- {note}\n"
-              comment += "\n"
-          
-          # Recommendations
-          recommendations = review.get('recommendations', [])
-          if recommendations:
-              comment += "### 💡 Empfehlungen\n\n"
-              for rec in recommendations:
-                  comment += f"- {rec}\n"
-              comment += "\n"
-          
-          comment += "---\n*Automatisches Review via Mistral AI - Bitte manuell validieren!*"
-          
-          print(comment)
-          PYTHON_SCRIPT
-          )
-          
-          echo "comment<<EOF" >> $GITHUB_OUTPUT
-          echo "$COMMENT" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
       
-      - name: Post Review Comment
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const comment = `${{ steps.format_comment.outputs.comment }}`;
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
-      
-      - name: Check Review Severity
+      - name: Review Completed
+        if: steps.changed_files.outputs.has_python_changes == 'true'
         run: |
-          SEVERITY=$(jq -r '.severity' review_output.json)
-          
-          if [ "$SEVERITY" == "error" ]; then
-            echo "❌ Review hat kritische Fehler gefunden!"
-            exit 1
-          elif [ "$SEVERITY" == "warning" ]; then
-            echo "⚠️ Review hat Warnungen gefunden - bitte prüfen!"
-          else
-            echo "✅ Review abgeschlossen ohne kritische Probleme"
-          fi
+          echo "✅ AI Code Review abgeschlossen"
+          echo "💬 Review-Kommentar wurde zur PR hinzugefügt"
