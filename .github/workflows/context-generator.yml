@@ -42,13 +42,14 @@ jobs:
       - name: Check for Changes
         id: check_changes
         run: |
-          if git diff --exit-code CONTEXT.md PROJECT_OVERVIEW.md > /dev/null 2>&1; then
+          if git diff --quiet CONTEXT.md PROJECT_OVERVIEW.md 2>/dev/null; then
             echo "changed=false" >> $GITHUB_OUTPUT
             echo "✅ Keine Änderungen in Context-Dateien"
           else
             echo "changed=true" >> $GITHUB_OUTPUT
             echo "📝 Context-Dateien wurden aktualisiert"
           fi
+          exit 0
       
       - name: Create Pull Request
         if: steps.check_changes.outputs.changed == 'true'
