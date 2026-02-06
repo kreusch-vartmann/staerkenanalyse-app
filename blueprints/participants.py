@@ -4,7 +4,7 @@
 import json
 from flask import Blueprint, request, redirect, url_for, flash, render_template, jsonify
 
-from extensions import db
+from extensions import db, csrf
 from models import Participant, Group, SelfAssessment
 from utils import sanitize_html
 
@@ -203,6 +203,7 @@ def show_self_assessment(participant_id):
     )
 
 @participants_bp.route("/save_self_assessment/<int:participant_id>", methods=["POST"])
+@csrf.exempt
 def save_self_assessment(participant_id):
     """Speichert die Selbsteinschätzung für einen Teilnehmer (API-Endpunkt)."""
     participant = db.get_or_404(Participant, participant_id)

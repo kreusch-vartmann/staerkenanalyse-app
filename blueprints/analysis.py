@@ -117,6 +117,7 @@ def edit_report(participant_id):
 
 
 @analysis_bp.route('/save_report/<int:participant_id>', methods=['POST'])
+@csrf.exempt
 def save_report(participant_id):
     """Speichert bearbeitete Berichtsdaten (KI-Analyse)."""
     participant = db.get_or_404(Participant, participant_id)
