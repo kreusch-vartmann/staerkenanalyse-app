@@ -153,6 +153,7 @@ def main():
     post_review_comment(review)
     
     print("✅ AI Code Review abgeschlossen!")
+    sys.exit(0)  # Expliziter Success Exit-Code
 
 
 if __name__ == "__main__":

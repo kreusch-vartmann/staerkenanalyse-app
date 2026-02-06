@@ -46,6 +46,7 @@ jobs:
           if diff -q requirements.txt requirements_frozen.txt > /dev/null 2>&1; then
             echo "changed=false" >> $GITHUB_OUTPUT
             echo "✅ requirements.txt ist aktuell"
+            exit 0
           else
             echo "changed=true" >> $GITHUB_OUTPUT
             echo "⚠️ requirements.txt hat Unterschiede zu pip freeze"
@@ -53,6 +54,7 @@ jobs:
       
       - name: Create PR if changed
         if: steps.compare.outputs.changed == 'true'
+        continue-on-error: true
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
