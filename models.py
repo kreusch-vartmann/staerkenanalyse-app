@@ -187,3 +187,17 @@ class ReportConfiguration(db.Model):
     company_logo = db.relationship('CompanyLogo', back_populates='report_configurations')
     client_logo = db.relationship('ClientLogo', back_populates='report_configuration')
 
+
+class SignatureImage(db.Model):
+    """
+    Global verwaltete Unterschrift-Bilder (JPG/PNG) für Leitung FE und Leitung SE.
+    Pro Rolle (leitung_fe / leitung_se) kann ein aktives Bild existieren.
+    """
+    __tablename__ = 'signature_images'
+    id = db.Column(db.Integer, primary_key=True)
+    role = db.Column(db.String(20), nullable=False)  # 'leitung_fe' oder 'leitung_se'
+    image_path = db.Column(db.String(255), nullable=False)  # z.B. "uploads/signatures/sig_fe.jpg"
+    filename = db.Column(db.String(100), nullable=False)
+    is_active = db.Column(db.Boolean, default=True)
+    uploaded_at = db.Column(db.DateTime, default=datetime.now(UTC))
+

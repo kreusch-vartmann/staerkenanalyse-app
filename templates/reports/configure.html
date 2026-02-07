@@ -10,8 +10,8 @@
         </div>
     </div>
 
-    <form method="POST" class="needs-validation" novalidate>
-        {{ csrf_token() }}
+    <form method="POST" class="needs-validation" enctype="multipart/form-data" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         
         <!-- Section 1: Design & Logos -->
         <div class="row mb-5">
@@ -41,7 +41,7 @@
                             <label for="company_logo" class="form-label">🏢 Unternehmenslogo</label>
                             {% if company_logo %}
                                 <div class="mb-2">
-                                    <img src="{{ url_for('static', filename=company_logo.logo_path) }}" alt="Company Logo" 
+                                    <img src="{{ url_for('reports.serve_upload', filename=company_logo.logo_path|replace('uploads/', '')) }}" alt="Company Logo" 
                                          style="max-width: 150px; max-height: 80px; border: 1px solid #ddd; padding: 5px;">
                                     <p class="small text-muted">{{ company_logo.filename }} (zuletzt: {{ company_logo.uploaded_at|datetimeformat }})</p>
                                 </div>
@@ -57,7 +57,7 @@
                             <label for="client_logo" class="form-label">🤝 Auftraggeber-Logo</label>
                             {% if client_logo %}
                                 <div class="mb-2">
-                                    <img src="{{ url_for('static', filename=client_logo.logo_path) }}" alt="Client Logo" 
+                                    <img src="{{ url_for('reports.serve_upload', filename=client_logo.logo_path|replace('uploads/', '')) }}" alt="Client Logo" 
                                          style="max-width: 150px; max-height: 80px; border: 1px solid #ddd; padding: 5px;">
                                     <p class="small text-muted">{{ client_logo.filename }} (zuletzt: {{ client_logo.uploaded_at|datetimeformat }})</p>
                                 </div>
@@ -67,6 +67,73 @@
                             <input type="file" class="form-control" id="client_logo" name="client_logo" accept="image/*">
                             <small class="text-muted">PNG, JPG, GIF (max 5MB) für diesen Auftraggeber</small>
                         </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Unterschriften-Bilder (global) -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">✍️ Unterschriften (global)</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="small text-muted mb-3">Unterschrift-Bilder für Leitung FE und SE. Diese gelten global für alle Berichte.</p>
+
+                        <!-- Leitung Fremdeinschätzung -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Leitung Fremdeinschätzung</label>
+                            {% if signature_fe %}
+                                <div class="mb-2 d-flex align-items-center gap-2">
+                                    <img src="{{ url_for('reports.serve_upload', filename=signature_fe.image_path|replace('uploads/', '')) }}" 
+                                         alt="Unterschrift FE" style="max-width: 150px; max-height: 60px; border: 1px solid #ddd; padding: 3px;">
+                                    <form method="POST" action="{{ url_for('reports.delete_signature', sig_id=signature_fe.id) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Unterschrift löschen?')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                                <p class="small text-muted">{{ signature_fe.filename }}</p>
+                            {% else %}
+                                <p class="text-warning small">⚠️ Keine Unterschrift hochgeladen</p>
+                            {% endif %}
+                        </div>
+                        <form method="POST" action="{{ url_for('reports.upload_signature') }}" enctype="multipart/form-data" class="mb-4">
+                            <input type="hidden" name="role" value="leitung_fe">
+                            <div class="input-group input-group-sm">
+                                <input type="file" class="form-control form-control-sm" name="file" accept="image/*" required>
+                                <button type="submit" class="btn btn-sm btn-outline-primary">Hochladen</button>
+                            </div>
+                        </form>
+
+                        <hr>
+
+                        <!-- Leitung Selbsteinschätzung -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Leitung Selbsteinschätzung</label>
+                            {% if signature_se %}
+                                <div class="mb-2 d-flex align-items-center gap-2">
+                                    <img src="{{ url_for('reports.serve_upload', filename=signature_se.image_path|replace('uploads/', '')) }}" 
+                                         alt="Unterschrift SE" style="max-width: 150px; max-height: 60px; border: 1px solid #ddd; padding: 3px;">
+                                    <form method="POST" action="{{ url_for('reports.delete_signature', sig_id=signature_se.id) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Unterschrift löschen?')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                                <p class="small text-muted">{{ signature_se.filename }}</p>
+                            {% else %}
+                                <p class="text-warning small">⚠️ Keine Unterschrift hochgeladen</p>
+                            {% endif %}
+                        </div>
+                        <form method="POST" action="{{ url_for('reports.upload_signature') }}" enctype="multipart/form-data">
+                            <input type="hidden" name="role" value="leitung_se">
+                            <div class="input-group input-group-sm">
+                                <input type="file" class="form-control form-control-sm" name="file" accept="image/*" required>
+                                <button type="submit" class="btn btn-sm btn-outline-primary">Hochladen</button>
+                            </div>
+                        </form>
 
                     </div>
                 </div>
@@ -197,20 +264,35 @@
                 </div>
             </div>
 
-            <!-- Hinweisblatt -->
+            <!-- Hinweisblatt (Erklärungstexte) -->
             <div class="col-md-6">
                 <div class="card mb-3">
                     <div class="card-header">
                         <h6 class="mb-0">
                             <input type="checkbox" name="info_page_enabled" 
                                    {% if modules_config.get('info_page', {}).get('enabled') %}checked{% endif %}>
-                            ℹ️ Hinweisblatt
+                            ℹ️ Hinweisblatt (Erklärungstexte)
                         </h6>
                     </div>
                     <div class="card-body ps-4">
-                        <label for="info_page_content" class="form-label small">Inhalt:</label>
-                        <textarea class="form-control form-control-sm" id="info_page_content" 
-                                  name="info_page_content" rows="4">{{ modules_config.get('info_page', {}).get('content', '') }}</textarea>
+                        {% if explanation_blocks %}
+                            <p class="small text-muted">Wähle die Erklärungstexte, die auf dem Hinweisblatt erscheinen sollen:</p>
+                            <div class="space-y-2">
+                                {% for block in explanation_blocks %}
+                                <label class="d-flex align-items-start p-2 border rounded mb-2">
+                                    <input type="checkbox" name="explanation_block_ids" value="{{ block.id }}" class="mt-1 mr-2"
+                                           {% if block.id in modules_config.get('info_page', {}).get('selected_block_ids', []) %}checked{% endif %}>
+                                    <div>
+                                        <div class="font-weight-bold">{{ block.title }}</div>
+                                        <div class="text-muted small">{{ block.content[:120] }}{% if block.content|length > 120 %}...{% endif %}</div>
+                                    </div>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-warning small">⚠️ Noch keine Erklärungstexte vorhanden.</p>
+                            <a href="{{ url_for('explanation_blocks.manage_explanation_blocks') }}" class="btn btn-sm btn-outline-secondary">Jetzt erstellen</a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -239,7 +321,7 @@
                 <button type="submit" class="btn btn-primary btn-lg">
                     💾 Konfiguration speichern
                 </button>
-                <a href="{{ url_for('groups.view_group', group_id=group.id) }}" class="btn btn-secondary btn-lg">
+                <a href="{{ url_for('groups.show_group_participants', group_id=group.id) }}" class="btn btn-secondary btn-lg">
                     ← Zurück zur Gruppe
                 </a>
             </div>

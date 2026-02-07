@@ -182,7 +182,7 @@ def bericht_pdf(participant_id):
     }
     german_tz = pytz.timezone('Europe/Berlin')
     current_date = datetime.now(pytz.utc).astimezone(german_tz).strftime("%d.%m.%Y")
-    current_location = "Lingen (Ems)"
+    current_location = group.location if group and group.location else ""
 
     sk_chart_image, vk_chart_image = _prepare_pdf_data(participant_dict)
 
@@ -530,57 +530,8 @@ def manage_final_reports():
 def final_report(participant_id):
     """Zeigt den Abschlussbericht für einen Teilnehmer an."""
     participant = db.get_or_404(Participant, participant_id)
-    group = participant.group
-    
-    # Hole Selbsteinschätzung
-    self_assessment = db.session.execute(
-        db.select(SelfAssessment).where(SelfAssessment.participant_id == participant_id)
-    ).scalar_one_or_none()
-    
-    # Hole alle Textblöcke
-    explanation_blocks = db.session.execute(
-        db.select(ExplanationBlock).order_by(ExplanationBlock.order, ExplanationBlock.id)
-    ).scalars().all()
-    
-    # Konvertiere Participant-Daten
-    participant_dict = {
-        'id': participant.id,
-        'name': participant.name,
-        'observations': json.loads(participant.observations) if participant.observations else {},
-        'sk_ratings': json.loads(participant.sk_ratings) if participant.sk_ratings else {},
-        'vk_ratings': json.loads(participant.vk_ratings) if participant.vk_ratings else {},
-        'ki_texts': json.loads(participant.ki_texts) if participant.ki_texts else {},
-    }
-    
-    group_dict = {
-        'id': group.id if group else None,
-        'name': group.name if group else '',
-        'date_from': group.date_from if group else None,
-        'date_to': group.date_to if group else None,
-        'location': group.location if group else '',
-        'leitung_fremdeinschatzung': group.leitung_fremdeinschatzung if group else '',
-        'leitung_selbsteinschatzung': group.leitung_selbsteinschatzung if group else '',
-        'beobachter1': group.beobachter1 if group else '',
-        'beobachter2': group.beobachter2 if group else '',
-    }
-    
-    german_tz = pytz.timezone('Europe/Berlin')
-    current_date = datetime.now(pytz.utc).astimezone(german_tz).strftime("%d.%m.%Y")
-    
-    breadcrumbs = [
-        {"link": url_for("dashboard"), "text": "Dashboard"},
-        {"link": url_for("analysis.manage_final_reports"), "text": "Abschlussberichte"},
-        {"text": participant.name}
-    ]
-    
-    return render_template(
-        "final_report.html",
-        participant=participant_dict,
-        group=group_dict,
-        self_assessment=self_assessment,
-        explanation_blocks=explanation_blocks,
-        current_date=current_date,
-        breadcrumbs=breadcrumbs
+    return redirect(
+        url_for('reports.preview_report_html', group_id=participant.group_id, participant_id=participant.id)
     )
 
 
@@ -588,63 +539,6 @@ def final_report(participant_id):
 def final_report_pdf(participant_id):
     """Generiert eine PDF-Version des Abschlussberichts."""
     participant = db.get_or_404(Participant, participant_id)
-    group = participant.group
-    
-    # Hole ausgewählte Textblöcke aus dem Form
-    selected_block_ids = request.form.getlist('selected_blocks')
-    selected_blocks = []
-    if selected_block_ids:
-        selected_blocks = db.session.execute(
-            db.select(ExplanationBlock).where(ExplanationBlock.id.in_(selected_block_ids)).order_by(ExplanationBlock.order)
-        ).scalars().all()
-    
-    # Hole Selbsteinschätzung
-    self_assessment = db.session.execute(
-        db.select(SelfAssessment).where(SelfAssessment.participant_id == participant_id)
-    ).scalar_one_or_none()
-    
-    # Konvertiere Participant-Daten
-    participant_dict = {
-        'id': participant.id,
-        'name': participant.name,
-        'sk_ratings': json.loads(participant.sk_ratings) if participant.sk_ratings else {},
-        'vk_ratings': json.loads(participant.vk_ratings) if participant.vk_ratings else {},
-        'ki_texts': json.loads(participant.ki_texts) if participant.ki_texts else {},
-    }
-    
-    group_dict = {
-        'name': group.name if group else '',
-        'location': group.location if group else '',
-        'leitung_fremdeinschatzung': group.leitung_fremdeinschatzung if group else '',
-        'leitung_selbsteinschatzung': group.leitung_selbsteinschatzung if group else '',
-    }
-    
-    german_tz = pytz.timezone('Europe/Berlin')
-    current_date = datetime.now(pytz.utc).astimezone(german_tz).strftime("%d.%m.%Y")
-    
-    # Erstelle Radardiagramme
-    sk_chart_image, vk_chart_image = _prepare_pdf_data(participant_dict)
-    
-    # Render PDF-Template
-    html_string = render_template(
-        'final_report_pdf.html',
-        participant=participant_dict,
-        group=group_dict,
-        self_assessment=self_assessment,
-        explanation_blocks=selected_blocks,
-        current_date=current_date,
-        sk_chart_image=sk_chart_image,
-        vk_chart_image=vk_chart_image
-    )
-    
-    pdf_bytes = HTML(string=html_string, base_url=request.base_url).write_pdf()
-    
-    safe_name = "".join(c for c in participant_dict.get('name', 'Unbekannt')
-                        if c.isalnum() or c in (' ', '_')).rstrip()
-    filename = f"Abschlussbericht_{safe_name.replace(' ', '_')}.pdf"
-    
-    return Response(
-        pdf_bytes,
-        mimetype="application/pdf",
-        headers={"Content-disposition": f"attachment; filename=\"{filename}\""}
+    return redirect(
+        url_for('reports.generate_pdf_report', group_id=participant.group_id, participant_id=participant.id)
     )

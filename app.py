@@ -146,22 +146,29 @@ register_commands(app)
 
 # --- INITIALISIERUNG ---
 
-def initialize_app():
-    """Führt Initialisierungsaufgaben durch (wird nach App-Start aufgerufen)."""
-    with app.app_context():
-        # Laden Sie Standard-Report-Templates
-        from blueprints.reports import get_default_templates
-        try:
-            get_default_templates()
-        except Exception as e:
-            app.logger.warning(f"Fehler beim Laden der Standard-Templates: {e}")
+def initialize_app_templates():
+    """
+    Lädt Standard-Report-Templates beim App-Start (nur wenn nötig).
+    Diese Funktion kann auf der ersten Request aufgerufen werden.
+    """
+    from blueprints.reports import get_default_templates
+    try:
+        get_default_templates()
+    except Exception as e:
+        app.logger.warning(f"Fehler beim Laden der Standard-Templates: {e}")
+
+# Lazy-load beim ersten Template-Request
+@app.before_request
+def _before_first_request():
+    """Wird vor der erste Request aufgerufen"""
+    if not hasattr(app, '_templates_initialized'):
+        initialize_app_templates()
+        app._templates_initialized = True
 
 
 # --- ANWENDUNG STARTEN ---
 
 if __name__ == "__main__":
     debug_mode = os.getenv('FLASK_DEBUG', 'False') == 'True'
-    # Templates beim Start laden
-    initialize_app()
     app.run(port=5001, debug=debug_mode)
 

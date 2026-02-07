@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <h2>Report-Vorschau</h2>
+            <p class="text-muted">Teilnehmer: <strong>{{ participant.name }}</strong> | Gruppe: <strong>{{ group.name }}</strong></p>
+            
+            <div class="btn-group mb-3" role="group">
+                <a href="{{ url_for('reports.generate_pdf_report', group_id=group.id, participant_id=participant.id) }}" 
+                   class="btn btn-primary">
+                    📥 Als PDF herunterladen
+                </a>
+                <a href="{{ url_for('reports.configure_report', group_id=group.id) }}" 
+                   class="btn btn-secondary">
+                    ⚙️ Zurück zur Konfiguration
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {# IFRAME isoliert das Report-HTML komplett von Bootstrap/Tailwind aus base.html.
+       Dadurch greifen die Report-eigenen Fonts und CSS korrekt,
+       ohne die Systemschrift der App zu verändern. #}
+    <div class="row">
+        <div class="col-md-12">
+            <iframe id="report-preview-frame"
+                    srcdoc="{{ html_content|e }}"
+                    style="width: 100%; border: 1px solid #ccc; border-radius: 4px; background: #e0e0e0;"
+                    sandbox="allow-same-origin"
+                    title="Report-Vorschau"></iframe>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <a href="{{ url_for('reports.generate_pdf_report', group_id=group.id, participant_id=participant.id) }}" 
+               class="btn btn-primary btn-lg">
+                📥 PDF herunterladen
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Automatische Höhenanpassung des iframes an den Inhalt
+    (function() {
+        var iframe = document.getElementById('report-preview-frame');
+        function resizeIframe() {
+            try {
+                var doc = iframe.contentDocument || iframe.contentWindow.document;
+                if (doc && doc.body) {
+                    // Mindesthöhe + tatsächliche Inhaltshöhe
+                    var h = Math.max(900, doc.body.scrollHeight + 60);
+                    iframe.style.height = h + 'px';
+                }
+            } catch(e) {}
+        }
+        iframe.addEventListener('load', function() {
+            resizeIframe();
+            // Nochmal nach kurzer Verzögerung (Fonts laden)
+            setTimeout(resizeIframe, 500);
+            setTimeout(resizeIframe, 1500);
+        });
+    })();
+</script>
+
+{% endblock %}

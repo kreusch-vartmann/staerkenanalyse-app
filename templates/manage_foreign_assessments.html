@@ -102,6 +102,10 @@
                                        class="text-indigo-600 hover:text-indigo-900">
                                         <i class="fas fa-edit me-1"></i>Fremdeinschätzung bearbeiten
                                     </a>
+                                    <a href="{{ url_for('reports.standalone_fe_pdf', participant_id=item.participant.id) }}"
+                                       class="text-green-600 hover:text-green-900" title="FE als PDF drucken">
+                                        <i class="fas fa-file-pdf me-1"></i>FE als PDF
+                                    </a>
                                     {% endif %}
                                     <a href="{{ url_for('analysis.ai_analysis_select_participants', group_id=group_data.group.id) }}?preselect={{ item.participant.id }}"
                                        class="text-purple-600 hover:text-purple-900">

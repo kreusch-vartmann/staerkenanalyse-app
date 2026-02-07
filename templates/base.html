@@ -256,7 +256,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint and 'final_report' in request.endpoint %}active{% endif %}" href="{{ url_for('analysis.manage_final_reports') }}">
+                            <a class="nav-link {% if request.endpoint and ('final_report' in request.endpoint or request.endpoint.startswith('reports.')) %}active{% endif %}" href="{{ url_for('analysis.manage_final_reports') }}">
                                 <span style="font-size: 1.2rem;">📘</span> Abschlussberichte
                             </a>
                         </li>

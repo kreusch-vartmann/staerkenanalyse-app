@@ -1,7 +1,7 @@
 # Stärkenanalyse-App
 
-**Version:** 0.1.0 (Pre-Release)  
-**Status:** In Entwicklung 🚧
+**Version:** 0.2.0-WIP (Pre-Release)  
+**Status:** Report-System in Entwicklung 🚧
 
 Eine lokale Flask-Webanwendung zur Verwaltung von Gruppen und Teilnehmenden und zur Durchführung von KI-gestützten Stärkenanalysen.
 
@@ -121,8 +121,55 @@ python -m flask run --port 5002
   - `blueprints/data_io.py` — Import/Export-Funktionen & Beobachtungsdaten
   - `blueprints/prompts.py` — Verwaltung von KI-Prompts
   - `blueprints/explanation_blocks.py` — Erklärungstexte für Abschlussberichte
+  - `blueprints/reports.py` — **NEUE** Report-Konfiguration, Vorschau & PDF-Generierung
 
-- `database.py` enthält helper-Funktionen zum Zugriff und zur Paginierung. Falls Sie Probleme mit Such- oder Pagination-Features haben, beginnen Sie hier.
+- `services/report_generator.py` — **NEUE** ReportGenerator-Klasse für HTML-Rendering und PDF-Export mit konfigurierbarem Sidebar-Layout
+
+## Report-Generierung (WIP — Work in Progress)
+
+Das System unterstützt nun flexible Report-Generierung mit HTML-Vorschau und PDF-Export:
+
+### Features
+- **Konfigurierbare Report-Module**: Deckblatt, Selbsteinschätzung, Fremdeinschätzung, Abschlussblatt, Hinweisblatt
+- **Sidebar-Layout**: Zwei Modi — "full" (mit Metadaten, für Standalone-PDFs) und "minimal" (nur Design, für Gesamtbericht)
+- **HTML-Vorschau mit iframe**: Verhindert CSS-Leakage zwischen App und Report
+- **PDF-Export**: WeasyPrint-basiert mit konfigurierbaren Designs (Farben, Schriften, Logos)
+- **Unterschriften-Verwaltung**: Global verwaltete JPG-Bilder für Leitung FE und Leitung SE
+- **Radardiagramme**: Automatisch generierte matplotlib-Charts für Social & Verbal Competencies
+
+### Aktuelle Status (⚠️ WIP)
+- ✅ `ReportGenerator` Service vollständig implementiert
+- ✅ Sidebar-Component mit Auto-Seitenzählung
+- ✅ Standalone-Routes für SE- und FE-PDF
+- ✅ Unterschriften-Upload in Configure-UI
+- ✅ PDF-Druck-Buttons in Verwaltungs-Templates
+- 🔧 **Feinschliff geplant** (nächste Session):
+  - Layout-Refinements & Styling
+  - Weitere Print-Tests mit echten Daten
+  - Optional: Tabellenformat & Zwischenbilanz
+
+### Routen (Reports-Blueprint)
+
+```
+GET/POST  /reports/<group_id>/configure         → Report-Konfiguration
+GET       /reports/<group_id>/preview/<pid>     → HTML-Vorschau (Gesamt)
+GET       /reports/<group_id>/generate-pdf/<pid> → PDF-Download (Gesamt)
+GET       /reports/standalone/self-assessment/<pid>/pdf  → SE-PDF
+GET       /reports/standalone/foreign-assessment/<pid>/pdf → FE-PDF
+GET       /reports/standalone/self-assessment/<pid>/preview     → SE-Vorschau
+GET       /reports/standalone/foreign-assessment/<pid>/preview  → FE-Vorschau
+POST      /reports/signatures/upload            → Unterschrift hochladen
+POST      /reports/signatures/delete/<sig_id>   → Unterschrift löschen
+```
+
+### Neue Datenbank-Modelle
+- `ReportTemplate` — Design-Vorlagen (Farben, Schriften, Layout)
+- `ReportConfiguration` — Gruppe-spezifische Einstellungen (aktive Module, Logos, Metadaten)
+- `CompanyLogo` — Zentral verwaltetes Firmenlogo
+- `ClientLogo` — Pro-Gruppe Kunden-Logos
+- `SignatureImage` — Unterschriftensbilder (Leitung FE/SE)
+
+`database.py` enthält helper-Funktionen zum Zugriff und zur Paginierung. Falls Sie Probleme mit Such- oder Pagination-Features haben, beginnen Sie hier.
 
 ## Entwickeln & Tests
 
@@ -237,7 +284,17 @@ EXPORT_SCHEMA_VERSION = "1.1"  # Bei Export-Erweiterungen
 
 ### Changelog
 
-**0.1.0** (2026-02-07) - Initial Pre-Release
+**0.2.0-WIP** (2026-02-07) - Report-System & PDF-Generierung (Work in Progress)
+- ✅ ReportGenerator Service mit Sidebar-Layout
+- ✅ HTML-Vorschau mit iframe-Isolation (kein CSS-Leakage)
+- ✅ Standalone-Routes für SE- und FE-PDF
+- ✅ Unterschriften-Management (JPG-Bilder für Leitung FE/SE)
+- ✅ Radardiagramme (matplotlib) für Social & Verbal Competencies
+- ✅ Auto-Seitenzählung & konfigurierbarer Content-Mix
+- ✅ PDF-Druck-Buttons in Verwaltungs-Templates
+- 🔧 Layout-Feinschliff & erweiterte Tests geplant für nächste Session
+
+**0.1.0** (2026-01-31) - Initial Pre-Release
 - ✅ Export/Import-Funktion mit Schema-Versionierung
 - ✅ CSRF-Schutz für alle Formulare
 - ✅ Modernisiertes UI (Tailwind CSS)

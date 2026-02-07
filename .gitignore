@@ -22,6 +22,12 @@ database.db
 data.json
 settings.json
 
+# Upload-Verzeichnisse (Benutzer-generierte Logos/Signaturen, nicht versionieren)
+uploads/*
+!uploads/.gitkeep
+!uploads/logos/.gitkeep
+!uploads/signatures/.gitkeep
+
 ### NEUE EMPFEHLUNGEN ###
 
 # IDE- / Editor-Konfiguration
@@ -48,3 +54,8 @@ dist/
 # Betriebssystem-spezifische Dateien
 .DS_Store
 Thumbs.db
+
+# Backup-Dateien
+*.bak
+*.backup
+*~

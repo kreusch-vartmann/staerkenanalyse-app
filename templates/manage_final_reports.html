@@ -69,8 +69,15 @@
                         </div>
                     </div>
                 </div>
-                <i class="fas fa-chevron-down transition-transform duration-200"
-                   id="icon-{{ group_data.group.id }}"></i>
+                <div class="flex items-center gap-3">
+                    <a href="{{ url_for('reports.configure_report', group_id=group_data.group.id) }}"
+                       class="text-sm text-blue-600 hover:text-blue-900 font-semibold"
+                       onclick="event.stopPropagation();">
+                        <i class="fas fa-sliders-h me-1"></i>Bericht konfigurieren
+                    </a>
+                    <i class="fas fa-chevron-down transition-transform duration-200"
+                       id="icon-{{ group_data.group.id }}"></i>
+                </div>
             </div>
         </div>
 
@@ -119,18 +126,27 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <div class="flex flex-col gap-2">
-                                    {% if item.has_foreign_assessment %}
-                                    <a href="{{ url_for('analysis.edit_report', participant_id=item.participant.id) }}"
-                                       class="text-indigo-600 hover:text-indigo-900">
-                                        <i class="fas fa-edit me-1"></i>Fremdeinschätzung bearbeiten
+                                    {% if item.can_create_report %}
+                                    <a href="{{ url_for('reports.preview_report_html', group_id=item.participant.group_id, participant_id=item.participant.id) }}"
+                                       class="text-blue-600 hover:text-blue-900 font-semibold">
+                                        <i class="fas fa-eye me-1"></i>Abschlussbericht anzeigen
+                                    </a>
+                                    <a href="{{ url_for('reports.generate_pdf_report', group_id=item.participant.group_id, participant_id=item.participant.id) }}"
+                                       class="text-red-600 hover:text-red-800">
+                                        <i class="fas fa-file-pdf me-1"></i>Gesamt-PDF
+                                    </a>
+                                    {% if item.has_self_assessment %}
+                                    <a href="{{ url_for('reports.standalone_se_pdf', participant_id=item.participant.id) }}"
+                                       class="text-green-600 hover:text-green-800">
+                                        <i class="fas fa-file-alt me-1"></i>Nur SE-PDF
                                     </a>
                                     {% endif %}
-
-                                    {% if item.can_create_report %}
-                                    <a href="{{ url_for('analysis.final_report', participant_id=item.participant.id) }}"
-                                       class="text-blue-600 hover:text-blue-900 font-semibold">
-                                        <i class="fas fa-file-alt me-1"></i>Abschlussbericht erstellen
+                                    {% if item.has_foreign_assessment %}
+                                    <a href="{{ url_for('reports.standalone_fe_pdf', participant_id=item.participant.id) }}"
+                                       class="text-purple-600 hover:text-purple-800">
+                                        <i class="fas fa-file-alt me-1"></i>Nur FE-PDF
                                     </a>
+                                    {% endif %}
                                     {% else %}
                                     <span class="text-gray-400">
                                         <i class="fas fa-ban me-1"></i>Nicht verfügbar

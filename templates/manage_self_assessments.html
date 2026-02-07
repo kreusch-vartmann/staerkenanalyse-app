@@ -105,14 +105,22 @@
                                 {% endif %}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="{{ url_for('participants.show_self_assessment', participant_id=participant.id) }}"
-                                   class="text-blue-600 hover:text-blue-900">
+                                <div class="flex items-center gap-3">
+                                    <a href="{{ url_for('participants.show_self_assessment', participant_id=participant.id) }}"
+                                       class="text-blue-600 hover:text-blue-900">
+                                        {% if participant.self_assessment and participant.self_assessment.content %}
+                                            <i class="fas fa-edit me-1"></i>Bearbeiten
+                                        {% else %}
+                                            <i class="fas fa-plus me-1"></i>Eingeben
+                                        {% endif %}
+                                    </a>
                                     {% if participant.self_assessment and participant.self_assessment.content %}
-                                        <i class="fas fa-edit me-1"></i>Bearbeiten
-                                    {% else %}
-                                        <i class="fas fa-plus me-1"></i>Eingeben
+                                    <a href="{{ url_for('reports.standalone_se_pdf', participant_id=participant.id) }}"
+                                       class="text-green-600 hover:text-green-900" title="SE als PDF drucken">
+                                        <i class="fas fa-file-pdf me-1"></i>PDF
+                                    </a>
                                     {% endif %}
-                                </a>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
