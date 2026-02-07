@@ -12,30 +12,14 @@ import json
 import os
 from datetime import datetime
 
-from flask import (
-    Blueprint,
-    flash,
-    jsonify,
-    redirect,
-    render_template,
-    request,
-    send_file,
-    send_from_directory,
-    url_for,
-)
+from flask import (Blueprint, flash, jsonify, redirect, render_template,
+                   request, send_file, send_from_directory, url_for)
 from werkzeug.utils import secure_filename
 
 from extensions import db
-from models import (
-    ClientLogo,
-    CompanyLogo,
-    ExplanationBlock,
-    Group,
-    Participant,
-    ReportConfiguration,
-    ReportTemplate,
-    SignatureImage,
-)
+from models import (ClientLogo, CompanyLogo, ExplanationBlock, Group,
+                    Participant, ReportConfiguration, ReportTemplate,
+                    SignatureImage)
 from services.report_generator import ReportGenerator
 
 bp = Blueprint("reports", __name__, url_prefix="/reports")

@@ -12,16 +12,8 @@ import pytz
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
-from flask import (
-    Blueprint,
-    Response,
-    flash,
-    jsonify,
-    redirect,
-    render_template,
-    request,
-    url_for,
-)
+from flask import (Blueprint, Response, flash, jsonify, redirect,
+                   render_template, request, url_for)
 from weasyprint import HTML
 
 from extensions import csrf, db

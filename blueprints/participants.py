@@ -3,7 +3,8 @@
 
 import json
 
-from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
+from flask import (Blueprint, flash, jsonify, redirect, render_template,
+                   request, url_for)
 
 from extensions import csrf, db
 from models import Group, Participant, SelfAssessment

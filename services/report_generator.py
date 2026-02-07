@@ -24,20 +24,12 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
-
 from flask import render_template_string
-from weasyprint import HTML, CSS
+from weasyprint import CSS, HTML
 
-from models import (
-    Group,
-    Participant,
-    ReportTemplate,
-    ReportConfiguration,
-    CompanyLogo,
-    ClientLogo,
-    SelfAssessment,
-    ExplanationBlock,
-)
+from models import (ClientLogo, CompanyLogo, ExplanationBlock, Group,
+                    Participant, ReportConfiguration, ReportTemplate,
+                    SelfAssessment)
 
 
 class ReportGenerator:

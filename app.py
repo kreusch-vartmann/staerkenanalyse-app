@@ -15,13 +15,11 @@ import models
 from blueprints.analysis import analysis_bp
 from blueprints.data_io import data_io_bp
 from blueprints.explanation_blocks import explanation_blocks_bp
-
 # Blueprints importieren
 from blueprints.groups import groups_bp
 from blueprints.participants import participants_bp
 from blueprints.prompts import prompts_bp
 from blueprints.reports import bp as reports_bp
-
 # Neue Imports
 from extensions import csrf, db, migrate
 from version import APP_VERSION, get_version_info

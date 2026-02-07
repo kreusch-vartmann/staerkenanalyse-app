@@ -1,7 +1,8 @@
 # blueprints/explanation_blocks.py
 """Dieses Modul enthält Routen und Funktionen für die Verwaltung von Erklärungstextblöcken."""
 
-from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
+from flask import (Blueprint, flash, jsonify, redirect, render_template,
+                   request, url_for)
 
 from extensions import db
 from models import ExplanationBlock

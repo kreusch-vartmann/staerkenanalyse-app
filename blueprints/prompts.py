@@ -1,7 +1,8 @@
 # blueprints/prompts.py
 """Dieses Modul enthält Routen und Funktionen für die Prompt-Verwaltung."""
 
-from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
+from flask import (Blueprint, flash, jsonify, redirect, render_template,
+                   request, url_for)
 
 from extensions import csrf, db
 from models import Prompt

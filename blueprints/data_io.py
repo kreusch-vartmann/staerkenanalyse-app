@@ -7,16 +7,8 @@ from datetime import UTC, datetime
 from io import BytesIO, StringIO
 
 import pandas as pd
-from flask import (
-    Blueprint,
-    Response,
-    flash,
-    jsonify,
-    redirect,
-    render_template,
-    request,
-    url_for,
-)
+from flask import (Blueprint, Response, flash, jsonify, redirect,
+                   render_template, request, url_for)
 
 from blueprints.data_import import import_participants_from_export
 from extensions import db
