@@ -8,8 +8,9 @@
 #
 # Versionshistorie:
 # - 0.1.0 (2026-02-07): Initial Release mit Export/Import-Funktion
-# - 0.2.0-WIP (2026-02-07): Report-System mit PDF-Generierung (Work in Progress)
-APP_VERSION = "0.2.0-WIP"
+# - 0.2.0 (2026-02-07): Report-System mit PDF-Generierung
+# - 0.3.0-WIP (2026-02-07): Umfassende Test-Suite + CI/CD-Pipeline (Work in Progress)
+APP_VERSION = "0.3.0-WIP"
 
 # Export-Schema-Version (unabhängig von App-Version)
 # Ändert sich nur bei Änderungen der CSV/Excel-Export-Struktur

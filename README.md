@@ -1,6 +1,6 @@
 # Stärkenanalyse-App
 
-**Version:** 0.2.0-WIP (Pre-Release)  
+**Version:** 0.3.0-WIP (Pre-Release)  
 **Status:** Report-System in Entwicklung 🚧
 
 Eine lokale Flask-Webanwendung zur Verwaltung von Gruppen und Teilnehmenden und zur Durchführung von KI-gestützten Stärkenanalysen.
@@ -176,6 +176,64 @@ POST      /reports/signatures/delete/<sig_id>   → Unterschrift löschen
 - Verwenden Sie `python -m venv .venv` und `pip install -r requirements.txt` wie oben beschrieben.
 - Linter/Formatters: `black`, `flake8`, `pylint` sind in `requirements.txt` gelistet. Sie können `pre-commit`-Hooks hinzufügen, falls gewünscht.
 
+### Automatisierte Tests (NEU in v0.3.0)
+
+Das Projekt enthält nun eine **umfassende Test-Suite** mit 91 Tests:
+
+#### Tests ausführen
+
+```bash
+# Alle Tests laufen
+pytest tests/ -v
+
+# Tests mit Coverage-Bericht
+coverage run -m pytest tests/ -v
+coverage report --skip-empty
+coverage html  # Generiert HTML-Report in htmlcov/
+
+# Nur Unit-Tests
+pytest tests/unit/ -v
+
+# Nur Integration-Tests
+pytest tests/integration/ -v
+
+# Specific Test File
+pytest tests/unit/test_models.py -v
+```
+
+#### Test-Struktur
+
+```
+tests/
+├── unit/                          # Unit Tests für einzelne Module
+│   ├── test_models.py            # SQLAlchemy Models & Validierungen
+│   ├── test_ki_services.py       # KI-API Integration
+│   └── test_utils.py             # Hilfsfunktionen
+└── integration/                   # Integration Tests für Blueprints
+    ├── test_groups_blueprint.py
+    ├── test_participants_blueprint.py
+    ├── test_analysis_blueprint.py
+    ├── test_data_io_blueprint.py
+    ├── test_prompts_blueprint.py
+    ├── test_explanation_blocks_blueprint.py
+    ├── test_reports_blueprint.py
+    └── test_workflows.py
+```
+
+#### Coverage-Bericht (v0.3.0)
+
+- **Gesamt-Coverage**: 46.90%
+- **Best**: models.py (100%), groups.py (100%), extensions.py (100%)
+- **Report**: `htmlcov/index.html` nach `coverage html`
+
+#### Test-Features
+
+- ✅ **91 Tests** erfolgreich
+- ✅ **100% Coverage** für Core-Module (models, extensions, services)
+- ✅ **Fixtures** für Testdaten-Generierung
+- ✅ **Mocking** für externe APIs (Mistral, Google)
+- ✅ **DB-Isolation** mit in-memory SQLite für Tests
+
 ## Nächste Schritte / Empfehlungen
 
 1. Entfernen oder optionalisieren Sie große KI-Abhängigkeiten in `requirements.txt`, wenn Sie die App lokal mit eingeschränkten Features betreiben möchten.
@@ -184,17 +242,24 @@ POST      /reports/signatures/delete/<sig_id>   → Unterschrift löschen
 
 ## GitHub Actions & CI/CD
 
-Dieses Projekt nutzt GitHub Actions für automatische Code-Qualitätsprüfungen und Dokumentations-Updates:
+Dieses Projekt nutzt GitHub Actions für automatische Code-Qualitätsprüfungen, Tests und Dokumentations-Updates:
 
 ### Workflows
 
-1. **CI - Code Quality** (`.github/workflows/ci-quality.yml`)
+1. **Tests & Coverage** (`.github/workflows/tests.yml`) - ⭐ **NEU in v0.3.0**
+   - Läuft bei jedem Push auf `main` oder `feature/*` Branches
+   - Führt komplette Test-Suite aus (91 Tests)
+   - Generiert Coverage-Report (HTMLCov + Codecov)
+   - Prüft Coverage-Schwellwerte (≥ 40%)
+   - Uploaded Coverage Artifacts für Review
+
+2. **CI - Code Quality** (`.github/workflows/ci-quality.yml`)
    - Läuft bei jedem Push auf `main` oder `feature/*` Branches
    - Prüft Code-Formatierung mit `black`, `isort`, `flake8`, `pylint`
    - Security-Checks mit `bandit` und `pip-audit`
    - Code-Komplexitäts-Analyse mit `radon`
 
-2. **Context Generator** (`.github/workflows/context-generator.yml`)
+3. **Context Generator** (`.github/workflows/context-generator.yml`)
    - Erstellt automatisch `CONTEXT.md` und `PROJECT_OVERVIEW.md`
    - Analysiert Projektstruktur, Routen, Modelle
    - Erstellt PR mit aktualisierten Kontext-Dateien
@@ -250,7 +315,7 @@ cp .env.example .env
 
 Diese App verwendet **Semantic Versioning** (0.MAJOR.MINOR im Pre-Release):
 
-### App-Version (aktuell: `0.2.0-WIP`)
+### App-Version (aktuell: `0.3.0-WIP`)
 
 **Pre-Release (0.x.y):**
 - `0.MINOR.PATCH` - Breaking Changes zwischen Minor-Versions erlaubt
@@ -284,15 +349,24 @@ EXPORT_SCHEMA_VERSION = "1.1"  # Bei Export-Erweiterungen
 
 ### Changelog
 
-**0.2.0-WIP** (2026-02-07) - Report-System & PDF-Generierung (Work in Progress)
-- ✅ ReportGenerator Service mit Sidebar-Layout
-- ✅ HTML-Vorschau mit iframe-Isolation (kein CSS-Leakage)
-- ✅ Standalone-Routes für SE- und FE-PDF
-- ✅ Unterschriften-Management (JPG-Bilder für Leitung FE/SE)
-- ✅ Radardiagramme (matplotlib) für Social & Verbal Competencies
-- ✅ Auto-Seitenzählung & konfigurierbarer Content-Mix
-- ✅ PDF-Druck-Buttons in Verwaltungs-Templates
+**0.3.0-WIP** (2026-02-07) - Umfassende Test-Suite & CI/CD-Integration (Work in Progress)
+- ✅ **Test-Suite**: 91 Tests (Unit + Integration), 46.90% Code-Coverage
+- ✅ **GitHub Actions**: Neuer Tests & Coverage Workflow (`.github/workflows/tests.yml`)
+- ✅ **Code-Quality**: Black + isort Formatierung, CI-Checks aktiv
+- ✅ **ReportGenerator Service** mit Sidebar-Layout
+- ✅ **HTML-Vorschau** mit iframe-Isolation (kein CSS-Leakage)
+- ✅ **Standalone-Routes** für SE- und FE-PDF
+- ✅ **Unterschriften-Management** (JPG-Bilder für Leitung FE/SE)
+- ✅ **Radardiagramme** (matplotlib) für Social & Verbal Competencies
+- ✅ **Auto-Seitenzählung** & konfigurierbarer Content-Mix
+- ✅ **PDF-Druck-Buttons** in Verwaltungs-Templates
 - 🔧 Layout-Feinschliff & erweiterte Tests geplant für nächste Session
+
+**0.2.0** (2026-02-07) - Report-System & PDF-Generierung
+- ✅ ReportGenerator Service vollständig implementiert
+- ✅ WeasyPrint-Integration für PDF-Export
+- ✅ Template-System für flexible Reports
+- ✅ Signature-Image-Model für Unterschriften
 
 **0.1.0** (2026-01-31) - Initial Pre-Release
 - ✅ Export/Import-Funktion mit Schema-Versionierung
