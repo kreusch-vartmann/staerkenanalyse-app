@@ -13,6 +13,8 @@ from flask import (Blueprint, request, redirect, url_for, flash, render_template
 from extensions import db
 from models import Participant, Group
 from utils import validate_upload_file
+from version import EXPORT_SCHEMA_VERSION
+from blueprints.data_import import import_participants_from_export
 
 data_io_bp = Blueprint('data_io', __name__)
 
@@ -35,18 +37,28 @@ def _format_date_range(group):
 
 
 def _create_participant_export_dict(participant):
-    """Erstellt ein flaches Dictionary für einen Teilnehmer für den Export."""
-    # TODO: Diese Funktion muss noch angepasst werden, wenn Export getestet wird
-    # PROBLEM: Felder 'leitung', 'analysis_results', 'raw_analysis_response' existieren nicht im Model
-    # Siehe models.py für korrekte Feldnamen
+    """Erstellt ein flaches Dictionary für einen Teilnehmer für den Export.
+    
+    Struktur (Schema v1.0):
+    - _meta: Export-Metadata (Schema-Version, Export-Timestamp)
+    - Basisdaten: Name, Gruppe, Ort, Zeitraum, Leitung, Beobachter
+    - Beobachtungen: Sozial + Verbal (Freitext)
+    - SK/VK Ratings: Je 4 numerische Werte (0-10 Skala)
+    - KI-Texte: 3 HTML-formatierte Texte (Sozial, Verbal, Zusammenfassung)
+    - KI-Rohdaten: Original-JSON der KI-API (für Reset-Funktion)
+    """
     group = participant.group
 
     participant_export = {
+        # Meta-Daten für Import-Kompatibilität
+        "_export_schema_version": EXPORT_SCHEMA_VERSION,
+        "_export_timestamp": datetime.now(UTC).isoformat(),
+        
+        # Basis-Daten
         "Name": participant.name,
         "Gruppe": group.name if group else "",
         "Zeitraum": _format_date_range(group) if group else "",
         "Ort": group.location if group else "",
-        # TODO: Entscheiden zwischen leitung_fremdeinschatzung / leitung_selbsteinschatzung
         "Leitung (Fremd)": group.leitung_fremdeinschatzung if group else "",
         "Leitung (Selbst)": group.leitung_selbsteinschatzung if group else "",
         "Beobachter 1": group.beobachter1 if group else "",
@@ -59,17 +71,30 @@ def _create_participant_export_dict(participant):
         "Beobachtung (Verbal)": observations.get("verbal", "")
     })
 
-    # TODO: Klären welches Feld für analysis_results verwendet werden soll
-    # Vermutlich ki_texts? Struktur muss geprüft werden
+    # SK/VK Ratings (numerische Werte 0-10)
+    sk_ratings = json.loads(participant.sk_ratings) if participant.sk_ratings else {}
+    vk_ratings = json.loads(participant.vk_ratings) if participant.vk_ratings else {}
+    
+    participant_export.update({
+        "SK Flexibilität": sk_ratings.get("flexibility", ""),
+        "SK Teamorientierung": sk_ratings.get("team_orientation", ""),
+        "SK Prozessorientierung": sk_ratings.get("process_orientation", ""),
+        "SK Ergebnisorientierung": sk_ratings.get("results_orientation", ""),
+        "VK Flexibilität": vk_ratings.get("flexibility", ""),
+        "VK Beratung": vk_ratings.get("consulting", ""),
+        "VK Sachlichkeit": vk_ratings.get("objectivity", ""),
+        "VK Zielorientierung": vk_ratings.get("goal_orientation", ""),
+    })
+
+    # KI-generierte Texte
     ki_texts = json.loads(participant.ki_texts) if participant.ki_texts else {}
     participant_export.update({
-        "KI SK-Stärken": ki_texts.get("sk_strengths", ""),
-        "KI SK-Potenziale": ki_texts.get("sk_potentials", ""),
-        "KI VK-Stärken": ki_texts.get("vk_strengths", ""),
-        "KI VK-Potenziale": ki_texts.get("vk_potentials", ""),
+        "KI-Text (Sozial)": ki_texts.get("social_text", ""),
+        "KI-Text (Verbal)": ki_texts.get("verbal_text", ""),
         "KI-Text (Zusammenfassung)": ki_texts.get("summary_text", ""),
     })
     
+    # KI-Rohdaten (komplettes Original-JSON für Reset-Funktion)
     if participant.ki_raw_response:
         participant_export["KI-Rohdaten"] = participant.ki_raw_response
 
@@ -219,6 +244,35 @@ def import_names():
         return redirect(url_for("groups.show_group_participants", group_id=new_group.id))
     except Exception as e:
         flash(f"Ein Fehler ist beim Verarbeiten der Datei aufgetreten: {e}", "error")
+        return redirect(url_for("data_io.import_page"))
+
+
+@data_io_bp.route("/import/full", methods=["POST"])
+def import_full():
+    """Importiert einen vollständigen Export (mit Schema-Versions-Check)."""
+    file = request.files.get("full_export_file")
+    
+    if not file or file.filename == "":
+        flash("Bitte wählen Sie eine Datei aus.", "warning")
+        return redirect(url_for("data_io.import_page"))
+    
+    # Datei-Format bestimmen
+    if file.filename.endswith('.xlsx'):
+        format = 'xlsx'
+    elif file.filename.endswith('.csv'):
+        format = 'csv'
+    else:
+        flash("Ungültiges Dateiformat. Nur .xlsx und .csv erlaubt.", "error")
+        return redirect(url_for("data_io.import_page"))
+    
+    # Import durchführen (mit Schema-Version-Check)
+    success, message, count = import_participants_from_export(file, format)
+    
+    if success:
+        flash(message, "success")
+        return redirect(url_for("participants.manage_participants"))
+    else:
+        flash(message, "error")
         return redirect(url_for("data_io.import_page"))
 
 

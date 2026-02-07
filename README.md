@@ -1,8 +1,11 @@
 # Stärkenanalyse-App
 
+**Version:** 0.1.0 (Pre-Release)  
+**Status:** In Entwicklung 🚧
+
 Eine lokale Flask-Webanwendung zur Verwaltung von Gruppen und Teilnehmenden und zur Durchführung von KI-gestützten Stärkenanalysen.
 
-Kurze Zusammenfassung
+## Kurze Zusammenfassung
 - Backend: Flask (Blueprint-basierte Struktur in `blueprints/`)
 - Datenbank: SQLite (`database.db`, Schema in `schema.sql`)
 - Templates: Jinja2 Vorlagen im Ordner `templates/`
@@ -195,6 +198,50 @@ cp .env.example .env
 - **Push auf `main` oder `feature/*`**: Alle Quality-Checks + Context-Generator laufen
 - **Pull Request auf `main`**: AI Code Review + Quality-Checks laufen
 - **Manuell**: Context Generator kann manuell in Actions-Tab gestartet werden
+
+## Versionierung
+
+Diese App verwendet **Semantic Versioning** (0.MAJOR.MINOR im Pre-Release):
+
+### App-Version (aktuell: `0.1.0`)
+
+**Pre-Release (0.x.y):**
+- `0.MINOR.PATCH` - Breaking Changes zwischen Minor-Versions erlaubt
+- `1.0.0` - Erster stabiler Production-Release
+
+**Nach 1.0.0:**
+- `MAJOR` - Breaking Changes (Datenbank-Schema-Umbruch)
+- `MINOR` - Neue Features (abwärtskompatibel)
+- `PATCH` - Bugfixes
+
+### Export-Schema-Version (aktuell: `1.0`)
+
+Unabhängig von der App-Version. Ändert sich nur bei CSV/Excel-Export-Struktur:
+- `MAJOR` - Inkompatible Änderungen (Spalten entfernt/umbenannt)
+- `MINOR` - Kompatible Erweiterungen (neue Spalten)
+
+### Version ändern
+
+**Manuell in `version.py` hochzählen:**
+
+```python
+# version.py
+APP_VERSION = "0.2.0"  # Bei neuen Features
+EXPORT_SCHEMA_VERSION = "1.1"  # Bei Export-Erweiterungen
+```
+
+**Dann in README aktualisieren:**
+```markdown
+**Version:** 0.2.0 (Pre-Release)
+```
+
+### Changelog
+
+**0.1.0** (2026-02-07) - Initial Pre-Release
+- ✅ Export/Import-Funktion mit Schema-Versionierung
+- ✅ CSRF-Schutz für alle Formulare
+- ✅ Modernisiertes UI (Tailwind CSS)
+- ✅ Robuste Datenbank-Migrationen
 
 ## Kontakt
 

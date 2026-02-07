@@ -3,59 +3,80 @@
 {% block title %}Daten exportieren{% endblock %}
 
 {% block content %}
-<h2 class="text-3xl font-bold text-gray-800 mb-6">Daten exportieren</h2>
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h2 class="text-3xl font-bold text-gray-800">Daten exportieren</h2>
+        <p class="text-gray-600 mt-2">Wählen Sie Teilnehmer und das Exportformat aus</p>
+    </div>
+</div>
 
-<div class="bg-white rounded-lg shadow p-6 mb-6">
+<div class="bg-white rounded-lg shadow-md p-6 mb-6">
     <form action="{{ url_for('data_io.export_data') }}" method="post" id="exportForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         
-        <div class="mb-6">
-            <h3 class="text-xl font-semibold mb-2">1. Exportformat auswählen</h3>
-            <div class="flex space-x-4">
-                <label class="inline-flex items-center">
-                    <input type="radio" name="format" value="xlsx" checked class="form-radio text-blue-600 h-4 w-4">
-                    <span class="ml-2">Excel (.xlsx)</span>
+        <div class="mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                <i class="fas fa-file-export me-2 text-blue-600"></i>Exportformat auswählen
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                    <input type="radio" name="format" value="xlsx" checked class="form-radio text-blue-600 h-5 w-5">
+                    <div class="ml-3">
+                        <span class="font-semibold text-gray-900">Excel (.xlsx)</span>
+                        <p class="text-sm text-gray-500">Kompatibel mit Excel und Libre Office</p>
+                    </div>
                 </label>
-                <label class="inline-flex items-center">
-                    <input type="radio" name="format" value="csv" class="form-radio text-blue-600 h-4 w-4">
-                    <span class="ml-2">CSV (.csv)</span>
+                <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                    <input type="radio" name="format" value="csv" class="form-radio text-blue-600 h-5 w-5">
+                    <div class="ml-3">
+                        <span class="font-semibold text-gray-900">CSV (.csv)</span>
+                        <p class="text-sm text-gray-500">Universelles Tabellenformat</p>
+                    </div>
                 </label>
             </div>
         </div>
 
         <div>
-            <h3 class="text-xl font-semibold mb-2">2. Teilnehmer auswählen</h3>
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                <i class="fas fa-users me-2 text-blue-600"></i>Teilnehmer auswählen
+            </h3>
             
-            <div class="mb-4">
-                <input type="text" id="search-input" placeholder="Suche nach Gruppen oder Teilnehmern..." class="w-full p-2 border border-gray-300 rounded-md">
+            <div class="mb-4 relative">
+                <input type="text" id="search-input" placeholder="Suche nach Gruppen oder Teilnehmern..." 
+                       class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                <i class="fas fa-search absolute left-3 top-4 text-gray-400"></i>
             </div>
 
-            <div class="mb-4 p-3 rounded-md bg-gray-50 border">
-                <label class="inline-flex items-center">
+            <div class="mb-4 p-3 rounded-lg bg-blue-50 border border-blue-200">
+                <label class="inline-flex items-center cursor-pointer">
                     <input type="checkbox" id="select-all" class="form-checkbox h-5 w-5 text-blue-600 rounded">
-                    <span class="ml-2 font-bold text-gray-800">Alle sichtbaren Teilnehmer auswählen</span>
+                    <span class="ml-2 font-semibold text-gray-800">Alle sichtbaren Teilnehmer auswählen</span>
                 </label>
             </div>
             
-            <div id="groups-container" class="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-                {% for group in groups_with_participants %}
-                <div class="group-item border rounded-lg" data-group-name="{{ group.name | lower }}">
-                    <div class="group-header bg-gray-100 p-3 border-b cursor-pointer flex justify-between items-center">
-                        <label class="inline-flex items-center cursor-pointer">
+            <div id="groups-container" class="space-y-3 max-h-[50vh] overflow-y-auto pr-2">
+                {% for group in groups %}
+                <div class="group-item border border-gray-200 rounded-lg hover:shadow-md transition-shadow" data-group-name="{{ group.name | lower }}">
+                    <div class="group-header bg-gray-50 hover:bg-gray-100 p-4 border-b cursor-pointer flex justify-between items-center transition-colors">
+                        <label class="inline-flex items-center cursor-pointer flex-1">
                             <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600 rounded group-checkbox" data-group-id="{{ group.id }}">
-                            <h4 class="ml-2 font-semibold text-lg">{{ group.name }}</h4>
+                            <div class="ml-3">
+                                <h4 class="font-semibold text-gray-900">{{ group.name }}</h4>
+                                <p class="text-xs text-gray-500">{{ group.participants.count() }} Teilnehmer</p>
+                            </div>
                         </label>
-                        <i class="fas fa-chevron-down transition-transform"></i>
+                        <i class="fas fa-chevron-down transition-transform text-gray-400"></i>
                     </div>
-                    <div class="participants-list hidden p-4 ml-4">
+                    <div class="participants-list hidden p-4 space-y-2 bg-white">
                         {% for p in group.participants %}
-                        <div class="participant-item mb-1" data-participant-name="{{ p.name | lower }}">
-                            <label class="inline-flex items-center">
+                        <div class="participant-item" data-participant-name="{{ p.name | lower }}">
+                            <label class="inline-flex items-center cursor-pointer hover:text-blue-600 transition-colors">
                                 <input type="checkbox" name="participant_ids" value="{{ p.id }}" class="form-checkbox text-blue-600 participant-checkbox" data-group-id="{{ group.id }}">
-                                <span class="ml-2">{{ p.name }}</span>
+                                <span class="ml-2 text-gray-700">{{ p.name }}</span>
                             </label>
                         </div>
                         {% else %}
-                        <p class="text-sm text-gray-500 italic">Keine Teilnehmer in dieser Gruppe.</p>
+                        <p class="text-sm text-gray-500 italic text-center py-2">Keine Teilnehmer in dieser Gruppe</p>
                         {% endfor %}
                     </div>
                 </div>
@@ -65,9 +86,12 @@
             </div>
         </div>
 
-        <div class="mt-8 border-t pt-6">
-            <button type="submit" class="w-full md:w-auto py-2 px-6 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold text-lg">
-                <i class="fas fa-download me-2"></i>Auswahl exportieren
+        <div class="mt-8 pt-6 border-t border-gray-200 flex gap-3 justify-end">
+            <a href="{{ url_for('dashboard') }}" class="py-2 px-6 rounded-lg text-gray-700 bg-gray-200 hover:bg-gray-300 font-semibold transition-colors">
+                <i class="fas fa-times me-2"></i>Abbrechen
+            </a>
+            <button type="submit" class="py-2 px-8 rounded-lg text-white bg-green-600 hover:bg-green-700 font-semibold transition-colors">
+                <i class="fas fa-download me-2"></i>Exportieren
             </button>
         </div>
     </form>
@@ -79,8 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectAllCheckbox = document.getElementById('select-all');
     const groupHeaders = document.querySelectorAll('.group-header');
 
-    // KORRIGIERTE FUNKTION: Steuert das Anzeigen/Verbergen der Teilnehmerlisten
-    function toggleGroup(header, forceState) { // forceState kann sein: true (öffnen), false (schließen), undefined (umschalten)
+    function toggleGroup(header, forceState) {
         const list = header.nextElementSibling;
         const icon = header.querySelector('i');
         const isHidden = list.classList.contains('hidden');
@@ -101,14 +124,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Funktion zum Filtern und Erweitern basierend auf der Suche
     function filterAndExpand() {
         const query = searchInput.value.toLowerCase().trim();
 
         if (query === '') {
             document.querySelectorAll('.group-item').forEach(group => {
                 group.style.display = '';
-                toggleGroup(group.querySelector('.group-header'), false); // Alle schließen
+                toggleGroup(group.querySelector('.group-header'), false);
                 group.querySelectorAll('.participant-item').forEach(p => p.style.display = '');
             });
             return;
@@ -129,17 +151,14 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             group.style.display = groupHasVisibleParticipant ? '' : 'none';
-            toggleGroup(group.querySelector('.group-header'), groupHasVisibleParticipant); // Gruppe öffnen, wenn Treffer
+            toggleGroup(group.querySelector('.group-header'), groupHasVisibleParticipant);
         });
     }
 
-    // --- Event Listeners ---
     searchInput.addEventListener('keyup', filterAndExpand);
 
     groupHeaders.forEach(header => {
         header.addEventListener('click', (e) => {
-            // Verhindern, dass der Klick auf die Checkbox oder das Label die Gruppe umschaltet.
-            // Nur der Klick auf den Header-Bereich selbst soll dies tun.
             if (e.target.closest('label')) {
                 return;
             }
@@ -147,7 +166,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // "Alle auswählen" Event
     selectAllCheckbox.addEventListener('change', function() {
         document.querySelectorAll('.participant-checkbox').forEach(cb => {
             const participantItem = cb.closest('.participant-item');
@@ -163,7 +181,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Gruppen-Checkbox Event
     document.querySelectorAll('.group-checkbox').forEach(groupCb => {
         groupCb.addEventListener('change', function() {
             const groupId = this.dataset.groupId;
@@ -173,7 +190,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Teilnehmer-Checkbox Event
     document.querySelectorAll('.participant-checkbox').forEach(participantCb => {
         participantCb.addEventListener('change', function() {
             if (!this.checked) {
@@ -186,6 +202,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <style>
-    .rotate-180 { transform: rotate(180deg); }
+    .rotate-180 { transform: rotate(180deg); transition: transform 0.2s ease; }
 </style>
 {% endblock %}

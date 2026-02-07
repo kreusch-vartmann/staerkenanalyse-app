@@ -12,6 +12,7 @@ from flask import Flask, render_template, url_for
 # Neue Imports
 from extensions import db, migrate, csrf
 import models
+from version import APP_VERSION, get_version_info
 
 # Blueprints importieren
 from blueprints.groups import groups_bp
@@ -49,8 +50,11 @@ app.register_blueprint(explanation_blocks_bp)
 
 @app.context_processor
 def inject_now():
-    """Fügt das aktuelle Jahr in alle Templates ein."""
-    return {"current_year": datetime.now(UTC).year}
+    """Fügt das aktuelle Jahr und Version in alle Templates ein."""
+    return {
+        "current_year": datetime.now(UTC).year,
+        "app_version": APP_VERSION
+    }
 
 @app.template_filter('datetimeformat')
 def datetimeformat_filter(value, format='%d.%m.%Y'):
@@ -131,6 +135,11 @@ def health():
         return {'status': 'healthy', 'database': 'connected'}, 200
     except Exception as e:
         return {'status': 'unhealthy', 'error': str(e)}, 500
+
+
+# --- CLI COMMANDS ---
+from generate_test_data import register_commands
+register_commands(app)
 
 
 # --- ANWENDUNG STARTEN ---
