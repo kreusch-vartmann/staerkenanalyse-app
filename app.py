@@ -21,6 +21,7 @@ from blueprints.analysis import analysis_bp
 from blueprints.data_io import data_io_bp
 from blueprints.prompts import prompts_bp
 from blueprints.explanation_blocks import explanation_blocks_bp
+from blueprints.reports import bp as reports_bp
 
 # App-Initialisierung
 app = Flask(__name__)
@@ -44,6 +45,7 @@ app.register_blueprint(analysis_bp)
 app.register_blueprint(data_io_bp)
 app.register_blueprint(prompts_bp)
 app.register_blueprint(explanation_blocks_bp)
+app.register_blueprint(reports_bp)
 
 
 # --- ZENTRALE FUNKTIONEN ---
@@ -142,9 +144,24 @@ from generate_test_data import register_commands
 register_commands(app)
 
 
+# --- INITIALISIERUNG ---
+
+def initialize_app():
+    """Führt Initialisierungsaufgaben durch (wird nach App-Start aufgerufen)."""
+    with app.app_context():
+        # Laden Sie Standard-Report-Templates
+        from blueprints.reports import get_default_templates
+        try:
+            get_default_templates()
+        except Exception as e:
+            app.logger.warning(f"Fehler beim Laden der Standard-Templates: {e}")
+
+
 # --- ANWENDUNG STARTEN ---
 
 if __name__ == "__main__":
     debug_mode = os.getenv('FLASK_DEBUG', 'False') == 'True'
+    # Templates beim Start laden
+    initialize_app()
     app.run(port=5001, debug=debug_mode)
 

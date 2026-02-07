@@ -194,54 +194,15 @@ Gib JSON zurück:
 
 def generate_ki_text(category, name, observations_text):
     """
-    Generiert KI-Analyse-Text basierend auf echten Beobachtungen.
+    DEPRECATED: Diese Funktion wird NICHT mehr verwendet.
     
-    Args:
-        category (str): "social" oder "verbal"
-        name (str): Teilnehmername
-        observations_text (str): Beobachtungstext der entsprechenden Kategorie
-        
-    Returns:
-        str: HTML-formatierter Analysetext (Stärkenprofil)
+    KI-Texte werden durch die normale KI-Analyse des Systems generiert,
+    nicht durch den Test-Daten-Generator. Dies ermöglicht das Testen
+    der implementierten KI-Analyse-Funktionalität.
+    
+    Die Funktion bleibt zur Rückwärts-Kompatibilität erhalten.
     """
-    category_de = "Soziale Kompetenzen" if category == "social" else "Verhaltenskompetenzen"
-    dimension_label = "SK" if category == "social" else "VK"
-    
-    prompt = f"""Du bist ein erfahrener AC-Auditor. Analysiere die Beobachtungen und schreibe ein Stärkenprofil.
-
-BEOBACHTUNGEN (nicht Interpretationen):
-{observations_text}
-
-AUFGABE:
-1. Extrahiere 2-3 konkrete STÄRKEN aus den Beobachtungen
-2. Begründe JEDE Stärke mit Zitat aus der Beobachtung
-3. Schreibe HTML-formatiert (p, strong, ul, li, em)
-4. Ton: Konstruktiv, entwicklungorientiert, wertschätzend
-5. 100-140 Wörter
-
-STRUKTUR:
-<p><strong>Stärkenprofil {dimension_label} - {category_de}:</strong> ...</p>
-<ul>
-<li><strong>Stärke 1:</strong> Beobachtung zeigt, dass...</li>
-<li><strong>Stärke 2:</strong> Erkennbar ist auch...</li>
-</ul>
-<p><em>Entwicklungspotential:</em> ...</p>
-
-Gib NUR HTML-Text zurück, keine Erklärung."""
-
-    try:
-        response = _call_ai_api(prompt, max_tokens=350, temperature=0.7)
-        result = response.strip()
-        click.echo(f"   ✅ KI-Analyse ({category}): {len(result)//10} Words")
-        return result
-    except Exception as e:
-        click.echo(f"   ⚠️ KI-Fehler ({category}): {e}")
-        return (
-            f"<p><strong>Stärkenprofil {dimension_label}:</strong> "
-            f"Basierend auf Beobachtungen zeigt {name} fundierte Fähigkeiten.</p>"
-            f"<ul><li><strong>Strukturiertes Vorgehen:</strong> Verhalten deutet auf systematische Arbeitsweise</li>"
-            f"<li><strong>Zusammenarbeit:</strong> Interaktionen zeigen kooperativen Stil</li></ul>"
-        )
+    pass
 
 
 def generate_self_assessment_text(name):
@@ -298,14 +259,16 @@ Gib NUR HTML zurück."""
 # =============================================================================
 
 def _generate_ratings():
-    """Generiert zufällige SK/VK Rating-Daten als JSON."""
-    ratings = {}
+    """
+    DEPRECATED: Diese Funktion wird NICHT mehr verwendet.
     
-    # SK-Rating Keys aus data_io.py: flexibility, team_orientation, process_orientation, results_orientation
-    for key in ["flexibility", "team_orientation", "process_orientation", "results_orientation"]:
-        ratings[key] = random.randint(0, 10)
+    Ratings werden durch die KI-Analyse des Systems generiert,
+    nicht durch den Test-Daten-Generator. Dies ermöglicht das Testen
+    der implementierten KI-Analyse-Funktionalität.
     
-    return ratings
+    Die Funktion bleibt zur Rückwärts-Kompatibilität erhalten.
+    """
+    pass
 
 
 def _create_group(index):
@@ -332,23 +295,25 @@ def _create_group(index):
 
 
 def _create_participant(name, group):
-    """Erstellt einen Teilnehmer mit vollständigen Daten."""
+    """
+    Erstellt einen Teilnehmer mit Beobachtungen.
+    
+    Ratings und KI-Texte werden NICHT generiert - diese sollen durch die normale
+    KI-Analyse des Systems erzeugt werden, um diese Funktionalität zu testen.
+    """
     
     # Generiere Beobachtungstexte (echte AC-Beobachtungen)
     obs_data = generate_observation_text(name)
     
+    # Hinweis: Ratings und KI-Texte bleiben LEER - werden später durch KI-Analyse generiert
     participant = Participant(
         name=name,
         group_id=group.id,
         observations=json.dumps(obs_data),
-        sk_ratings=json.dumps(_generate_ratings()),
-        vk_ratings=json.dumps(_generate_ratings()),
-        ki_texts=json.dumps({
-            "social_text": generate_ki_text("social", name, obs_data.get("social", "")),
-            "verbal_text": generate_ki_text("verbal", name, obs_data.get("verbal", "")),
-            "summary_text": f"<p><strong>Gesamtprofil:</strong> {name} zeigt ein ausgewogenes Kompetenzprofil mit klaren Stärken in Zusammenarbeit und strukturiertem Handeln. Entwicklungspotentiale liegen in proaktiver Einflussnahme und Stressbewältigung.</p>"
-        }),
-        ki_raw_response=json.dumps({"status": "generated", "method": "mistral", "timestamp": datetime.now(UTC).isoformat()})
+        sk_ratings=None,  # Wird durch KI-Analyse des Systems generiert
+        vk_ratings=None,  # Wird durch KI-Analyse des Systems generiert
+        ki_texts=None,  # Wird durch KI-Analyse des Systems generiert
+        ki_raw_response=None  # Wird durch KI-Analyse des Systems gefüllt
     )
     
     return participant
@@ -379,6 +344,15 @@ def _generate_test_data(num_groups=2, participants_range=(8, 10), clear_existing
     click.echo("🔧 Testdaten-Generator für Stärkenanalyse-App")
     click.echo("=" * 70)
     click.echo()
+    click.echo("📋 Was wird generiert:")
+    click.echo("   ✅ Gruppen (mit Leiter/Beobacher/Datum/Ort)")
+    click.echo("   ✅ Teilnehmer (mit Namen)")
+    click.echo("   ✅ Beobachtungsdaten (AC-konforme Verhaltensbeobachtungen)")
+    click.echo("   ✅ Selbsteinschätzungen (Seelbreflexion, ~65% der TN)")
+    click.echo("   ❌ SK/VK-Ratings (sollen durch KI-Analyse des Systems generiert werden)")
+    click.echo("   ❌ KI-Berichte (sollen durch KI-Analyse des Systems generiert werden)")
+    click.echo("   ❌ Abschlussberichte (sollen manuell designer/angepasst werden)")
+    click.echo()
     
     # Prüfe, ob API verfügbar
     if not MISTRAL_CLIENT and not GenerativeModel:
@@ -403,10 +377,11 @@ def _generate_test_data(num_groups=2, participants_range=(8, 10), clear_existing
         click.echo()
     
     # Konfiguration anzeigen
-    click.echo(f"📊 Konfiguration:")
+    click.echo(f"⚙️ Konfiguration:")
     click.echo(f"   • Gruppen: {num_groups}")
     click.echo(f"   • Teilnehmer pro Gruppe: {participants_range[0]}-{participants_range[1]}")
     click.echo(f"   • Selbsteinschätzungen: ~65% der Teilnehmer")
+    click.echo(f"   • KI-Berichte: NICHT generiert (werden vom System erzeugt)")
     click.echo()
     click.echo("🚀 Starte Generierung...")
     click.echo()
@@ -463,10 +438,15 @@ def _generate_test_data(num_groups=2, participants_range=(8, 10), clear_existing
         pct = int(total_self_assessments/total_participants*100) if total_participants > 0 else 0
         click.echo(f"   • {total_self_assessments} Selbsteinschätzungen erstellt ({pct}%)")
         click.echo()
+        click.echo("ℹ️  Hinweis:")
+        click.echo("   • SK/VK-Ratings sind LEER - Sie können jetzt die KI-Analyse-Funktion testen!")
+        click.echo("   • KI-Berichte sind LEER - Sie können jetzt die KI-Analyse-Funktion testen!")
+        click.echo("   • Abschlussberichte existieren noch nicht - diese können dann designed werden")
+        click.echo()
         click.echo("🎯 Nächste Schritte:")
         click.echo("   1. App starten: python app.py")
         click.echo("   2. Dashboard öffnen: http://localhost:5001")
-        click.echo("   3. Features mit Testdaten testen")
+        click.echo("   3. KI-Analyse für Teilnehmer generieren und testen")
         click.echo()
         
     except Exception as e:
@@ -489,7 +469,11 @@ def _generate_test_data(num_groups=2, participants_range=(8, 10), clear_existing
 @with_appcontext
 def generate_test_data_command(groups, participants, clear):
     """
-    Generiert synthetische Testdaten mit KI-generierten Inhalten.
+    Generiert synthetische Testdaten (Gruppen, Teilnehmer, Beobachtungen, Selbsteinschätzungen).
+    
+    KI-TEXTE und ABSCHLUSSBERICHTE werden NICHT generiert - diese sollen durch die
+    normale KI-Analyse und das Bericht-System des Systems erzeugt werden, um diese
+    Funktionalität zu testen.
     
     Beispiele:
         flask generate-test-data

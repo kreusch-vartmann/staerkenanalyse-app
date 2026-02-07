@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <h1>Abschlussberichtgestaltung</h1>
+            <p class="text-muted">Gruppe: <strong>{{ group.name }}</strong></p>
+            <hr>
+        </div>
+    </div>
+
+    <form method="POST" class="needs-validation" novalidate>
+        {{ csrf_token() }}
+        
+        <!-- Section 1: Design & Logos -->
+        <div class="row mb-5">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">🎨 Design & Logos</h5>
+                    </div>
+                    <div class="card-body">
+                        
+                        <!-- Template Selection -->
+                        <div class="mb-3">
+                            <label for="template_id" class="form-label">Report-Template</label>
+                            <select class="form-select" id="template_id" name="template_id" required>
+                                <option value="">-- Bitte wählen --</option>
+                                {% for tmpl in templates %}
+                                    <option value="{{ tmpl.id }}" {% if config.template_id == tmpl.id %}selected{% endif %}>
+                                        {{ tmpl.name }} {% if tmpl.description %}<small>({{ tmpl.description }})</small>{% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Wählt Farben, Schriften und Layout</small>
+                        </div>
+
+                        <!-- Company Logo -->
+                        <div class="mb-3">
+                            <label for="company_logo" class="form-label">🏢 Unternehmenslogo</label>
+                            {% if company_logo %}
+                                <div class="mb-2">
+                                    <img src="{{ url_for('static', filename=company_logo.logo_path) }}" alt="Company Logo" 
+                                         style="max-width: 150px; max-height: 80px; border: 1px solid #ddd; padding: 5px;">
+                                    <p class="small text-muted">{{ company_logo.filename }} (zuletzt: {{ company_logo.uploaded_at|datetimeformat }})</p>
+                                </div>
+                            {% else %}
+                                <p class="text-warning small">⚠️ Noch kein Logo hochgeladen</p>
+                            {% endif %}
+                            <input type="file" class="form-control" id="company_logo" name="company_logo" accept="image/*">
+                            <small class="text-muted">PNG, JPG, GIF (max 5MB). Überschreibt das aktuelle Logo.</small>
+                        </div>
+
+                        <!-- Client/Auftraggeber Logo -->
+                        <div class="mb-3">
+                            <label for="client_logo" class="form-label">🤝 Auftraggeber-Logo</label>
+                            {% if client_logo %}
+                                <div class="mb-2">
+                                    <img src="{{ url_for('static', filename=client_logo.logo_path) }}" alt="Client Logo" 
+                                         style="max-width: 150px; max-height: 80px; border: 1px solid #ddd; padding: 5px;">
+                                    <p class="small text-muted">{{ client_logo.filename }} (zuletzt: {{ client_logo.uploaded_at|datetimeformat }})</p>
+                                </div>
+                            {% else %}
+                                <p class="text-warning small">⚠️ Noch kein Logo hochgeladen</p>
+                            {% endif %}
+                            <input type="file" class="form-control" id="client_logo" name="client_logo" accept="image/*">
+                            <small class="text-muted">PNG, JPG, GIF (max 5MB) für diesen Auftraggeber</small>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: Module -->
+        <div class="row mb-5">
+            <div class="col-md-12">
+                <h4>📋 Report-Module</h4>
+            </div>
+
+            <!-- Deckblatt -->
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <input type="checkbox" name="cover_page_enabled" 
+                                   {% if modules_config.get('cover_page', {}).get('enabled') %}checked{% endif %}>
+                            📄 Deckblatt
+                        </h6>
+                    </div>
+                    <div class="card-body ps-4">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="cover_page_show_title" 
+                                   name="cover_page_show_title" {% if modules_config.get('cover_page', {}).get('show_title') %}checked{% endif %}>
+                            <label class="form-check-label" for="cover_page_show_title">Titel anzeigen</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="cover_page_show_participant_name" 
+                                   name="cover_page_show_participant_name" {% if modules_config.get('cover_page', {}).get('show_participant_name') %}checked{% endif %}>
+                            <label class="form-check-label" for="cover_page_show_participant_name">Teilnehmername</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="cover_page_show_group_name" 
+                                   name="cover_page_show_group_name" {% if modules_config.get('cover_page', {}).get('show_group_name') %}checked{% endif %}>
+                            <label class="form-check-label" for="cover_page_show_group_name">Gruppennamen</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="cover_page_show_date" 
+                                   name="cover_page_show_date" {% if modules_config.get('cover_page', {}).get('show_date') %}checked{% endif %}>
+                            <label class="form-check-label" for="cover_page_show_date">Datum</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="cover_page_show_company_logo" 
+                                   name="cover_page_show_company_logo" {% if modules_config.get('cover_page', {}).get('show_company_logo') %}checked{% endif %}>
+                            <label class="form-check-label" for="cover_page_show_company_logo">Unternehmenslogo</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="cover_page_show_client_logo" 
+                                   name="cover_page_show_client_logo" {% if modules_config.get('cover_page', {}).get('show_client_logo') %}checked{% endif %}>
+                            <label class="form-check-label" for="cover_page_show_client_logo">Auftraggeber-Logo</label>
+                        </div>
+                        <hr>
+                        <div class="mb-2">
+                            <label for="cover_page_title" class="form-label small">Titel:</label>
+                            <input type="text" class="form-control form-control-sm" id="cover_page_title" 
+                                   name="cover_page_title" value="{{ modules_config.get('cover_page', {}).get('title', 'Stärkenanalyse') }}">
+                        </div>
+                        <div class="mb-2">
+                            <label for="cover_page_subtitle" class="form-label small">Untertitel:</label>
+                            <input type="text" class="form-control form-control-sm" id="cover_page_subtitle" 
+                                   name="cover_page_subtitle" value="{{ modules_config.get('cover_page', {}).get('subtitle', 'Entwicklungsprofil') }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selbsteinschätzung -->
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <input type="checkbox" name="self_assessment_enabled" 
+                                   {% if modules_config.get('self_assessment', {}).get('enabled') %}checked{% endif %}>
+                            🤔 Selbsteinschätzung
+                        </h6>
+                    </div>
+                    <div class="card-body ps-4">
+                        <p class="small text-muted">Wird aus den Teilnehmerdaten geladen</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fremdeinschätzung -->
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <input type="checkbox" name="external_assessment_enabled" 
+                                   {% if modules_config.get('external_assessment', {}).get('enabled') %}checked{% endif %}>
+                            👁️ Fremdeinschätzung
+                        </h6>
+                    </div>
+                    <div class="card-body ps-4">
+                        <p class="small text-muted">Wird aus den KI-Analysen geladen</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Abschlussblatt -->
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <input type="checkbox" name="closing_page_enabled" 
+                                   {% if modules_config.get('closing_page', {}).get('enabled') %}checked{% endif %}>
+                            ✍️ Abschlussblatt
+                        </h6>
+                    </div>
+                    <div class="card-body ps-4">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="closing_page_show_signature_fields" 
+                                   name="closing_page_show_signature_fields" {% if modules_config.get('closing_page', {}).get('show_signature_fields') %}checked{% endif %}>
+                            <label class="form-check-label" for="closing_page_show_signature_fields">Unterschriftsfelder</label>
+                        </div>
+                        <div class="mb-2">
+                            <label for="closing_page_signature_lines_count" class="form-label small">Anzahl Unterschriftszeilen:</label>
+                            <input type="number" class="form-control form-control-sm" id="closing_page_signature_lines_count" 
+                                   name="closing_page_signature_lines_count" value="{{ modules_config.get('closing_page', {}).get('signature_lines_count', 3) }}" min="1" max="10">
+                        </div>
+                        <div class="mb-2">
+                            <label for="closing_page_additional_text" class="form-label small">Zusatztext:</label>
+                            <textarea class="form-control form-control-sm" id="closing_page_additional_text" 
+                                      name="closing_page_additional_text" rows="3">{{ modules_config.get('closing_page', {}).get('additional_text', '') }}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hinweisblatt -->
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <input type="checkbox" name="info_page_enabled" 
+                                   {% if modules_config.get('info_page', {}).get('enabled') %}checked{% endif %}>
+                            ℹ️ Hinweisblatt
+                        </h6>
+                    </div>
+                    <div class="card-body ps-4">
+                        <label for="info_page_content" class="form-label small">Inhalt:</label>
+                        <textarea class="form-control form-control-sm" id="info_page_content" 
+                                  name="info_page_content" rows="4">{{ modules_config.get('info_page', {}).get('content', '') }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inhaltsverzeichnis -->
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <input type="checkbox" name="toc_enabled" 
+                                   {% if modules_config.get('toc_enabled') %}checked{% endif %}>
+                            📑 Inhaltsverzeichnis
+                        </h6>
+                    </div>
+                    <div class="card-body ps-4">
+                        <p class="small text-muted">Wird automatisch generiert</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    💾 Konfiguration speichern
+                </button>
+                <a href="{{ url_for('groups.view_group', group_id=group.id) }}" class="btn btn-secondary btn-lg">
+                    ← Zurück zur Gruppe
+                </a>
+            </div>
+        </div>
+
+    </form>
+
+</div>
+
+<style>
+    .card {
+        border-left: 4px solid #0052CC;
+    }
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .form-check {
+        margin-bottom: 0.5rem;
+    }
+</style>
+
+{% endblock %}
