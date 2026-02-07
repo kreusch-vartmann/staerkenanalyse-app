@@ -1,12 +1,6 @@
 name: Documentation Updater
 
 on:
-  push:
-    branches: [main, feature/*]
-    paths:
-      - '**.py'
-      - 'requirements.txt'
-      - 'README.md'
   workflow_dispatch:
 
 permissions:

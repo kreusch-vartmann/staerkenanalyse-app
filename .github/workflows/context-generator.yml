@@ -1,15 +1,6 @@
 name: Context Generator
 
 on:
-  push:
-    branches: [main, feature/*]
-    paths:
-      - '**.py'
-      - 'models.py'
-      - 'app.py'
-      - 'blueprints/**'
-      - 'templates/**'
-      - '.github/scripts/generate_context.py'
   workflow_dispatch:
 
 permissions:
