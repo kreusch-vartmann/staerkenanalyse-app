@@ -19,40 +19,44 @@ class ContextGenerator:
         self.templates_dir = project_root / "templates"
         self.models_file = project_root / "models.py"
         self.app_file = project_root / "app.py"
-        
+
     def extract_routes(self, file_path: Path) -> List[Dict]:
         """Extrahiert Flask-Routen aus einer Python-Datei"""
         routes = []
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
-            
+
             # Finde @blueprint.route() Dekoratoren
-            route_pattern = r'@\w+_bp\.route\(["\']([^"\']+)["\']\s*(?:,\s*methods=\[([^\]]+)\])?\)'
-            func_pattern = r'def\s+(\w+)\('
-            
-            lines = content.split('\n')
+            route_pattern = (
+                r'@\w+_bp\.route\(["\']([^"\']+)["\']\s*(?:,\s*methods=\[([^\]]+)\])?\)'
+            )
+            func_pattern = r"def\s+(\w+)\("
+
+            lines = content.split("\n")
             for i, line in enumerate(lines):
                 route_match = re.search(route_pattern, line)
                 if route_match:
                     route_path = route_match.group(1)
                     methods = route_match.group(2) if route_match.group(2) else '"GET"'
-                    methods = methods.replace('"', '').replace("'", '')
-                    
+                    methods = methods.replace('"', "").replace("'", "")
+
                     # Finde Funktionsnamen in der nächsten Zeile
                     if i + 1 < len(lines):
                         func_match = re.search(func_pattern, lines[i + 1])
                         if func_match:
-                            routes.append({
-                                'path': route_path,
-                                'methods': methods,
-                                'function': func_match.group(1)
-                            })
+                            routes.append(
+                                {
+                                    "path": route_path,
+                                    "methods": methods,
+                                    "function": func_match.group(1),
+                                }
+                            )
         except Exception as e:
             print(f"Fehler beim Parsen von {file_path}: {e}")
-        
+
         return routes
-    
+
     def extract_models(self) -> List[Dict]:
         """Extrahiert SQLAlchemy-Modelle aus models.py"""
         models = []
@@ -62,51 +66,50 @@ class ContextGenerator:
                 print("⚠️ models.py nicht gefunden")
                 return models
 
-            with open(self.models_file, 'r', encoding='utf-8') as f:
+            with open(self.models_file, "r", encoding="utf-8") as f:
                 tree = ast.parse(f.read())
-            
+
             for node in ast.walk(tree):
                 if isinstance(node, ast.ClassDef):
                     # Prüfe ob es ein SQLAlchemy-Model ist
-                    bases = [base.id for base in node.bases if hasattr(base, 'id')]
-                    if 'Model' in bases or any('Model' in str(base) for base in node.bases):
+                    bases = [base.id for base in node.bases if hasattr(base, "id")]
+                    if "Model" in bases or any(
+                        "Model" in str(base) for base in node.bases
+                    ):
                         fields = []
                         for item in node.body:
                             if isinstance(item, ast.Assign):
                                 for target in item.targets:
-                                    if hasattr(target, 'id'):
+                                    if hasattr(target, "id"):
                                         fields.append(target.id)
-                        
-                        models.append({
-                            'name': node.name,
-                            'fields': fields
-                        })
+
+                        models.append({"name": node.name, "fields": fields})
         except Exception as e:
             print(f"Fehler beim Parsen von models.py: {e}")
-        
+
         return models
-    
+
     def list_templates(self) -> List[str]:
         """Listet alle Template-Dateien auf"""
         templates = []
         if self.templates_dir.exists():
-            for file in sorted(self.templates_dir.glob('*.html')):
+            for file in sorted(self.templates_dir.glob("*.html")):
                 templates.append(file.name)
         return templates
-    
+
     def analyze_dependencies(self) -> Dict[str, List[str]]:
         """Analysiert Import-Abhängigkeiten"""
         dependencies = {}
-        
-        for py_file in self.project_root.rglob('*.py'):
-            if 'venv' in str(py_file) or '__pycache__' in str(py_file):
+
+        for py_file in self.project_root.rglob("*.py"):
+            if "venv" in str(py_file) or "__pycache__" in str(py_file):
                 continue
-            
+
             imports = []
             try:
-                with open(py_file, 'r', encoding='utf-8') as f:
+                with open(py_file, "r", encoding="utf-8") as f:
                     tree = ast.parse(f.read())
-                
+
                 for node in ast.walk(tree):
                     if isinstance(node, ast.Import):
                         for alias in node.names:
@@ -114,27 +117,27 @@ class ContextGenerator:
                     elif isinstance(node, ast.ImportFrom):
                         if node.module:
                             imports.append(node.module)
-                
+
                 rel_path = py_file.relative_to(self.project_root)
                 dependencies[str(rel_path)] = list(set(imports))
             except Exception as e:
                 print(f"Fehler beim Analysieren von {py_file}: {e}")
-        
+
         return dependencies
-    
+
     def generate_context_md(self) -> str:
         """Generiert CONTEXT.md Content"""
         blueprints = {}
         if self.blueprints_dir.exists():
-            for bp_file in self.blueprints_dir.glob('*.py'):
-                if bp_file.name != '__init__.py':
+            for bp_file in self.blueprints_dir.glob("*.py"):
+                if bp_file.name != "__init__.py":
                     bp_name = bp_file.stem
                     routes = self.extract_routes(bp_file)
                     blueprints[bp_name] = routes
-        
+
         models = self.extract_models()
         templates = self.list_templates()
-        
+
         md = f"""# CONTEXT.md - Stärkenanalyse-App
 
 **Automatisch generiert am**: {self._get_timestamp()}
@@ -165,24 +168,24 @@ class ContextGenerator:
 
 ### Blueprints ({len(blueprints)} total)
 """
-        
+
         for bp_name, routes in sorted(blueprints.items()):
             md += f"\n#### {bp_name}.py ({len(routes)} Routes)\n"
             for route in routes:
                 md += f"- `{route['methods']} {route['path']}` → `{route['function']}()`\n"
-        
+
         md += f"\n### Templates ({len(templates)} HTML-Dateien)\n"
         for template in templates:
             md += f"- {template}\n"
-        
+
         md += "\n---\n\n## 🗄️ Datenbank-Schema (SQLAlchemy Models)\n\n"
         for model in models:
             md += f"### {model['name']}\n"
             md += f"**Felder**: {', '.join(model['fields'][:10])}"
-            if len(model['fields']) > 10:
+            if len(model["fields"]) > 10:
                 md += f" ... (+{len(model['fields']) - 10} weitere)"
             md += "\n\n"
-        
+
         md += """---
 
 ## 🔐 Environment Variables
@@ -244,11 +247,11 @@ class ContextGenerator:
 **Letzte Aktualisierung**: {self._get_timestamp()}
 """
         return md
-    
+
     def generate_project_overview_md(self) -> str:
         """Generiert PROJECT_OVERVIEW.md für schnellen Überblick"""
         dependencies = self.analyze_dependencies()
-        
+
         md = f"""# PROJECT_OVERVIEW.md
 
 **Generiert am**: {self._get_timestamp()}
@@ -334,27 +337,30 @@ python app.py
 **Für detaillierte Informationen siehe [CONTEXT.md](CONTEXT.md)**
 """
         return md
-    
+
     def _get_timestamp(self) -> str:
         """Gibt aktuellen Timestamp zurück"""
         from datetime import datetime
+
         return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
+
     def run(self):
         """Führt Context-Generierung aus"""
         print("🔍 Analysiere Projekt...")
-        
+
         context_md = self.generate_context_md()
         overview_md = self.generate_project_overview_md()
-        
+
         print("📝 Schreibe CONTEXT.md...")
-        with open(self.project_root / "CONTEXT.md", 'w', encoding='utf-8') as f:
+        with open(self.project_root / "CONTEXT.md", "w", encoding="utf-8") as f:
             f.write(context_md)
-        
+
         print("📝 Schreibe PROJECT_OVERVIEW.md...")
-        with open(self.project_root / "PROJECT_OVERVIEW.md", 'w', encoding='utf-8') as f:
+        with open(
+            self.project_root / "PROJECT_OVERVIEW.md", "w", encoding="utf-8"
+        ) as f:
             f.write(overview_md)
-        
+
         print("✅ Context-Dateien erfolgreich generiert!")
 
 

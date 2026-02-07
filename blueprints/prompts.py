@@ -1,21 +1,24 @@
 # blueprints/prompts.py
 """Dieses Modul enthält Routen und Funktionen für die Prompt-Verwaltung."""
 
-from flask import (Blueprint, request, redirect, url_for, flash, render_template,
-                   jsonify)
-from extensions import db, csrf
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
+
+from extensions import csrf, db
 from models import Prompt
 
 # Ein Blueprint-Objekt für die Prompt-Verwaltung
-prompts_bp = Blueprint('prompts', __name__)
+prompts_bp = Blueprint("prompts", __name__)
 
 
 # --- ROUTEN FÜR PROMPT-VERWALTUNG ---
 
+
 @prompts_bp.route("/prompts")
 def manage_prompts():
     """Zeigt die Seite zur Verwaltung von Prompts an."""
-    prompts = db.session.execute(db.select(Prompt).order_by(Prompt.name)).scalars().all()
+    prompts = (
+        db.session.execute(db.select(Prompt).order_by(Prompt.name)).scalars().all()
+    )
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
         {"text": "Prompts"},
@@ -40,7 +43,7 @@ def add_prompt():
         new_prompt = Prompt(name=name, description=description, content=content)
         db.session.add(new_prompt)
         db.session.commit()
-        
+
         flash(f'Prompt "{name}" wurde erfolgreich erstellt.', "success")
         return redirect(url_for("prompts.manage_prompts"))
 
@@ -79,7 +82,7 @@ def edit_prompt(prompt_id):
         prompt.description = description
         prompt.content = content
         db.session.commit()
-        
+
         flash(f'Prompt "{name}" wurde erfolgreich aktualisiert.', "success")
         return redirect(url_for("prompts.manage_prompts"))
 
@@ -110,6 +113,7 @@ def delete_prompt(prompt_id):
 
 
 # --- API-ROUTE FÜR PROMPTS ---
+
 
 @prompts_bp.route("/api/prompt/<int:prompt_id>")
 @csrf.exempt

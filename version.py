@@ -28,12 +28,14 @@ EXPORT_SCHEMA_VERSION = "1.0"
 # - b4c7ad2a2bbc (Group date_from/date_to)
 # - 37910f5c8ff0 (ExplanationBlock model)
 
+
 def get_version_info():
     """Gibt Version-Infos als Dictionary zurück."""
     return {
         "app_version": APP_VERSION,
         "export_schema_version": EXPORT_SCHEMA_VERSION,
     }
+
 
 def get_version_string():
     """Gibt formatierte Version für UI zurück."""

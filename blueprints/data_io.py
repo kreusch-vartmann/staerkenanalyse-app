@@ -1,25 +1,34 @@
 # blueprints/data_io.py
 """Dieses Modul enthält Routen und Funktionen für den Datenimport, -export und die Dateneingabe."""
 
-import json
 import csv
+import json
 from datetime import UTC, datetime
 from io import BytesIO, StringIO
+
 import pandas as pd
+from flask import (
+    Blueprint,
+    Response,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 
-from flask import (Blueprint, request, redirect, url_for, flash, render_template,
-                   Response, jsonify)
-
+from blueprints.data_import import import_participants_from_export
 from extensions import db
-from models import Participant, Group
+from models import Group, Participant
 from utils import validate_upload_file
 from version import EXPORT_SCHEMA_VERSION
-from blueprints.data_import import import_participants_from_export
 
-data_io_bp = Blueprint('data_io', __name__)
+data_io_bp = Blueprint("data_io", __name__)
 
 
 # --- HILFSFUNKTIONEN FÜR EXPORT (ANGEPASST AN SQLAlchemy-OBJEKTE) ---
+
 
 def _format_date_range(group):
     """Formatiert den Datumszeitraum einer Gruppe für den Export."""
@@ -38,7 +47,7 @@ def _format_date_range(group):
 
 def _create_participant_export_dict(participant):
     """Erstellt ein flaches Dictionary für einen Teilnehmer für den Export.
-    
+
     Struktur (Schema v1.0):
     - _meta: Export-Metadata (Schema-Version, Export-Timestamp)
     - Basisdaten: Name, Gruppe, Ort, Zeitraum, Leitung, Beobachter
@@ -53,7 +62,6 @@ def _create_participant_export_dict(participant):
         # Meta-Daten für Import-Kompatibilität
         "_export_schema_version": EXPORT_SCHEMA_VERSION,
         "_export_timestamp": datetime.now(UTC).isoformat(),
-        
         # Basis-Daten
         "Name": participant.name,
         "Gruppe": group.name if group else "",
@@ -65,35 +73,43 @@ def _create_participant_export_dict(participant):
         "Beobachter 2": group.beobachter2 if group else "",
     }
 
-    observations = json.loads(participant.observations) if participant.observations else {}
-    participant_export.update({
-        "Beobachtung (Sozial)": observations.get("social", ""),
-        "Beobachtung (Verbal)": observations.get("verbal", "")
-    })
+    observations = (
+        json.loads(participant.observations) if participant.observations else {}
+    )
+    participant_export.update(
+        {
+            "Beobachtung (Sozial)": observations.get("social", ""),
+            "Beobachtung (Verbal)": observations.get("verbal", ""),
+        }
+    )
 
     # SK/VK Ratings (numerische Werte 0-10)
     sk_ratings = json.loads(participant.sk_ratings) if participant.sk_ratings else {}
     vk_ratings = json.loads(participant.vk_ratings) if participant.vk_ratings else {}
-    
-    participant_export.update({
-        "SK Flexibilität": sk_ratings.get("flexibility", ""),
-        "SK Teamorientierung": sk_ratings.get("team_orientation", ""),
-        "SK Prozessorientierung": sk_ratings.get("process_orientation", ""),
-        "SK Ergebnisorientierung": sk_ratings.get("results_orientation", ""),
-        "VK Flexibilität": vk_ratings.get("flexibility", ""),
-        "VK Beratung": vk_ratings.get("consulting", ""),
-        "VK Sachlichkeit": vk_ratings.get("objectivity", ""),
-        "VK Zielorientierung": vk_ratings.get("goal_orientation", ""),
-    })
+
+    participant_export.update(
+        {
+            "SK Flexibilität": sk_ratings.get("flexibility", ""),
+            "SK Teamorientierung": sk_ratings.get("team_orientation", ""),
+            "SK Prozessorientierung": sk_ratings.get("process_orientation", ""),
+            "SK Ergebnisorientierung": sk_ratings.get("results_orientation", ""),
+            "VK Flexibilität": vk_ratings.get("flexibility", ""),
+            "VK Beratung": vk_ratings.get("consulting", ""),
+            "VK Sachlichkeit": vk_ratings.get("objectivity", ""),
+            "VK Zielorientierung": vk_ratings.get("goal_orientation", ""),
+        }
+    )
 
     # KI-generierte Texte
     ki_texts = json.loads(participant.ki_texts) if participant.ki_texts else {}
-    participant_export.update({
-        "KI-Text (Sozial)": ki_texts.get("social_text", ""),
-        "KI-Text (Verbal)": ki_texts.get("verbal_text", ""),
-        "KI-Text (Zusammenfassung)": ki_texts.get("summary_text", ""),
-    })
-    
+    participant_export.update(
+        {
+            "KI-Text (Sozial)": ki_texts.get("social_text", ""),
+            "KI-Text (Verbal)": ki_texts.get("verbal_text", ""),
+            "KI-Text (Zusammenfassung)": ki_texts.get("summary_text", ""),
+        }
+    )
+
     # KI-Rohdaten (komplettes Original-JSON für Reset-Funktion)
     if participant.ki_raw_response:
         participant_export["KI-Rohdaten"] = participant.ki_raw_response
@@ -124,13 +140,16 @@ def generate_csv_export(participants):
     fieldnames = sorted(list(all_fieldnames))
 
     output = StringIO()
-    writer = csv.DictWriter(output, fieldnames=fieldnames, delimiter=";", quoting=csv.QUOTE_MINIMAL)
+    writer = csv.DictWriter(
+        output, fieldnames=fieldnames, delimiter=";", quoting=csv.QUOTE_MINIMAL
+    )
     writer.writeheader()
     writer.writerows(export_data)
     return output.getvalue().encode("utf-8-sig")
 
 
 # --- ROUTEN FÜR DATENEINGABE ---
+
 
 @data_io_bp.route("/data-entry/rework")
 def data_entry_rework():
@@ -140,19 +159,28 @@ def data_entry_rework():
         {"link": url_for("dashboard"), "text": "Dashboard"},
         {"text": "Beobachtungsdaten"},
     ]
-    return render_template("data_entry_rework.html", groups=groups, breadcrumbs=breadcrumbs)
+    return render_template(
+        "data_entry_rework.html", groups=groups, breadcrumbs=breadcrumbs
+    )
 
 
-@data_io_bp.route("/data-entry/search", methods=['GET'])
+@data_io_bp.route("/data-entry/search", methods=["GET"])
 def data_entry_search():
     """Zeigt eine Suchseite für Teilnehmer an und verarbeitet die Suche."""
-    search_query = request.args.get('query', '').strip()
+    search_query = request.args.get("query", "").strip()
     results = []
     if search_query:
         search_term = f"%{search_query}%"
-        results = db.session.execute(
-            db.select(Participant).join(Group).filter(Participant.name.ilike(search_term)).order_by(Participant.name)
-        ).scalars().all()
+        results = (
+            db.session.execute(
+                db.select(Participant)
+                .join(Group)
+                .filter(Participant.name.ilike(search_term))
+                .order_by(Participant.name)
+            )
+            .scalars()
+            .all()
+        )
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
         {"text": "Teilnehmer suchen"},
@@ -161,11 +189,12 @@ def data_entry_search():
         "data_entry_search.html",
         search_query=search_query,
         results=results,
-        breadcrumbs=breadcrumbs
+        breadcrumbs=breadcrumbs,
     )
 
 
 # --- API ROUTEN FÜR DATENEINGABE ---
+
 
 @data_io_bp.route("/api/group/<int:group_id>/participants")
 def api_get_participants_by_group(group_id):
@@ -198,12 +227,13 @@ def save_observations_api(participant_id):
 
 # --- ROUTEN FÜR IMPORT & EXPORT (ANGEPASST AN SQLAlchemy) ---
 
+
 @data_io_bp.route("/import")
 def import_page():
     """Zeigt die Import-Seite an."""
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
-        {"text": "Import"}
+        {"text": "Import"},
     ]
     return render_template("import_page.html", breadcrumbs=breadcrumbs)
 
@@ -238,10 +268,14 @@ def import_names():
         for name in names:
             new_participant = Participant(name=name, group_id=new_group.id)
             db.session.add(new_participant)
-        
+
         db.session.commit()
-        flash(f'Gruppe "{group_name}" mit {len(names)} Teilnehmern erstellt.', "success")
-        return redirect(url_for("groups.show_group_participants", group_id=new_group.id))
+        flash(
+            f'Gruppe "{group_name}" mit {len(names)} Teilnehmern erstellt.', "success"
+        )
+        return redirect(
+            url_for("groups.show_group_participants", group_id=new_group.id)
+        )
     except Exception as e:
         flash(f"Ein Fehler ist beim Verarbeiten der Datei aufgetreten: {e}", "error")
         return redirect(url_for("data_io.import_page"))
@@ -251,23 +285,23 @@ def import_names():
 def import_full():
     """Importiert einen vollständigen Export (mit Schema-Versions-Check)."""
     file = request.files.get("full_export_file")
-    
+
     if not file or file.filename == "":
         flash("Bitte wählen Sie eine Datei aus.", "warning")
         return redirect(url_for("data_io.import_page"))
-    
+
     # Datei-Format bestimmen
-    if file.filename.endswith('.xlsx'):
-        format = 'xlsx'
-    elif file.filename.endswith('.csv'):
-        format = 'csv'
+    if file.filename.endswith(".xlsx"):
+        format = "xlsx"
+    elif file.filename.endswith(".csv"):
+        format = "csv"
     else:
         flash("Ungültiges Dateiformat. Nur .xlsx und .csv erlaubt.", "error")
         return redirect(url_for("data_io.import_page"))
-    
+
     # Import durchführen (mit Schema-Version-Check)
     success, message, count = import_participants_from_export(file, format)
-    
+
     if success:
         flash(message, "success")
         return redirect(url_for("participants.manage_participants"))
@@ -279,17 +313,15 @@ def import_full():
 @data_io_bp.route("/export_selection")
 def export_selection():
     """Zeigt die Seite zur Auswahl der zu exportierenden Teilnehmer an."""
-    groups = db.session.execute(
-        db.select(Group).order_by(Group.name)
-    ).scalars().all()
-    
+    groups = db.session.execute(db.select(Group).order_by(Group.name)).scalars().all()
+
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
-        {"text": "Export"}
+        {"text": "Export"},
     ]
-    return render_template("export_selection.html",
-                           groups=groups,
-                           breadcrumbs=breadcrumbs)
+    return render_template(
+        "export_selection.html", groups=groups, breadcrumbs=breadcrumbs
+    )
 
 
 @data_io_bp.route("/export_data", methods=["POST"])
@@ -301,7 +333,9 @@ def export_data():
         query = db.select(Participant)
         if not select_all:
             participant_ids = [
-                int(pid) for pid in request.form.getlist("participant_ids") if pid.isdigit()
+                int(pid)
+                for pid in request.form.getlist("participant_ids")
+                if pid.isdigit()
             ]
             if not participant_ids:
                 flash("Bitte wählen Sie mindestens einen Teilnehmer aus.", "error")
@@ -316,7 +350,9 @@ def export_data():
 
         if export_format == "xlsx":
             output = generate_excel_export(participants_to_export)
-            mimetype = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            mimetype = (
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
             extension = "xlsx"
         else:
             output = generate_csv_export(participants_to_export)
@@ -328,7 +364,7 @@ def export_data():
         return Response(
             output,
             mimetype=mimetype,
-            headers={"Content-Disposition": f"attachment;filename={filename}"}
+            headers={"Content-Disposition": f"attachment;filename={filename}"},
         )
     except Exception as e:
         flash(f"Fehler beim Exportieren der Daten: {str(e)}", "error")

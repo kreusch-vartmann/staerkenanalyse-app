@@ -3,8 +3,9 @@ Dieses Modul enthält Funktionen zur Integration und Nutzung von KI-Modellen
 für die Berichtserstellung.
 """
 
-import os
 import json
+import os
+
 from dotenv import load_dotenv
 
 # Lade die Umgebungsvariablen aus der .env-Datei
@@ -12,27 +13,40 @@ load_dotenv()
 
 # Versuche, die notwendigen Bibliotheken zu importieren und zu konfigurieren
 try:
-    from google.generativeai import GenerativeModel, configure, list_models
     from google.api_core import exceptions as google_exceptions
+    from google.generativeai import GenerativeModel, configure, list_models
+
     GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
     if GOOGLE_API_KEY:
         configure(api_key=GOOGLE_API_KEY)
     else:
-        print("WARNUNG: GOOGLE_API_KEY nicht gefunden. Google-Modelle sind nicht verfügbar.")
+        print(
+            "WARNUNG: GOOGLE_API_KEY nicht gefunden. Google-Modelle sind nicht verfügbar."
+        )
 except ImportError:
     GenerativeModel, list_models, google_exceptions = None, None, None
-    print("WARNUNG: google-generativeai nicht installiert. Google-Modelle nicht verfügbar.")
+    print(
+        "WARNUNG: google-generativeai nicht installiert. Google-Modelle nicht verfügbar."
+    )
 
 try:
     from mistralai.client import MistralClient
-    from mistralai.models.chat_completion import ChatMessage
     from mistralai.exceptions import MistralAPIException
+    from mistralai.models.chat_completion import ChatMessage
+
     MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
     MISTRAL_CLIENT = MistralClient(api_key=MISTRAL_API_KEY) if MISTRAL_API_KEY else None
     if not MISTRAL_API_KEY:
-        print("WARNUNG: MISTRAL_API_KEY nicht gefunden. Mistral-Modelle sind nicht verfügbar.")
+        print(
+            "WARNUNG: MISTRAL_API_KEY nicht gefunden. Mistral-Modelle sind nicht verfügbar."
+        )
 except ImportError:
-    MistralClient, ChatMessage, MistralAPIException, MISTRAL_CLIENT = None, None, None, None
+    MistralClient, ChatMessage, MistralAPIException, MISTRAL_CLIENT = (
+        None,
+        None,
+        None,
+        None,
+    )
     print("WARNUNG: mistralai nicht installiert. Mistral-Modelle nicht verfügbar.")
 
 
@@ -46,10 +60,12 @@ def generate_report_with_ai(prompt_text, ki_model):
     try:
         if ki_model == "gemini":
             if not GenerativeModel:
-                raise ValueError("Die 'Google Generative AI'-Bibliothek ist nicht installiert.")
+                raise ValueError(
+                    "Die 'Google Generative AI'-Bibliothek ist nicht installiert."
+                )
 
             # KORREKTUR: Flash-Modell verwenden (schneller, höheres Free-Tier-Kontingent)
-            model_name = 'models/gemini-flash-latest'
+            model_name = "models/gemini-flash-latest"
             try:
                 model = GenerativeModel(model_name)
                 response = model.generate_content(prompt_text)
@@ -70,13 +86,13 @@ def generate_report_with_ai(prompt_text, ki_model):
             )
             messages = [
                 ChatMessage(role="system", content=system_prompt),
-                ChatMessage(role="user", content=prompt_text)
+                ChatMessage(role="user", content=prompt_text),
             ]
             chat_response = MISTRAL_CLIENT.chat(
                 model="mistral-large-latest",
                 messages=messages,
                 temperature=0,
-                response_format={"type": "json_object"}
+                response_format={"type": "json_object"},
             )
             return chat_response.choices[0].message.content
 
@@ -99,8 +115,11 @@ def _try_list_available_gemini_models(model_name, original_exception):
 
     try:
         print("\n--- VERSUCHE, VERFÜGBARE MODELLE AUFZULISTEN ---")
-        available_models = [m.name for m in list_models()
-                            if 'generateContent' in m.supported_generation_methods]
+        available_models = [
+            m.name
+            for m in list_models()
+            if "generateContent" in m.supported_generation_methods
+        ]
 
         if available_models:
             print("Folgende Modelle sind für deinen API-Key verfügbar und nutzbar:")
@@ -112,7 +131,9 @@ def _try_list_available_gemini_models(model_name, original_exception):
                 "der oben gelisteten Modelle in der 'ki_services.py'."
             ) from original_exception
 
-        print("Es konnten keine verfügbaren Modelle für deinen API-Key gefunden werden.")
+        print(
+            "Es konnten keine verfügbaren Modelle für deinen API-Key gefunden werden."
+        )
         raise ValueError(
             "Keine kompatiblen Gemini-Modelle für deinen API-Key gefunden."
         ) from original_exception
