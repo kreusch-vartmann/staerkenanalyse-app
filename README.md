@@ -250,7 +250,7 @@ cp .env.example .env
 
 Diese App verwendet **Semantic Versioning** (0.MAJOR.MINOR im Pre-Release):
 
-### App-Version (aktuell: `0.1.0`)
+### App-Version (aktuell: `0.2.0-WIP`)
 
 **Pre-Release (0.x.y):**
 - `0.MINOR.PATCH` - Breaking Changes zwischen Minor-Versions erlaubt
