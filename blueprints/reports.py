@@ -202,6 +202,8 @@ def configure_report(group_id):
     ).all()
 
     if request.method == "POST":
+        print(f"DEBUG: POST request received for group {group_id}")
+        print(f"DEBUG: Form data: {request.form.to_dict()}")
         # Handle Logo Uploads
         company_file = request.files.get("company_logo")
         if company_file and company_file.filename:

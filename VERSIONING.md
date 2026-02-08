@@ -5,7 +5,7 @@ Dieses Dokument erklärt, wie die Versionsnummern in dieser App verwaltet werden
 ## Zwei unabhängige Versionen
 
 ### 1. App-Version (`APP_VERSION`)
-**Aktuell:** `0.1.0`  
+**Aktuell:** `0.4.0`  
 **Zweck:** Release-Tracking, Bug-Reports, Changelog
 
 **Format:** `MAJOR.MINOR.PATCH` (Semantic Versioning)
@@ -227,3 +227,62 @@ A: Nicht schlimm im Pre-Release! Nach 1.0.0 solltest du aber konsequent sein.
 
 - [Semantic Versioning 2.0.0](https://semver.org/)
 - [Flask-Migrate Dokumentation](https://flask-migrate.readthedocs.io/)
+---
+
+## Versions-Historie
+
+### v0.4.0 (2026-02-08) - Report-Konfiguration & Backup-System
+**Neue Features:**
+- ✅ Report-Konfiguration UI mit Tailwind CSS Accordions
+- ✅ Backup-System für SQLite-Datenbank (automatisch + manuell)
+- ✅ Prompts-Export als JSON mit Metadaten
+- ✅ Retention-Management für Backups (max. 50)
+- ✅ Default-Prompts-Loader (`load_default_prompts.py`)
+- ✅ Prompt-Unique-Constraint Migration
+
+**Bugfixes:**
+- 🐛 CSRF-Token in Report-Konfiguration behoben
+- 🐛 Verschachtelte Forms in Configure-Template entfernt
+- 🐛 Unterschriften-Upload in Abschlussblatt-Bereich integriert
+
+**Breaking Changes:** Keine
+
+---
+
+### v0.3.0 (2026-02-07) - Test-Suite & CI/CD
+**Neue Features:**
+- ✅ 91 Tests (Unit + Integration), 46.90% Coverage
+- ✅ GitHub Actions Workflows (Tests, Code Quality)
+- ✅ ReportGenerator Service mit Sidebar-Layout
+- ✅ HTML-Vorschau mit iframe-Isolation
+- ✅ Standalone-Routes für SE/FE-PDFs
+
+**Bugfixes:** -
+
+**Breaking Changes:** Keine
+
+---
+
+### v0.2.0 (2026-02-07) - Report-System
+**Neue Features:**
+- ✅ ReportGenerator Service
+- ✅ WeasyPrint PDF-Export
+- ✅ Template-System für flexible Reports
+- ✅ Signature-Image-Model
+
+**Bugfixes:** -
+
+**Breaking Changes:** Keine
+
+---
+
+### v0.1.0 (2026-01-31) - Initial Pre-Release
+**Neue Features:**
+- ✅ Export/Import mit Schema-Versionierung
+- ✅ CSRF-Schutz für alle Formulare
+- ✅ Modernisiertes UI (Tailwind CSS)
+- ✅ Datenbank-Migrationen
+
+**Bugfixes:** -
+
+**Breaking Changes:** -

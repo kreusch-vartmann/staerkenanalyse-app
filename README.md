@@ -1,7 +1,7 @@
 # Stärkenanalyse-App
 
-**Version:** 0.3.0-WIP (Pre-Release)  
-**Status:** Report-System in Entwicklung 🚧
+**Version:** 0.4.0  
+**Status:** Report-System mit Konfiguration & Backup-System ✅
 
 Eine lokale Flask-Webanwendung zur Verwaltung von Gruppen und Teilnehmenden und zur Durchführung von KI-gestützten Stärkenanalysen.
 
@@ -125,28 +125,27 @@ python -m flask run --port 5002
 
 - `services/report_generator.py` — **NEUE** ReportGenerator-Klasse für HTML-Rendering und PDF-Export mit konfigurierbarem Sidebar-Layout
 
-## Report-Generierung (WIP — Work in Progress)
+## Report-Generierung & Konfiguration ✅
 
-Das System unterstützt nun flexible Report-Generierung mit HTML-Vorschau und PDF-Export:
+Das System unterstützt flexible Report-Generierung mit HTML-Vorschau und PDF-Export:
 
 ### Features
 - **Konfigurierbare Report-Module**: Deckblatt, Selbsteinschätzung, Fremdeinschätzung, Abschlussblatt, Hinweisblatt
+- **Report-Konfiguration pro Gruppe**: Template-Auswahl, Logo-Upload, Modul-Aktivierung
 - **Sidebar-Layout**: Zwei Modi — "full" (mit Metadaten, für Standalone-PDFs) und "minimal" (nur Design, für Gesamtbericht)
 - **HTML-Vorschau mit iframe**: Verhindert CSS-Leakage zwischen App und Report
 - **PDF-Export**: WeasyPrint-basiert mit konfigurierbaren Designs (Farben, Schriften, Logos)
 - **Unterschriften-Verwaltung**: Global verwaltete JPG-Bilder für Leitung FE und Leitung SE
 - **Radardiagramme**: Automatisch generierte matplotlib-Charts für Social & Verbal Competencies
 
-### Aktuelle Status (⚠️ WIP)
+### Status ✅ Vollständig
 - ✅ `ReportGenerator` Service vollständig implementiert
+- ✅ Report-Konfiguration UI mit Tailwind CSS Accordions
 - ✅ Sidebar-Component mit Auto-Seitenzählung
 - ✅ Standalone-Routes für SE- und FE-PDF
-- ✅ Unterschriften-Upload in Configure-UI
+- ✅ Unterschriften-Upload & Verwaltung im Abschlussblatt-Bereich
 - ✅ PDF-Druck-Buttons in Verwaltungs-Templates
-- 🔧 **Feinschliff geplant** (nächste Session):
-  - Layout-Refinements & Styling
-  - Weitere Print-Tests mit echten Daten
-  - Optional: Tabellenformat & Zwischenbilanz
+- ✅ Form-Validierung & CSRF-Schutz aktiv
 
 ### Routen (Reports-Blueprint)
 
@@ -170,6 +169,54 @@ POST      /reports/signatures/delete/<sig_id>   → Unterschrift löschen
 - `SignatureImage` — Unterschriftensbilder (Leitung FE/SE)
 
 `database.py` enthält helper-Funktionen zum Zugriff und zur Paginierung. Falls Sie Probleme mit Such- oder Pagination-Features haben, beginnen Sie hier.
+
+## Backup-System (NEU in v0.4.0) 🔒
+
+Automatisches Backup-System für die SQLite-Datenbank mit Prompts-Export:
+
+### Features
+- **Automatische Backups**: Beim App-Start werden automatisch Backups erstellt
+- **Manuelle Backups**: Via Flask-CLI oder Python-Skript
+- **Retention-Management**: Alte Backups werden automatisch bereinigt (max. 50 Backups)
+- **Prompts-Export**: Zusätzliche JSON-Sicherung aller Prompts mit Metadaten
+- **Verifizierung**: Größencheck nach jedem Backup
+
+### Usage
+
+```bash
+# Manuelles Backup
+python backup_database.py
+
+# Als Flask-Command
+flask backup-db
+flask backup-db --keep 30    # Nur letzte 30 Backups behalten
+
+# Prompts exportieren
+flask export-prompts
+```
+
+### Backup-Struktur
+
+```
+backups/
+├── database_20260208_143022_startup.db        # Timestamp + Grund
+├── database_20260208_150033_manual.db
+└── prompts_export/
+    ├── prompt_1_staerkenanalyse.json          # Einzelne Prompt-Dateien
+    ├── prompt_2_fremdeinschaetzung.json
+    └── all_prompts_20260208_143055.json       # Alle Prompts kombiniert
+```
+
+### Integration
+
+Backup-System ist direkt in `app.py` integriert:
+```python
+from backup_database import create_backup
+
+# Beim App-Start
+with app.app_context():
+    create_backup(reason="startup")
+```
 
 ## Entwickeln & Tests
 
@@ -349,7 +396,17 @@ EXPORT_SCHEMA_VERSION = "1.1"  # Bei Export-Erweiterungen
 
 ### Changelog
 
-**0.3.0-WIP** (2026-02-07) - Umfassende Test-Suite & CI/CD-Integration (Work in Progress)
+**0.4.0** (2026-02-08) - Report-Konfiguration & Backup-System ✅
+- ✅ **Report-Konfiguration UI**: Tailwind CSS Accordions mit 6 konfigurierbaren Bereichen
+- ✅ **Backup-System**: Automatische SQLite-Backups beim App-Start + Flask-CLI-Commands
+- ✅ **Prompts-Export**: JSON-Sicherung aller Prompts mit Metadaten
+- ✅ **Retention-Management**: Automatische Bereinigung alter Backups (max. 50)
+- ✅ **Prompt-Management**: Unique-Constraint für Prompt-Namen, Default-Prompts-Loader
+- ✅ **Form-Fixes**: CSRF-Token-Integration, verschachtelte Forms behoben
+- ✅ **UI-Improvements**: Unterschriften-Upload im Abschlussblatt-Bereich integriert
+- ✅ **Migration**: Neue DB-Migration für Prompt-Unique-Constraint
+
+**0.3.0** (2026-02-07) - Umfassende Test-Suite & CI/CD-Integration
 - ✅ **Test-Suite**: 91 Tests (Unit + Integration), 46.90% Code-Coverage
 - ✅ **GitHub Actions**: Neuer Tests & Coverage Workflow (`.github/workflows/tests.yml`)
 - ✅ **Code-Quality**: Black + isort Formatierung, CI-Checks aktiv
@@ -360,7 +417,6 @@ EXPORT_SCHEMA_VERSION = "1.1"  # Bei Export-Erweiterungen
 - ✅ **Radardiagramme** (matplotlib) für Social & Verbal Competencies
 - ✅ **Auto-Seitenzählung** & konfigurierbarer Content-Mix
 - ✅ **PDF-Druck-Buttons** in Verwaltungs-Templates
-- 🔧 Layout-Feinschliff & erweiterte Tests geplant für nächste Session
 
 **0.2.0** (2026-02-07) - Report-System & PDF-Generierung
 - ✅ ReportGenerator Service vollständig implementiert

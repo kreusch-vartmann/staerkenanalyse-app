@@ -32,8 +32,9 @@ app.config["SECRET_KEY"] = os.getenv(
     "SECRET_KEY", "dev-secret-key-change-in-production"
 )
 # Fallback zu SQLite für Tests/CI falls DATABASE_URL nicht gesetzt
+# sqlite:/// mit 3 Slashes wird von Flask relativ zum instance/ Ordner aufgelöst
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
-    "DATABASE_URL", "sqlite:///app.db"
+    "DATABASE_URL", "sqlite:///database.db"
 )
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["WTF_CSRF_ENABLED"] = True
@@ -171,8 +172,12 @@ def health():
 
 # --- CLI COMMANDS ---
 from generate_test_data import register_commands
+from load_default_prompts import register_command as register_prompt_command
+from backup_database import register_backup_commands, startup_backup
 
 register_commands(app)
+register_prompt_command(app)
+register_backup_commands(app)
 
 
 # --- INITIALISIERUNG ---
@@ -198,6 +203,13 @@ def _before_first_request():
     if not hasattr(app, "_templates_initialized"):
         initialize_app_templates()
         app._templates_initialized = True
+    # Automatisches Backup bei erstem Request (einmalig pro App-Start)
+    if not hasattr(app, "_backup_done"):
+        try:
+            startup_backup()
+        except Exception as e:
+            app.logger.warning(f"Automatisches Backup fehlgeschlagen: {e}")
+        app._backup_done = True
 
 
 # --- ANWENDUNG STARTEN ---

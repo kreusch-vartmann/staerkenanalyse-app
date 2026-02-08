@@ -70,14 +70,23 @@
         }
 
         try {
-            const response = await fetch(`{{ url_for('prompts.get_prompt_content_api', prompt_id=0) }}`.slice(0, -1) + promptId);
+            const url = `/api/prompt/${promptId}`;
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const data = await response.json();
             if (data.content) {
                 promptTextarea.value = data.content;
+            } else if (data.error) {
+                promptTextarea.value = `Fehler: ${data.error}`;
             }
         } catch (error) {
             console.error('Fehler beim Laden des Prompts:', error);
-            promptTextarea.value = 'Fehler: Prompt konnte nicht geladen werden.';
+            console.error('URL würde sein: /api/prompt/' + promptId);
+            promptTextarea.value = 'Fehler: Prompt konnte nicht geladen werden. Siehe Konsole für Details.';
         }
     });
 </script>

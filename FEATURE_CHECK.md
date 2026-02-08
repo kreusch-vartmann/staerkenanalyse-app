@@ -1,7 +1,7 @@
 # Feature-Checkliste: Stärkenanalyse-App
 
-**Datum:** 06.02.2026
-**Branch:** feature/selbsteinschaetzung-abschlussbericht
+**Datum:** 08.02.2026 (v0.4.0)
+**Branch:** main
 **Modus:** Lokale Entwicklung (SQLite)
 
 ---
@@ -115,7 +115,35 @@
 ### 15. Datenbank
 - [x] SQLAlchemy ORM mit Flask-SQLAlchemy
 - [x] Flask-Migrate (Alembic) für Migrationen
-- [x] 4 Models: Group, Participant, Prompt, SelfAssessment
+- [x] 10 Models: Group, Participant, Prompt, SelfAssessment, ExplanationBlock, ReportTemplate, ReportConfiguration, CompanyLogo, ClientLogo, SignatureImage
+
+### 16. Report-Konfiguration (NEU in v0.4.0) 📄
+- [x] Report-Konfiguration UI (`/reports/<group_id>/configure`)
+- [x] Tailwind CSS Accordions (6 Bereiche)
+- [x] Template-Auswahl (ReportTemplate Model)
+- [x] Logo-Upload (Company & Client)
+- [x] Unterschriften-Verwaltung (FE/SE im Abschlussblatt-Bereich)
+- [x] Modul-Aktivierung (Cover, SE, FE, Closing, Info, TOC)
+- [x] Form-Validierung mit CSRF-Token
+- [x] Nested-Form-Fix (keine verschachtelten `<form>` Tags mehr)
+- [x] HTML-Vorschau (`/reports/<group_id>/preview/<pid>`)
+- [x] PDF-Download (`/reports/<group_id>/generate-pdf/<pid>`)
+
+### 17. Backup-System (NEU in v0.4.0) 🔒
+- [x] Automatische Backups beim App-Start (`backup_database.py`)
+- [x] Manuelle Backups: `flask backup-db` / `python backup_database.py`
+- [x] Retention-Management (max. 50 Backups)
+- [x] Backup-Verzeichnis: `backups/`
+- [x] Timestamped Backups mit Grund (startup, manual, before_migration)
+- [x] Größenverifizierung nach Backup
+- [x] Prompts-Export: `flask export-prompts`
+- [x] JSON-Export aller Prompts mit Metadaten (`backups/prompts_export/`)
+
+### 18. Prompt-Management-Improvements (NEU in v0.4.0) 🧠
+- [x] Unique-Constraint für Prompt-Namen (Migration: `65898bde1230`)
+- [x] Default-Prompts-Loader (`load_default_prompts.py`)
+- [x] Prompt-Bearbeitungs-UI verbessert
+- [x] Error-Handling bei Duplikaten
 
 ---
 

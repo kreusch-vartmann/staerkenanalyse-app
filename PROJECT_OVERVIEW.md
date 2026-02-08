@@ -1,6 +1,6 @@
 # PROJECT_OVERVIEW.md
 
-**Generiert am**: 2026-02-06 17:02:59
+**Generiert am**: 2026-02-08 (v0.4.0)
 
 ---
 
@@ -9,17 +9,18 @@
 Flask-basierte Web-Applikation für **Stärkenanalyse** mit KI-gestützter Berichterstellung:
 - Teilnehmermanagement in Gruppen
 - Dateneingabe (Beobachtungen, Selbsteinschätzungen)
-- KI-Analyse via Mistral API
-- PDF-Berichte generieren
+- KI-Analyse via Mistral/Google Gemini API
+- Konfigurierbare PDF-Berichte mit Report-Templates
+- Automatisches Backup-System für Datenbank & Prompts
 
 ---
 
 ## 📊 Projektstatistik
 
-- **Python-Dateien**: 21
-- **Blueprints**: 6 (groups, participants, analysis, data_io, prompts, explanation_blocks)
-- **Templates**: 27
-- **Datenbank-Models**: 4 (Group, Participant, Prompt, SelfAssessment)
+- **Python-Dateien**: 25+
+- **Blueprints**: 7 (groups, participants, analysis, data_io, prompts, explanation_blocks, reports)
+- **Templates**: 35+
+- **Datenbank-Models**: 10 (Group, Participant, Prompt, SelfAssessment, ExplanationBlock, ReportTemplate, ReportConfiguration, CompanyLogo, ClientLogo, SignatureImage)
 
 ---
 
@@ -33,6 +34,7 @@ Flask-basierte Web-Applikation für **Stärkenanalyse** mit KI-gestützter Beric
 | data_io | 9 | Import/Export, Dateneingabe |
 | prompts | 4 | Prompt-Management |
 | explanation_blocks | 4 | Erklärungstexte für Berichte |
+| reports | 10+ | Report-Konfiguration, PDF-Generierung, Vorschau |
 
 ---
 
@@ -69,6 +71,26 @@ cp .env.example .env  # API-Keys eintragen
 flask db upgrade
 python app.py
 ```
+
+---
+
+## 🆕 Neue Features in v0.4.0
+
+### Backup-System 🔒
+- **Automatische Backups**: Beim App-Start (`backup_database.py`)
+- **Manuelle Backups**: `flask backup-db` / `python backup_database.py`
+- **Retention-Management**: Max. 50 Backups, automatische Bereinigung
+- **Prompts-Export**: `flask export-prompts` → JSON-Dateien in `backups/prompts_export/`
+
+### Report-Konfiguration 📄
+- **UI-Template**: `templates/reports/configure.html` mit Tailwind CSS Accordions
+- **6 Konfigurationsbereiche**: Design, Deckblatt, Selbst-/Fremdeinschätzung, Abschlussblatt, Hinweisblatt
+- **Logo-Upload**: Company & Client Logos pro Gruppe
+- **Unterschriften-Management**: JPG-Bilder für Leitung FE/SE im Abschlussblatt-Bereich
+
+### Prompt-Management 🧠
+- **Unique-Constraint**: Prompt-Namen müssen eindeutig sein (neue Migration)
+- **Default-Prompts**: `load_default_prompts.py` lädt Standard-Prompts
 
 ---
 

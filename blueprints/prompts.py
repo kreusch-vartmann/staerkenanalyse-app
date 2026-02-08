@@ -39,7 +39,23 @@ def add_prompt():
 
         if not name or not content:
             flash("Name und Inhalt des Prompts dürfen nicht leer sein.", "warning")
-            return render_template("prompt_form.html", title="Neuen Prompt erstellen")
+            temp_prompt = Prompt(name=name or "", description=description, content=content or "")
+            return render_template(
+                "prompt_form.html",
+                title="Neuen Prompt erstellen",
+                prompt=temp_prompt,
+            )
+
+        # Prüfe auf Duplikat
+        existing = Prompt.query.filter_by(name=name).first()
+        if existing:
+            flash(f'Ein Prompt mit dem Namen "{name}" existiert bereits.', "error")
+            temp_prompt = Prompt(name=name, description=description, content=content or "")
+            return render_template(
+                "prompt_form.html",
+                title="Neuen Prompt erstellen",
+                prompt=temp_prompt,
+            )
 
         new_prompt = Prompt(name=name, description=description, content=content)
         db.session.add(new_prompt)
@@ -73,11 +89,35 @@ def edit_prompt(prompt_id):
 
         if not name or not content:
             flash("Name und Inhalt des Prompts dürfen nicht leer sein.", "warning")
+            temp_prompt = Prompt(
+                name=name or "",
+                description=description,
+                content=content or "",
+            )
             return render_template(
                 "prompt_form.html",
                 title=f"Prompt bearbeiten: {prompt.name}",
-                prompt=prompt,
+                prompt=temp_prompt,
             )
+
+        # Prüfe ob ein anderer Prompt bereits diesen Namen hat
+        if name != prompt.name:
+            existing = Prompt.query.filter_by(name=name).first()
+            if existing:
+                flash(
+                    f'Ein anderer Prompt mit dem Namen "{name}" existiert bereits.',
+                    "error",
+                )
+                temp_prompt = Prompt(
+                    name=name,
+                    description=description,
+                    content=content or "",
+                )
+                return render_template(
+                    "prompt_form.html",
+                    title=f"Prompt bearbeiten: {prompt.name}",
+                    prompt=temp_prompt,
+                )
 
         prompt.name = name
         prompt.description = description

@@ -84,6 +84,64 @@ def _prepare_pdf_data(participant):
     return sk_chart, vk_chart
 
 
+def _normalize_ki_data(ki_data):
+    """Normalisiert KI-JSON auf erwartete Struktur.
+
+    Unterstützt sowohl:
+    - {"ki_texts": {"social_text": "...", ...}}
+    - {"social_text": "...", "verbal_text": "...", "summary_text": "..."}
+    """
+    sk_ratings = ki_data.get("sk_ratings") or {}
+    vk_ratings = ki_data.get("vk_ratings") or {}
+
+    # Map alternative VK keys (z.B. CopilotSozVerbv1)
+    if isinstance(vk_ratings, dict):
+        mapped_vk = {}
+        if "flexibility" in vk_ratings:
+            mapped_vk["flexibility"] = vk_ratings.get("flexibility")
+        if "expression_flexibility" in vk_ratings:
+            mapped_vk["flexibility"] = vk_ratings.get("expression_flexibility")
+        if "consulting" in vk_ratings:
+            mapped_vk["consulting"] = vk_ratings.get("consulting")
+        if "consulting_competence" in vk_ratings:
+            mapped_vk["consulting"] = vk_ratings.get("consulting_competence")
+        if "objectivity" in vk_ratings:
+            mapped_vk["objectivity"] = vk_ratings.get("objectivity")
+        if "goal_orientation" in vk_ratings:
+            mapped_vk["goal_orientation"] = vk_ratings.get("goal_orientation")
+        if "goal_oriented_communication" in vk_ratings:
+            mapped_vk["goal_orientation"] = vk_ratings.get(
+                "goal_oriented_communication"
+            )
+        vk_ratings = mapped_vk or vk_ratings
+
+    ki_texts = ki_data.get("ki_texts")
+    if not isinstance(ki_texts, dict):
+        # CopilotSozVerbv1: analysis.social_analysis.interpretation etc.
+        analysis_block = ki_data.get("analysis") or {}
+        social_analysis = analysis_block.get("social_analysis") or {}
+        verbal_analysis = analysis_block.get("verbal_analysis") or {}
+
+        summary_block = ki_data.get("summary") or {}
+        summary_parts = [
+            summary_block.get("key_strengths"),
+            summary_block.get("development_areas"),
+            summary_block.get("task_alignment"),
+        ]
+        summary_text = "\n".join([part for part in summary_parts if part])
+
+        ki_texts = {
+            "social_text": social_analysis.get("interpretation", "")
+            or ki_data.get("social_text", ""),
+            "verbal_text": verbal_analysis.get("interpretation", "")
+            or ki_data.get("verbal_text", ""),
+            "summary_text": summary_text or ki_data.get("summary_text", ""),
+        }
+
+    ki_texts = {key: (value or "") for key, value in ki_texts.items()}
+    return sk_ratings, vk_ratings, ki_texts
+
+
 # --- ROUTEN FÜR BERICHTE (HTML & PDF) ---
 
 
@@ -370,8 +428,11 @@ def run_ki_analysis(participant_id):
     full_name = participant.name
     first_name = full_name.split(" ")[0] if full_name else ""
 
-    final_prompt = final_prompt.replace("{{name}}", first_name).replace(
-        "{{vorname}}", first_name
+    final_prompt = (
+        final_prompt.replace("{{name}}", first_name)
+        .replace("{{vorname}}", first_name)
+        .replace("{{first_name}}", first_name)
+        .replace("{{ganzer_name}}", full_name)
     )
 
     observations = (
@@ -379,8 +440,9 @@ def run_ki_analysis(participant_id):
     )
     social_obs = observations.get("social", "")
     verbal_obs = observations.get("verbal", "")
-    final_prompt = final_prompt.replace("{{social_observations}}", social_obs).replace(
-        "{{verbal_observations}}", verbal_obs
+    final_prompt = (
+        final_prompt.replace("{{social_observations}}", social_obs)
+        .replace("{{verbal_observations}}", verbal_obs)
     )
 
     additional_content = ""
@@ -389,6 +451,22 @@ def run_ki_analysis(participant_id):
         if file and file.filename != "":
             additional_content = get_file_content(file)
     final_prompt = final_prompt.replace("{{additional_content}}", additional_content)
+
+    # Falls keine Kontext-Platzhalter vorhanden sind, Kontextblock ergänzen
+    context_block = (
+        f"ANALYSE-SUBJEKT:\n- Vorname: {first_name}\n- Ganzer Name: {full_name}\n\n"
+        f"BEOBACHTUNGEN ZUM VERHALTEN:\n- Soziale Kompetenzen: {social_obs}\n"
+        f"- Verbale Kompetenzen: {verbal_obs}\n\n"
+        f"ZUSÄTZLICHER KONTEXT:\n{additional_content}"
+    )
+    if "{{context}}" in final_prompt:
+        final_prompt = final_prompt.replace("{{context}}", context_block)
+    elif (
+        "{{social_observations}}" not in request.form.get("ki_prompt", "")
+        and "{{verbal_observations}}" not in request.form.get("ki_prompt", "")
+        and "{{context}}" not in request.form.get("ki_prompt", "")
+    ):
+        final_prompt = f"{final_prompt}\n\n{context_block}"
 
     ki_response_str = generate_report_with_ai(final_prompt, ki_model)
     participant.ki_raw_response = ki_response_str
@@ -401,9 +479,27 @@ def run_ki_analysis(participant_id):
                 {"status": "error", "message": f"KI-Fehler: {ki_data['error']}"}
             )
 
-        participant.sk_ratings = json.dumps(ki_data.get("sk_ratings", {}))
-        participant.vk_ratings = json.dumps(ki_data.get("vk_ratings", {}))
-        participant.ki_texts = json.dumps(ki_data.get("ki_texts", {}))
+        sk_ratings, vk_ratings, ki_texts = _normalize_ki_data(ki_data)
+        has_any_text = any(
+            [
+                ki_texts.get("social_text"),
+                ki_texts.get("verbal_text"),
+                ki_texts.get("summary_text"),
+            ]
+        )
+        has_any_ratings = bool(sk_ratings) or bool(vk_ratings)
+
+        if not has_any_text and not has_any_ratings:
+            return jsonify(
+                {
+                    "status": "error",
+                    "message": "Die KI-Antwort enthält keine verwertbaren Daten.",
+                }
+            )
+
+        participant.sk_ratings = json.dumps(sk_ratings)
+        participant.vk_ratings = json.dumps(vk_ratings)
+        participant.ki_texts = json.dumps(ki_texts)
         db.session.commit()
 
         return jsonify(
@@ -447,8 +543,27 @@ def run_single_analysis_api(participant_id):
         f"- Verbale Kompetenzen: {obs.get('verbal', '')}\n\n"
         f"ZUSÄTZLICHER KONTEXT:\n{data.get('additional_content', '')}"
     )
+    prompt_template = data.get("prompt_template", "")
+    prompt = (
+        prompt_template.replace("{{context}}", context_block)
+        .replace("{{name}}", first_name)
+        .replace("{{vorname}}", first_name)
+        .replace("{{first_name}}", first_name)
+        .replace("{{ganzer_name}}", full_name)
+        .replace("{{social_observations}}", obs.get("social", ""))
+        .replace("{{verbal_observations}}", obs.get("verbal", ""))
+        .replace("{{additional_content}}", data.get("additional_content", ""))
+        .replace("{{participant_id}}", str(participant.id))
+    )
 
-    prompt = data.get("prompt_template", "").replace("{{context}}", context_block)
+    if "{{context}}" in prompt_template:
+        prompt = prompt_template.replace("{{context}}", context_block)
+    elif (
+        "{{social_observations}}" not in prompt_template
+        and "{{verbal_observations}}" not in prompt_template
+        and "{{context}}" not in prompt_template
+    ):
+        prompt = f"{prompt}\n\n{context_block}"
 
     response_str = generate_report_with_ai(prompt, data.get("ki_model"))
     participant.ki_raw_response = response_str
@@ -461,9 +576,27 @@ def run_single_analysis_api(participant_id):
                 {"status": "error", "message": f"KI-Fehler: {ki_data['error']}"}
             )
 
-        participant.sk_ratings = json.dumps(ki_data.get("sk_ratings", {}))
-        participant.vk_ratings = json.dumps(ki_data.get("vk_ratings", {}))
-        participant.ki_texts = json.dumps(ki_data.get("ki_texts", {}))
+        sk_ratings, vk_ratings, ki_texts = _normalize_ki_data(ki_data)
+        has_any_text = any(
+            [
+                ki_texts.get("social_text"),
+                ki_texts.get("verbal_text"),
+                ki_texts.get("summary_text"),
+            ]
+        )
+        has_any_ratings = bool(sk_ratings) or bool(vk_ratings)
+
+        if not has_any_text and not has_any_ratings:
+            return jsonify(
+                {
+                    "status": "error",
+                    "message": "Die KI-Antwort enthält keine verwertbaren Daten.",
+                }
+            )
+
+        participant.sk_ratings = json.dumps(sk_ratings)
+        participant.vk_ratings = json.dumps(vk_ratings)
+        participant.ki_texts = json.dumps(ki_texts)
         db.session.commit()
 
         return jsonify({"status": "success", "message": "Analyse erfolgreich."})

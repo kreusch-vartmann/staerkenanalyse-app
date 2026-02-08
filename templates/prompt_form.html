@@ -6,9 +6,10 @@
 <h2 class="text-3xl font-bold text-gray-800 mb-6">{{ title }}</h2>
 
 <form method="post" class="bg-white p-8 rounded-lg shadow-md space-y-6">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     <div>
         <label for="name" class="block text-sm font-medium text-gray-700">Prompt-Name</label>
-        <input type="text" name="name" id="name" value="{{ prompt.name if prompt else '' }}" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+        <input type="text" name="name" id="name" value="{{ prompt.name if prompt else '' }}" required autocomplete="off" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
         <p class="mt-1 text-xs text-gray-500">Ein kurzer, wiedererkennbarer Name (z.B. "Standardanalyse Mistral V2").</p>
     </div>
     <div>
