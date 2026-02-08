@@ -23,6 +23,16 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libcairo2-dev \
+          libpango1.0-dev \
+          libgdk-pixbuf2.0-dev \
+          libffi-dev \
+          shared-mime-info
+    
     - name: Cache pip dependencies
       uses: actions/cache@v3
       with:
@@ -36,6 +46,22 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-test.txt
+    
+    - name: Set environment variables
+      run: |
+        echo "FLASK_ENV=testing" >> $GITHUB_ENV
+        echo "DATABASE_URL=sqlite:///test.db" >> $GITHUB_ENV
+        echo "SECRET_KEY=test-secret-key-for-ci" >> $GITHUB_ENV
+        echo "WTF_CSRF_ENABLED=False" >> $GITHUB_ENV
+    
+    - name: Initialize database
+      run: |
+        python -c "
+        from app import app, db
+        with app.app_context():
+            db.create_all()
+            print('✅ Database initialized')
+        "
     
     - name: Run Unit Tests
       run: |
