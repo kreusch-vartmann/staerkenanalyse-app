@@ -34,7 +34,7 @@ jobs:
           shared-mime-info
     
     - name: Cache pip dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt', '**/requirements-test.txt') }}
@@ -57,10 +57,14 @@ jobs:
     - name: Initialize database
       run: |
         python -c "
-        from app import app, db
-        with app.app_context():
-            db.create_all()
-            print('✅ Database initialized')
+import os
+os.environ['FLASK_ENV'] = 'testing'
+os.environ['DATABASE_URL'] = 'sqlite:///test.db'
+os.environ['SECRET_KEY'] = 'test-key'
+from app import app, db
+with app.app_context():
+    db.create_all()
+    print('✅ Database initialized')
         "
     
     - name: Run Unit Tests
@@ -76,7 +80,7 @@ jobs:
         pytest --cov=. --cov-report=xml --cov-report=html --cov-report=term -v
     
     - name: Upload Coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
         flags: unittests
@@ -98,11 +102,11 @@ jobs:
     - name: Test Summary
       if: always()
       run: |
-        echo "## Test Results :test_tube:" >> $GITHUB_STEP_SUMMARY
+        echo "## Test Results ✅" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "Python Version: ${{ matrix.python-version }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Python Version:** ${{ matrix.python-version }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        pytest --co -q | wc -l | xargs -I {} echo "Total Tests: {}" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "Coverage Report:" >> $GITHUB_STEP_SUMMARY
-        coverage report --format=markdown >> $GITHUB_STEP_SUMMARY || true
+        if [ -f coverage.xml ]; then
+          echo "**Coverage Report:**" >> $GITHUB_STEP_SUMMARY
+          coverage report --format=markdown >> $GITHUB_STEP_SUMMARY 2>/dev/null || coverage report >> $GITHUB_STEP_SUMMARY
+        fi
