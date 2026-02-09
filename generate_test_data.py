@@ -14,7 +14,7 @@ Usage:
 import json
 import os
 import random
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timezone, timedelta
 
 import click
 from flask import Flask

@@ -12,7 +12,7 @@ class Config:
     """Basis-Konfiguration (gemeinsame Settings)."""
 
     # Flask
-    SECRET_KEY = os.getenv("SECRET_KEY", os.urandom(24).hex())
+    SECRET_KEY = os.getenv("SECRET_KEY")  # Pflicht: muss in .env/Umgebung gesetzt sein
 
     # SQLAlchemy
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
@@ -30,11 +30,16 @@ class Config:
     UPLOAD_FOLDER = "uploads"
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB max upload
 
-    # Session
-    SESSION_COOKIE_SECURE = False  # In Production auf True setzen
+    # Session (8 Stunden)
+    PERMANENT_SESSION_LIFETIME = 8 * 3600
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
-    PERMANENT_SESSION_LIFETIME = 3600  # 1 Stunde
+    SESSION_COOKIE_SECURE = False  # In Production auf True setzen
+    
+    # Flask-Login
+    REMEMBER_COOKIE_DURATION = 7 * 24 * 3600  # 7 Tage
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SECURE = False  # In Production auf True
 
 
 class DevelopmentConfig(Config):
@@ -42,6 +47,9 @@ class DevelopmentConfig(Config):
 
     DEBUG = True
     TESTING = False
+
+    # Fallback SECRET_KEY für Entwicklung (wenn nicht in .env)
+    SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
 
     # Development-spezifische Settings
     SQLALCHEMY_ECHO = True  # SQL-Queries in Console loggen

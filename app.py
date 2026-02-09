@@ -7,9 +7,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import os
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 from flask import Flask, render_template, url_for
+from flask_login import login_required
 
 import models
 from blueprints.analysis import analysis_bp
@@ -21,31 +22,49 @@ from blueprints.participants import participants_bp
 from blueprints.prompts import prompts_bp
 from blueprints.reports import bp as reports_bp
 # Neue Imports
-from extensions import csrf, db, migrate
+from config import DevelopmentConfig, ProductionConfig
+from extensions import csrf, db, login_manager, migrate
 from version import APP_VERSION, get_version_info
 
 # App-Initialisierung
 app = Flask(__name__)
 
-# --- NEUE KONFIGURATION ---
-app.config["SECRET_KEY"] = os.getenv(
-    "SECRET_KEY", "dev-secret-key-change-in-production"
-)
-# Fallback zu SQLite für Tests/CI falls DATABASE_URL nicht gesetzt
-# sqlite:/// mit 3 Slashes wird von Flask relativ zum instance/ Ordner aufgelöst
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
-    "DATABASE_URL", "sqlite:///database.db"
-)
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["WTF_CSRF_ENABLED"] = True
+# --- KONFIGURATION LADEN ---
+env = os.getenv("FLASK_ENV", "development")
+if env == "production":
+    app.config.from_object(ProductionConfig)
+else:
+    app.config.from_object(DevelopmentConfig)
 
 # Erweiterungen initialisieren
 db.init_app(app)
 migrate.init_app(app, db)
 csrf.init_app(app)
+login_manager.init_app(app)
 
+# Flask-Login Konfiguration
+login_manager.login_view = "auth.login"
+login_manager.login_message = "Bitte melden Sie sich an."
+login_manager.login_message_category = "warning"
+
+
+# Flask-Login User Loader
+@login_manager.user_loader
+def load_user(user_id: str) -> models.User:
+    """Lädt den aktuellen User per ID aus der Datenbank."""
+    try:
+        return db.session.get(models.User, int(user_id))
+    except (ValueError, TypeError):
+        return None
+
+
+# Blueprints importieren (nach Login-Manager Setup)
+from blueprints.auth import auth_bp
+from blueprints.admin import admin_bp
 
 # Blueprints registrieren
+app.register_blueprint(auth_bp)
+app.register_blueprint(admin_bp)
 app.register_blueprint(groups_bp)
 app.register_blueprint(participants_bp)
 app.register_blueprint(analysis_bp)
@@ -61,7 +80,7 @@ app.register_blueprint(reports_bp)
 @app.context_processor
 def inject_now():
     """Fügt das aktuelle Jahr und Version in alle Templates ein."""
-    return {"current_year": datetime.now(UTC).year, "app_version": APP_VERSION}
+    return {"current_year": datetime.now(timezone.utc).year, "app_version": APP_VERSION}
 
 
 @app.template_filter("datetimeformat")
@@ -80,6 +99,7 @@ def datetimeformat_filter(value, format="%d.%m.%Y"):
 
 
 @app.route("/")
+@login_required
 def dashboard():
     """Zeigt das Dashboard an."""
     # --- KORRIGIERT: Veraltete Abfragen durch moderne SQLAlchemy-Syntax ersetzt ---
@@ -118,6 +138,7 @@ def dashboard():
 
 
 @app.route("/info")
+@login_required
 def info():
     """Zeigt die Info-Seite an."""
     breadcrumbs = [
@@ -174,10 +195,12 @@ def health():
 from generate_test_data import register_commands
 from load_default_prompts import register_command as register_prompt_command
 from backup_database import register_backup_commands, startup_backup
+from cli_commands import register_auth_commands
 
 register_commands(app)
 register_prompt_command(app)
 register_backup_commands(app)
+register_auth_commands(app)
 
 
 # --- INITIALISIERUNG ---

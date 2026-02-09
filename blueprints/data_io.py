@@ -3,18 +3,20 @@
 
 import csv
 import json
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from io import BytesIO, StringIO
 
 import pandas as pd
 from flask import (Blueprint, Response, flash, jsonify, redirect,
                    render_template, request, url_for)
+from flask_login import login_required, current_user
 
 from blueprints.data_import import import_participants_from_export
 from extensions import db
 from models import Group, Participant
 from utils import validate_upload_file
 from version import EXPORT_SCHEMA_VERSION
+from decorators import admin_required, group_access_required, filter_groups_by_access
 
 data_io_bp = Blueprint("data_io", __name__)
 
@@ -53,7 +55,7 @@ def _create_participant_export_dict(participant):
     participant_export = {
         # Meta-Daten für Import-Kompatibilität
         "_export_schema_version": EXPORT_SCHEMA_VERSION,
-        "_export_timestamp": datetime.now(UTC).isoformat(),
+        "_export_timestamp": datetime.now(timezone.utc).isoformat(),
         # Basis-Daten
         "Name": participant.name,
         "Gruppe": group.name if group else "",
@@ -144,9 +146,11 @@ def generate_csv_export(participants):
 
 
 @data_io_bp.route("/data-entry/rework")
+@login_required
 def data_entry_rework():
     """Zeigt die kombinierte Auswahl- und Eingabeseite für Beobachtungen."""
-    groups = db.session.execute(db.select(Group).order_by(Group.name)).scalars().all()
+    query = filter_groups_by_access(current_user)
+    groups = db.session.scalars(query.order_by(Group.name)).all()
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
         {"text": "Beobachtungsdaten"},
@@ -157,17 +161,23 @@ def data_entry_rework():
 
 
 @data_io_bp.route("/data-entry/search", methods=["GET"])
+@login_required
 def data_entry_search():
     """Zeigt eine Suchseite für Teilnehmer an und verarbeitet die Suche."""
     search_query = request.args.get("query", "").strip()
     results = []
     if search_query:
         search_term = f"%{search_query}%"
+        # Filter by accessible groups
+        query = filter_groups_by_access(current_user)
         results = (
             db.session.execute(
                 db.select(Participant)
                 .join(Group)
-                .filter(Participant.name.ilike(search_term))
+                .filter(
+                    Participant.name.ilike(search_term),
+                    Group.id.in_([g.id for g in db.session.scalars(query).all()])
+                )
                 .order_by(Participant.name)
             )
             .scalars()
@@ -189,6 +199,8 @@ def data_entry_search():
 
 
 @data_io_bp.route("/api/group/<int:group_id>/participants")
+@login_required
+@group_access_required
 def api_get_participants_by_group(group_id):
     """Liefert Teilnehmer einer Gruppe als JSON."""
     group = db.get_or_404(Group, group_id)
@@ -197,6 +209,8 @@ def api_get_participants_by_group(group_id):
 
 
 @data_io_bp.route("/api/participant/<int:participant_id>/observations")
+@login_required
+@group_access_required
 def api_get_observations(participant_id):
     """Liefert die Beobachtungen eines Teilnehmers als JSON."""
     participant = db.get_or_404(Participant, participant_id)
@@ -206,6 +220,8 @@ def api_get_observations(participant_id):
 
 
 @data_io_bp.route("/save_observations/<int:participant_id>", methods=["POST"])
+@login_required
+@group_access_required
 def save_observations_api(participant_id):
     """Speichert die Beobachtungen für einen Teilnehmer (API-Endpunkt)."""
     participant = db.get_or_404(Participant, participant_id)
@@ -221,6 +237,8 @@ def save_observations_api(participant_id):
 
 
 @data_io_bp.route("/import")
+@login_required
+@admin_required
 def import_page():
     """Zeigt die Import-Seite an."""
     breadcrumbs = [
@@ -231,6 +249,8 @@ def import_page():
 
 
 @data_io_bp.route("/import/names", methods=["POST"])
+@login_required
+@admin_required
 def import_names():
     """Importiert Namen aus einer Datei in eine neue Gruppe."""
     group_name = request.form.get("group_name")
@@ -253,7 +273,7 @@ def import_names():
             flash("Die ausgewählte Datei enthält keine gültigen Namen.", "warning")
             return redirect(url_for("data_io.import_page"))
 
-        new_group = Group(name=group_name, date=datetime.now(UTC).date())
+        new_group = Group(name=group_name, date=datetime.now(timezone.utc).date())
         db.session.add(new_group)
         db.session.flush()
 
@@ -274,6 +294,8 @@ def import_names():
 
 
 @data_io_bp.route("/import/full", methods=["POST"])
+@login_required
+@admin_required
 def import_full():
     """Importiert einen vollständigen Export (mit Schema-Versions-Check)."""
     file = request.files.get("full_export_file")
@@ -303,9 +325,12 @@ def import_full():
 
 
 @data_io_bp.route("/export_selection")
+@login_required
+@admin_required
 def export_selection():
     """Zeigt die Seite zur Auswahl der zu exportierenden Teilnehmer an."""
-    groups = db.session.execute(db.select(Group).order_by(Group.name)).scalars().all()
+    query = filter_groups_by_access(current_user)
+    groups = db.session.scalars(query.order_by(Group.name)).all()
 
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
@@ -317,6 +342,8 @@ def export_selection():
 
 
 @data_io_bp.route("/export_data", methods=["POST"])
+@login_required
+@admin_required
 def export_data():
     """Exportiert die ausgewählten Teilnehmerdaten als Excel oder CSV."""
     select_all = request.form.get("select_all_data") == "true"
@@ -351,7 +378,7 @@ def export_data():
             mimetype = "text/csv"
             extension = "csv"
 
-        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         filename = f"staerkenanalyse_export_{timestamp}.{extension}"
         return Response(
             output,

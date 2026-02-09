@@ -11,7 +11,8 @@
 # - 0.2.0 (2026-02-07): Report-System mit PDF-Generierung
 # - 0.3.0 (2026-02-07): Umfassende Test-Suite + CI/CD-Pipeline
 # - 0.4.0 (2026-02-08): Report-Konfiguration + Backup-System + Prompt-Management
-APP_VERSION = "0.4.0"
+# - 1.0.0 (2026-02-09): Phase 1 COMPLETE - Benutzerverwaltung + Sicherheitskonzept
+APP_VERSION = "1.0.0"
 
 # Export-Schema-Version (unabhängig von App-Version)
 # Ändert sich nur bei Änderungen der CSV/Excel-Export-Struktur

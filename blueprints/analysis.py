@@ -14,12 +14,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 from flask import (Blueprint, Response, flash, jsonify, redirect,
                    render_template, request, url_for)
+from flask_login import login_required, current_user
 from weasyprint import HTML
 
 from extensions import csrf, db
 from ki_services import generate_report_with_ai
 from models import ExplanationBlock, Group, Participant, Prompt, SelfAssessment
 from utils import clean_json_response, get_file_content, sanitize_html
+from decorators import admin_required, group_access_required, filter_groups_by_access
 
 analysis_bp = Blueprint("analysis", __name__)
 
@@ -146,6 +148,8 @@ def _normalize_ki_data(ki_data):
 
 
 @analysis_bp.route("/edit_report/<int:participant_id>")
+@login_required
+@group_access_required
 def edit_report(participant_id):
     """Zeigt die bearbeitbare Version des Berichts an."""
     participant = db.get_or_404(Participant, participant_id)
@@ -208,6 +212,8 @@ def edit_report(participant_id):
 
 
 @analysis_bp.route("/save_report/<int:participant_id>", methods=["POST"])
+@login_required
+@group_access_required
 @csrf.exempt
 def save_report(participant_id):
     """Speichert bearbeitete Berichtsdaten (KI-Analyse)."""
@@ -239,6 +245,8 @@ def save_report(participant_id):
 
 
 @analysis_bp.route("/bericht/<int:participant_id>/pdf")
+@login_required
+@group_access_required
 def bericht_pdf(participant_id):
     """Generiert eine PDF-Version des Berichts serverseitig."""
     participant = db.get_or_404(Participant, participant_id)
@@ -304,6 +312,8 @@ def bericht_pdf(participant_id):
 
 
 @analysis_bp.route("/ai_analysis/select_group")
+@login_required
+@admin_required
 def ai_analysis_select_group():
     """Zeigt die Seite zur Auswahl der Gruppe für die KI-Analyse an."""
     groups = db.session.execute(db.select(Group).order_by(Group.name)).scalars().all()
@@ -317,6 +327,8 @@ def ai_analysis_select_group():
 
 
 @analysis_bp.route("/ai_analysis/group/<int:group_id>")
+@login_required
+@admin_required
 def ai_analysis_select_participants(group_id):
     """Zeigt die Seite zur Auswahl der Teilnehmer für die KI-Analyse an."""
     group = db.get_or_404(Group, group_id)
@@ -335,6 +347,8 @@ def ai_analysis_select_participants(group_id):
 
 
 @analysis_bp.route("/ai_analysis/configure", methods=["POST"])
+@login_required
+@admin_required
 def configure_batch_ai_analysis():
     """Zeigt die Seite zur Konfiguration der KI-Analyse für ausgewählte Teilnehmer."""
     participant_ids = request.form.getlist("participant_ids")
@@ -376,6 +390,8 @@ def configure_batch_ai_analysis():
 
 
 @analysis_bp.route("/ai_analysis/execute", methods=["POST"])
+@login_required
+@admin_required
 def execute_batch_ai_analysis():
     """Zeigt den Status der KI-Analyse für ausgewählte Teilnehmer an."""
     participant_ids = request.form.getlist("participant_ids")
@@ -419,6 +435,8 @@ def execute_batch_ai_analysis():
 
 
 @analysis_bp.route("/run_ki_analysis/<int:participant_id>", methods=["POST"])
+@login_required
+@admin_required
 def run_ki_analysis(participant_id):
     """Führt die KI-Analyse für einen einzelnen Teilnehmer durch (aus der Dateneingabe)."""
     participant = db.get_or_404(Participant, participant_id)
@@ -522,6 +540,8 @@ def run_ki_analysis(participant_id):
 
 
 @analysis_bp.route("/api/run_single_analysis/<int:participant_id>", methods=["POST"])
+@login_required
+@admin_required
 @csrf.exempt
 def run_single_analysis_api(participant_id):
     """API-Endpunkt, um die KI-Analyse für die Batch-Verarbeitung auszuführen."""
@@ -614,9 +634,11 @@ def run_single_analysis_api(participant_id):
 
 
 @analysis_bp.route("/foreign-assessments")
+@login_required
 def manage_foreign_assessments():
     """Zeigt die Übersicht aller Teilnehmer gruppiert nach Gruppen mit Fremdeinschätzungs-Status an."""
-    groups = db.session.execute(db.select(Group).order_by(Group.name)).scalars().all()
+    query = filter_groups_by_access(current_user)
+    groups = db.session.scalars(query.order_by(Group.name)).all()
 
     groups_with_participants = []
     for group in groups:
@@ -667,9 +689,11 @@ def manage_foreign_assessments():
 
 
 @analysis_bp.route("/final-reports")
+@login_required
 def manage_final_reports():
     """Zeigt die Übersicht aller Teilnehmer gruppiert nach Gruppen mit Abschlussberichts-Status an."""
-    groups = db.session.execute(db.select(Group).order_by(Group.name)).scalars().all()
+    query = filter_groups_by_access(current_user)
+    groups = db.session.scalars(query.order_by(Group.name)).all()
 
     # Gruppiere Participants mit Status-Informationen nach Gruppen
     groups_with_participants = []
@@ -736,6 +760,8 @@ def manage_final_reports():
 
 
 @analysis_bp.route("/final_report/<int:participant_id>")
+@login_required
+@group_access_required
 def final_report(participant_id):
     """Zeigt den Abschlussbericht für einen Teilnehmer an."""
     participant = db.get_or_404(Participant, participant_id)
@@ -749,6 +775,8 @@ def final_report(participant_id):
 
 
 @analysis_bp.route("/final_report/<int:participant_id>/pdf", methods=["POST"])
+@login_required
+@group_access_required
 def final_report_pdf(participant_id):
     """Generiert eine PDF-Version des Abschlussberichts."""
     participant = db.get_or_404(Participant, participant_id)

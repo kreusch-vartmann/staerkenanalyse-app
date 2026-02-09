@@ -1,0 +1,27 @@
+Erstelle basierend auf den folgenden Beobachtungen einen strukturierten Bericht im JSON-Format. Der Bericht muss ausschließlich ein einziges, valides JSON-Objekt sein, ohne jeglichen einleitenden Text oder Code-Blöcke (```json).
+
+{
+  "social_text": "Eine prägnante, stärkebasierte Zusammenfassung der sozialen Kompetenz des Teilnehmers.",
+  "verbal_text": "Eine prägnante, stärkebasierte Zusammenfassung der verbalen Kompetenz des Teilnehmers.",
+  "summary_text": "Eine kurze, stärkebasierte Gesamtzusammenfassung der Schlüsselkompetenzen des Teilnehmers.",
+  "sk_ratings": {
+    "flexibility": 0.0,
+    "team_orientation": 0.0,
+    "process_orientation": 0.0,
+    "results_orientation": 0.0
+  },
+  "vk_ratings": {
+    "flexibility": 0.0,
+    "consulting": 0.0,
+    "objectivity": 0.0,
+    "goal_orientation": 0.0
+  }
+}
+
+Beobachtungen:
+Teilnehmers Vorname: {{first_name}}
+Soziale Kompetenz: {{social_observations}}
+Verbale Kompetenz: {{verbal_observations}}
+
+Zusätzliche Dokumente:
+{{additional_content}}

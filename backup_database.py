@@ -20,7 +20,7 @@ Usage:
 import os
 import shutil
 import json
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from pathlib import Path
 
 import click

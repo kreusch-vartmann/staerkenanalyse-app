@@ -4,17 +4,22 @@
 from datetime import datetime
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask_login import current_user, login_required
 
 from extensions import db
 from models import Group, Participant
+from decorators import admin_required, filter_groups_by_access
 
 groups_bp = Blueprint("groups", __name__)
 
 
 @groups_bp.route("/groups")
+@login_required
 def manage_groups():
     """Zeigt die Seite zur Verwaltung von Gruppen an."""
-    groups = db.session.execute(db.select(Group).order_by(Group.name)).scalars().all()
+    # Filter based on user role: Beobachter only sees assigned groups
+    query = filter_groups_by_access(current_user)
+    groups = db.session.scalars(query.order_by(Group.name)).all()
 
     breadcrumbs = [
         {"link": url_for("dashboard"), "text": "Dashboard"},
@@ -28,9 +33,17 @@ def manage_groups():
 
 
 @groups_bp.route("/group/<int:group_id>/participants")
+@login_required
 def show_group_participants(group_id):
     """Zeigt die Teilnehmer einer bestimmten Gruppe an."""
     group = db.get_or_404(Group, group_id)
+    
+    # Check permission: Admin always allowed, Beobachter only for assigned groups
+    if not current_user.is_admin:
+        if not current_user.groups.filter_by(id=group_id).first():
+            flash("Sie haben keinen Zugriff auf diese Gruppe.", "error")
+            return redirect(url_for("dashboard"))
+    
     participants = group.participants.order_by(Participant.name).all()
 
     breadcrumbs = [
@@ -47,6 +60,8 @@ def show_group_participants(group_id):
 
 
 @groups_bp.route("/group/add", methods=["POST"])
+@login_required
+@admin_required
 def add_group():
     """Verarbeitet das Hinzufügen einer neuen Gruppe aus dem Formular auf der Hauptseite."""
     date_from_str = request.form.get("date_from")
@@ -77,6 +92,8 @@ def add_group():
 
 
 @groups_bp.route("/group/edit/<int:group_id>", methods=["POST"])
+@login_required
+@admin_required
 def edit_group(group_id):
     """Verarbeitet die Aktualisierung einer bestehenden Gruppe aus dem Modal."""
     group_to_edit = db.get_or_404(Group, group_id)
@@ -110,6 +127,8 @@ def edit_group(group_id):
 
 
 @groups_bp.route("/group/delete/<int:group_id>", methods=["POST"])
+@login_required
+@admin_required
 def delete_group(group_id):
     """Entfernt eine Gruppe und alle zugehörigen Teilnehmer."""
     group_to_delete = db.get_or_404(Group, group_id)

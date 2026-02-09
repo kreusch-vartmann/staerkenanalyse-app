@@ -2,7 +2,7 @@
 """Robuste Import-Funktionen mit Schema-Versions-Unterstützung."""
 
 import json
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 import pandas as pd
 from flask import flash

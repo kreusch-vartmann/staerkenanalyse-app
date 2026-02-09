@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}{{ "Benutzer bearbeiten" if user else "Neuer Benutzer" }} - Stärkenanalyse{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <h2>
+                <i class="fas fa-user"></i>
+                {{ "Benutzer bearbeiten" if user else "Neuen Benutzer erstellen" }}
+            </h2>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{% if category == 'error' %}danger{% else %}{{ category }}{% endif %} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endwith %}
+
+            <!-- Form -->
+            <form method="POST" action="{% if user %}{{ url_for('admin.edit_user', user_id=user.id) }}{% else %}{{ url_for('admin.add_user') }}{% endif %}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Persönliche Daten</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">E-Mail</label>
+                            <input 
+                                type="email" 
+                                class="form-control" 
+                                id="email" 
+                                name="email" 
+                                value="{{ user.email if user else '' }}"
+                                {% if user %}readonly{% else %}required{% endif %}
+                            >
+                            {% if user %}
+                                <small class="form-text text-muted">E-Mail kann nicht geändert werden</small>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="first_name" class="form-label">Vorname</label>
+                                <input 
+                                    type="text" 
+                                    class="form-control" 
+                                    id="first_name" 
+                                    name="first_name" 
+                                    value="{{ user.first_name if user else '' }}"
+                                    required
+                                >
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="last_name" class="form-label">Nachname</label>
+                                <input 
+                                    type="text" 
+                                    class="form-control" 
+                                    id="last_name" 
+                                    name="last_name" 
+                                    value="{{ user.last_name if user else '' }}"
+                                    required
+                                >
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rolle -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Berechtigung</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="role" class="form-label">Rolle</label>
+                            <select class="form-select" id="role" name="role" required onchange="toggleGroupSelection()">
+                                <option value="">— Bitte wählen —</option>
+                                {% for role in roles %}
+                                    <option 
+                                        value="{{ role.name }}"
+                                        {% if user and user.role.name == role.name %}selected{% elif not user and role.name == 'beobachter' %}selected{% endif %}
+                                    >
+                                        {{ role.name | upper }} - {{ role.description | default("") }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gruppen (nur für Beobachter) -->
+                <div class="card mb-3" id="groups-section" style="display: none;">
+                    <div class="card-header">
+                        <h5 class="mb-0">Zugeordnete Gruppen</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if groups %}
+                            <div class="row">
+                                {% for group in groups %}
+                                <div class="col-md-6 mb-2">
+                                    <div class="form-check">
+                                        <input 
+                                            class="form-check-input" 
+                                            type="checkbox" 
+                                            id="group_{{ group.id }}" 
+                                            name="groups" 
+                                            value="{{ group.id }}"
+                                            {% if user and group.id in user_group_ids %}checked{% endif %}
+                                        >
+                                        <label class="form-check-label" for="group_{{ group.id }}">
+                                            <strong>{{ group.name }}</strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                {{ group.date_from | datetimeformat if group.date_from else '' }}
+                                                {% if group.date_from and group.date_to %} bis {% endif %}
+                                                {{ group.date_to | datetimeformat if group.date_to else '' }}
+                                            </small>
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted">Noch keine Gruppen verfügbar.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Passwort -->
+                {% if not user %}
+                    <!-- Nur bei Neuanlage: automatisches PW wird generiert -->
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        Das Passwort wird automatisch generiert und angezeigt. Der Benutzer kann es beim ersten Login ändern.
+                    </div>
+                {% else %}
+                    <!-- Beim Bearbeiten: optionales neues PW -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5 class="mb-0">Passwort ändern (optional)</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="new_password" class="form-label">Neues Passwort</label>
+                                <input 
+                                    type="password" 
+                                    class="form-control" 
+                                    id="new_password" 
+                                    name="new_password" 
+                                    minlength="8"
+                                    placeholder="Leer = keine Änderung"
+                                >
+                                <small class="form-text text-muted">
+                                    Lassen Sie das Feld leer, um das Passwort nicht zu ändern.
+                                    Mindestlänge: 8 Zeichen.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Buttons -->
+                <div class="mb-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> {{ "Speichern" if user else "Erstellen" }}
+                    </button>
+                    <a href="{{ url_for('admin.manage_users') }}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Abbrechen
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Info Sidebar -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Hinweise</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Rollen:</h6>
+                    <dl>
+                        <dt><span class="badge bg-danger">ADMIN</span></dt>
+                        <dd>Zugriff auf alle Funktionen, Benutzerverwaltung</dd>
+                        
+                        <dt><span class="badge bg-info">BEOBACHTER</span></dt>
+                        <dd>Zugriff nur auf zugeordnete Gruppen, kann Beobachtungsdaten und Selbsteinschätzungen eingeben</dd>
+                    </dl>
+
+                    <h6 class="mt-4">Passwort:</h6>
+                    <p class="small">
+                        {% if not user %}
+                            Ein sicheres Zufallspasswort (16 Zeichen) wird nach Erstellung angezeigt.
+                        {% else %}
+                            Nach Passwort-Reset wird der Benutzer beim nächsten Login zur Änderung aufgefordert.
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleGroupSelection() {
+    const role = document.getElementById('role').value;
+    const groupsSection = document.getElementById('groups-section');
+    
+    if (role === 'beobachter') {
+        groupsSection.style.display = 'block';
+    } else {
+        groupsSection.style.display = 'none';
+        // Deselect all groups for non-observer roles
+        document.querySelectorAll('input[name="groups"]').forEach(cb => cb.checked = false);
+    }
+}
+
+// Initialisiere beim Laden
+window.addEventListener('DOMContentLoaded', toggleGroupSelection);
+</script>
+
+{% endblock %}

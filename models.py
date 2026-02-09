@@ -3,9 +3,96 @@ Dieses Modul definiert die SQLAlchemy-Datenbankmodelle für die Anwendung.
 Jede Klasse repräsentiert eine Tabelle in der Datenbank.
 """
 
-from datetime import UTC, datetime  # UTC hier importiert
+from datetime import datetime, timezone  # timezone für UTC
+
+from flask_login import UserMixin
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from extensions import db
+
+
+# =============================================================================
+# User Management & Authentication Models
+# =============================================================================
+
+# Many-to-Many Association Table: User ↔ Group
+user_groups = db.Table(
+    "user_groups",
+    db.Column("user_id", db.Integer, db.ForeignKey("users.id"), primary_key=True),
+    db.Column("group_id", db.Integer, db.ForeignKey("groups.id"), primary_key=True),
+)
+
+
+class Role(db.Model):
+    """Rollen für die Zugriffskontrolle (RBAC)."""
+
+    __tablename__ = "roles"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False, unique=True)
+    description = db.Column(db.Text, nullable=True)
+
+    # Relationship
+    users = db.relationship("User", back_populates="role")
+
+    def __repr__(self):
+        return f"<Role {self.name}>"
+
+
+class User(UserMixin, db.Model):
+    """Benutzer mit Login-Funktionalität (implementiert UserMixin von Flask-Login)."""
+
+    __tablename__ = "users"
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), nullable=False, unique=True, index=True)
+    password_hash = db.Column(db.String(255), nullable=False)
+    first_name = db.Column(db.String(100), nullable=True)
+    last_name = db.Column(db.String(100), nullable=True)
+
+    # Foreign Key to Role
+    role_id = db.Column(db.Integer, db.ForeignKey("roles.id"), nullable=False)
+
+    # Status
+    is_active = db.Column(db.Boolean, default=True)
+    force_password_change = db.Column(db.Boolean, default=True)
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc)
+    )
+    last_login = db.Column(db.DateTime, nullable=True)
+
+    # Relationships
+    role = db.relationship("Role", back_populates="users")
+    groups = db.relationship(
+        "Group",
+        secondary=user_groups,
+        backref="assigned_users",
+        lazy="dynamic",
+    )
+
+    def set_password(self, password: str) -> None:
+        """Hasht das Passwort und speichert es."""
+        self.password_hash = generate_password_hash(password, method="pbkdf2:sha256")
+
+    def check_password(self, password: str) -> bool:
+        """Prüft ob das gegebene Passwort dem Hash entspricht."""
+        return check_password_hash(self.password_hash, password)
+
+    @property
+    def is_admin(self) -> bool:
+        """Prüft ob der Benutzer Admin ist."""
+        return self.role.name == "admin"
+
+    @property
+    def full_name(self) -> str:
+        """Gibt den vollständigen Namen zurück."""
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        return self.email
+
+    def __repr__(self):
+        return f"<User {self.email} ({self.role.name})>"
 
 
 class Group(db.Model):
@@ -46,9 +133,9 @@ class Participant(db.Model):
     ki_raw_response = db.Column(db.Text, nullable=True)
     footer_data = db.Column(db.Text, nullable=True)
 
-    created_at = db.Column(db.DateTime, default=datetime.now(UTC))
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     updated_at = db.Column(
-        db.DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC)
+        db.DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc)
     )
 
     # Relationships
@@ -67,9 +154,9 @@ class Prompt(db.Model):
     name = db.Column(db.String(100), nullable=False, unique=True)
     description = db.Column(db.Text, nullable=True)
     content = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.now(UTC))
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     updated_at = db.Column(
-        db.DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC)
+        db.DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc)
     )
 
 
@@ -82,9 +169,9 @@ class SelfAssessment(db.Model):
         db.Integer, db.ForeignKey("participants.id"), nullable=False, unique=True
     )
 
-    created_at = db.Column(db.DateTime, default=datetime.now(UTC))
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     updated_at = db.Column(
-        db.DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC)
+        db.DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc)
     )
 
     # Relationship zum Teilnehmer
@@ -97,9 +184,9 @@ class ExplanationBlock(db.Model):
     title = db.Column(db.String(200), nullable=False)
     content = db.Column(db.Text, nullable=False)
     order = db.Column(db.Integer, default=0)
-    created_at = db.Column(db.DateTime, default=datetime.now(UTC))
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     updated_at = db.Column(
-        db.DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC)
+        db.DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc)
     )
 
 
@@ -125,9 +212,9 @@ class ReportTemplate(db.Model):
     design_config = db.Column(db.Text, nullable=False)  # JSON
 
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.now(UTC))
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     updated_at = db.Column(
-        db.DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC)
+        db.DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc)
     )
 
     # Relationships
@@ -149,7 +236,7 @@ class CompanyLogo(db.Model):
     )  # z.B. "uploads/logos/company_logo.png"
     filename = db.Column(db.String(100), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
-    uploaded_at = db.Column(db.DateTime, default=datetime.now(UTC))
+    uploaded_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
     # Relationships
     report_configurations = db.relationship(
@@ -171,9 +258,9 @@ class ClientLogo(db.Model):
         db.String(255), nullable=False
     )  # z.B. "uploads/logos/client_xyz_123.png"
     filename = db.Column(db.String(100), nullable=False)
-    uploaded_at = db.Column(db.DateTime, default=datetime.now(UTC))
+    uploaded_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     updated_at = db.Column(
-        db.DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC)
+        db.DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc)
     )
 
     # Relationships
@@ -237,9 +324,9 @@ class ReportConfiguration(db.Model):
     # }
     modules_config = db.Column(db.Text, nullable=False)  # JSON
 
-    created_at = db.Column(db.DateTime, default=datetime.now(UTC))
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     updated_at = db.Column(
-        db.DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC)
+        db.DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc)
     )
 
     # Relationships
@@ -265,4 +352,4 @@ class SignatureImage(db.Model):
     )  # z.B. "uploads/signatures/sig_fe.jpg"
     filename = db.Column(db.String(100), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
-    uploaded_at = db.Column(db.DateTime, default=datetime.now(UTC))
+    uploaded_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))

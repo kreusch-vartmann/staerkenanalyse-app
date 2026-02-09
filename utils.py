@@ -4,6 +4,8 @@ import io
 import mimetypes
 import os
 import re
+import secrets
+import string
 
 import bleach
 from docx import Document
@@ -161,3 +163,33 @@ def clean_json_response(raw_response):
         raw_response = raw_response.rsplit("```", 1)[0]
     cleaned_response = re.sub(r"[\r\n]+", "", raw_response)
     return cleaned_response.strip()
+
+
+def generate_secure_password(length: int = 16) -> str:
+    """
+    Generiert ein kryptographisch sicheres Zufallspasswort.
+    
+    Verwendet Python's `secrets`-Modul (cryptographically strong random generator).
+    Enthält Großbuchstaben, Kleinbuchstaben, Ziffern und Sonderzeichen.
+    
+    Args:
+        length: Länge des Passworts (Standard: 16 Zeichen ~95-100 Bit Entropie)
+    
+    Returns:
+        str: Ein 16-Zeichen-Passwort mit hoher Entropie
+    
+    Beispiel:
+        password = generate_secure_password()
+        # Output: "k7$Xp2mR!wQ9nL4s" (zufällig generiert)
+    """
+    # Character set: A-Z, a-z, 0-9, Sonderzeichen
+    chars = string.ascii_letters + string.digits + string.punctuation
+    
+    # Entferne problematische Sonderzeichen die in manchen Kontexten Probleme machen
+    # aber behalte genug für Sicherheit (nicht " oder \ oder backtick)
+    chars = "".join(c for c in chars if c not in '"\'\\`')
+    
+    # Generiere sicheres Passwort
+    password = "".join(secrets.choice(chars) for _ in range(length))
+    
+    return password

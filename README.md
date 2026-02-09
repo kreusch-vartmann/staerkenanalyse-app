@@ -1,9 +1,10 @@
 # Stärkenanalyse-App
 
-**Version:** 0.4.0  
-**Status:** Report-System mit Konfiguration & Backup-System ✅
+**Version:** 1.0.0  
+**Status:** Phase 1 Complete - Production Ready ✅  
+**Benutzerverwaltung & Sicherheitskonzept:** Implementiert und getestet
 
-Eine lokale Flask-Webanwendung zur Verwaltung von Gruppen und Teilnehmenden und zur Durchführung von KI-gestützten Stärkenanalysen.
+Eine lokale Flask-Webanwendung zur Verwaltung von Gruppen und Teilnehmenden mit rollenbasierter Zugriffskontrolle und zur Durchführung von KI-gestützten Stärkenanalysen.
 
 ## Kurze Zusammenfassung
 - Backend: Flask (Blueprint-basierte Struktur in `blueprints/`)
