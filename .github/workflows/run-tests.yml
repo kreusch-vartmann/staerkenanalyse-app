@@ -47,35 +47,33 @@ jobs:
         pip install -r requirements.txt
         pip install -r requirements-test.txt
     
-    - name: Set environment variables
-      run: |
-        echo "FLASK_ENV=testing" >> $GITHUB_ENV
-        echo "DATABASE_URL=sqlite:///test.db" >> $GITHUB_ENV
-        echo "SECRET_KEY=test-secret-key-for-ci" >> $GITHUB_ENV
-        echo "WTF_CSRF_ENABLED=False" >> $GITHUB_ENV
-    
     - name: Initialize database
-      run: |
-        python -c "
-import os
-os.environ['FLASK_ENV'] = 'testing'
-os.environ['DATABASE_URL'] = 'sqlite:///test.db'
-os.environ['SECRET_KEY'] = 'test-key'
-from app import app, db
-with app.app_context():
-    db.create_all()
-    print('✅ Database initialized')
-        "
+      run: python scripts/init_test_db.py
     
     - name: Run Unit Tests
+      env:
+        FLASK_ENV: testing
+        DATABASE_URL: sqlite:///test.db
+        SECRET_KEY: test-secret-key-ci
+        WTF_CSRF_ENABLED: 'False'
       run: |
         pytest tests/unit/ -v --tb=short
     
     - name: Run Integration Tests
+      env:
+        FLASK_ENV: testing
+        DATABASE_URL: sqlite:///test.db
+        SECRET_KEY: test-secret-key-ci
+        WTF_CSRF_ENABLED: 'False'
       run: |
         pytest tests/integration/ -v --tb=short
     
     - name: Run Full Test Suite with Coverage
+      env:
+        FLASK_ENV: testing
+        DATABASE_URL: sqlite:///test.db
+        SECRET_KEY: test-secret-key-ci
+        WTF_CSRF_ENABLED: 'False'
       run: |
         pytest --cov=. --cov-report=xml --cov-report=html --cov-report=term -v
     
