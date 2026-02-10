@@ -1,19 +1,27 @@
 # CONTEXT.md - Stärkenanalyse-App
 
-**Automatisch generiert am**: 2026-02-06 17:02:58
+**Automatisch aktualisiert am**: 2026-02-10 (Version 1.1.0)
 
 ---
 
 ## 📋 Projektübersicht
 
+**Version**: 1.1.0  
+**Status**: Phase 2 Development - KI-Gym & Task Management ✅
+
 **Technologie-Stack**:
-- **Backend**: Python 3.12.12, Flask 3.1.2
+- **Backend**: Python 3.11+, Flask 3.1.2
 - **ORM**: SQLAlchemy 2.0.28 + Flask-SQLAlchemy 3.0.4
 - **Database**: SQLite (via DATABASE_URL env var)
 - **KI-Integration**: Mistral API (mistralai==0.4.2), Google Generative AI
-- **Frontend**: Vanilla JavaScript, Chart.js, Tailwind CSS, Bootstrap 4
+- **Frontend**: Vanilla JavaScript, Chart.js, Tailwind CSS, Bootstrap 5, Quill.js
 - **PDF-Generation**: WeasyPrint
 - **Migrations**: Flask-Migrate 4.0.4 (Alembic)
+
+**Neue Komponenten in v1.1.0**:
+- **KI-Gym Learning System**: Pattern-Extraktion aus Content-Edits, automatische Prompt-Optimierung
+- **Beobachtungsaufgaben-Verwaltung**: Task-Library mit KI-Generierung und Versions-Management
+- **KI-Modell-Auswahl**: Reusable Modal für Mistral vs. Gemini Auswahl
 
 ---
 

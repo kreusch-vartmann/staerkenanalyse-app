@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Aufgabe generieren{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="card-title mb-0">⚡ KI generiert Aufgabenvorschlag...</h4>
+                </div>
+                
+                <div class="card-body p-5">
+                    <!-- KI-Auswahl -->
+                    <div id="selectSection">
+                        <h5 class="mb-4">Starten Sie die Generierung</h5>
+                        
+                        <form id="generateForm" method="POST" class="mb-4">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="ki_model" id="ki_model_input" value="mistral">
+                        </form>
+                        
+                        <button type="button" class="btn btn-primary btn-lg" onclick="openGenerationModal()">
+                            Generierung starten
+                        </button>
+                    </div>
+                    
+                    <!-- Loading Animation (versteckt bis Generierung startet) -->
+                    <div id="loadingSection" style="display: none; text-center;">
+                        <div class="spinner-border text-primary mb-4" role="status" style="width: 4rem; height: 4rem;">
+                            <span class="visually-hidden">Wird geladen...</span>
+                        </div>
+                        
+                        <h5 class="mb-3">KI-Generierung läuft...</h5>
+                        <p class="text-muted mb-4">
+                            <span id="kiModelDisplay"></span> erstellt einen professionellen Aufgabenvorschlag basierend auf:
+                        </p>
+                        
+                        <div class="row text-start mt-4">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6 class="fw-bold">📊 Metadaten</h6>
+                                    <small class="text-muted">
+                                        <div>Bereich: <strong>{{ task.observation_area }}</strong></div>
+                                        <div>Teilnehmer: <strong>{{ task.participant_count }}</strong></div>
+                                        <div>Dauer: <strong>{{ task.duration_minutes }} Min</strong></div>
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6 class="fw-bold">🧠 KI-Kontext</h6>
+                                    <small class="text-muted">
+                                        <div>✓ Best-Practice Knowledge</div>
+                                        <div>✓ Referenz-Aufgaben</div>
+                                        <div>✓ Stärken-Assessment fokussiert</div>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <small class="text-muted d-block">
+                                Dies kann 30-60 Sekunden dauern...
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tipps -->
+            <div class="card shadow-sm mt-4 border-info">
+                <div class="card-header bg-light">
+                    <h6 class="card-title mb-0">💡 Nächste Schritte</h6>
+                </div>
+                <div class="card-body small">
+                    <ol class="mb-0">
+                        <li>KI-Vorschlag wird angezeigt</li>
+                        <li>Im Editor anpassen und verfeinern</li>
+                        <li>Im Chat-Panel mit KI iterieren (optional)</li>
+                        <li>Speichern und Aufgabe ist einsatzbereit</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include 'partials/_ki_model_modal.html' %}
+
+<script>
+function openGenerationModal() {
+    openKiModelModal(function(selectedModel) {
+        startGenerationWithModel(selectedModel);
+    });
+}
+
+function startGenerationWithModel(kiModel) {
+    const kiName = {
+        "mistral": "Mistral Large",
+        "gemini": "Google Gemini"
+    }[kiModel];
+    
+    // Set ki_model in form
+    document.getElementById('ki_model_input').value = kiModel;
+    
+    // Show loading screen with KI name
+    document.getElementById('selectSection').style.display = 'none';
+    document.getElementById('loadingSection').style.display = 'block';
+    document.getElementById('kiModelDisplay').textContent = kiName;
+    
+    // Submit form
+    setTimeout(function() {
+        document.getElementById('generateForm').submit();
+    }, 500);
+}
+</script>
+
+<style>
+.spinner-border {
+    color: #0d6efd !important;
+}
+</style>
+{% endblock %}

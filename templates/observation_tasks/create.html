@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Neue Beobachtungsaufgabe{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">
+                        📝 Neue Beobachtungsaufgabe erstellen
+                    </h3>
+                </div>
+                
+                <div class="card-body">
+                    <form method="POST" class="needs-validation" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <!-- Beobachtungsbereich -->
+                        <div class="mb-4">
+                            <label for="observation_area" class="form-label fw-bold">
+                                Beobachtungsbereich
+                            </label>
+                            <select class="form-select form-select-lg" id="observation_area" 
+                                    name="observation_area" required>
+                                <option value="">-- Bitte wählen --</option>
+                                {% for area in observation_areas %}
+                                <option value="{{ area }}">
+                                    {% if area == "Soziale Kompetenzen" %}
+                                        👥 Soziale Kompetenzen
+                                    {% elif area == "Verbale Kompetenzen" %}
+                                        💬 Verbale Kompetenzen
+                                    {% else %}
+                                        {{ area }}
+                                    {% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted d-block mt-2">
+                                <strong>Soziale Kompetenzen:</strong> Teamfähigkeit, Kooperation, Empathie<br>
+                                <strong>Verbale Kompetenzen:</strong> Argumentation, Überzeugung, Präsentation
+                            </small>
+                        </div>
+                        
+                        <!-- Teilnehmerzahl -->
+                        <div class="mb-4">
+                            <label for="participant_count" class="form-label fw-bold">
+                                Teilnehmerzahl
+                            </label>
+                            <div class="input-group input-group-lg">
+                                <button class="btn btn-outline-secondary" type="button" onclick="decreaseCount()">−</button>
+                                <input type="number" class="form-control text-center" id="participant_count" 
+                                       name="participant_count" value="4" min="1" max="10" required>
+                                <button class="btn btn-outline-secondary" type="button" onclick="increaseCount()">+</button>
+                            </div>
+                            <small class="text-muted d-block mt-2">Empfohlen: 3-6 Personen</small>
+                        </div>
+                        
+                        <!-- Dauer -->
+                        <div class="mb-4">
+                            <label for="duration_minutes" class="form-label fw-bold">
+                                Dauer (Minuten)
+                            </label>
+                            <input type="number" class="form-control form-control-lg" id="duration_minutes" 
+                                   name="duration_minutes" value="30" min="5" max="120" required>
+                            <small class="text-muted d-block mt-2">Typisch: 30-45 Minuten</small>
+                        </div>
+                        
+                        <!-- KI-Optionen -->
+                        <div class="mb-4 p-3 bg-light rounded">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="use_example" 
+                                       name="use_example" checked>
+                                <label class="form-check-label" for="use_example">
+                                    <strong>KI mit Referenz-Aufgaben trainieren</strong><br>
+                                    <small class="text-muted">Die KI verwendet ähnliche Best-Practice Aufgaben als Vorlage</small>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Buttons -->
+                        <div class="d-grid gap-2 d-sm-flex justify-content-sm-end mt-4">
+                            <a href="{{ url_for('observation_tasks.task_library') }}" class="btn btn-outline-secondary btn-lg">
+                                Abbrechen
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                ✓ Aufgabe erstellen und KI generieren
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar mit Beispielen -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-info mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">💡 Beispiel-Aufgaben</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% for key, example in example_tasks.items() %}
+                    <div class="border-bottom p-3" style="border-bottom: 1px solid #dee2e6;">
+                        <h6 class="fw-bold mb-2">
+                            {% if example.observation_area == "Soziale Kompetenzen" %}
+                                👥
+                            {% else %}
+                                💬
+                            {% endif %}
+                            {{ example.title }}
+                        </h6>
+                        <p class="small mb-1">
+                            <span class="badge bg-secondary">{{ example.observation_area }}</span>
+                        </p>
+                        <p class="small text-muted mb-0">
+                            👥 {{ example.participant_count }} | ⏱️ {{ example.duration_minutes }} Min
+                        </p>
+                        <p class="small mt-2 mb-0">
+                            <strong>Fokus:</strong> {{ example.observation_focus }}
+                        </p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="card shadow-sm border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">✨ Tipp für beste Ergebnisse</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="small">
+                        <li>Wähle den <strong>genauen</strong> Beobachtungsbereich</li>
+                        <li>Teilnehmerzahl entsprechend deinen Gruppen</li>
+                        <li>KI-Training mit Beispielen aktivieren</li>
+                        <li>Generierte Aufgabe im Editor anpassen</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function decreaseCount() {
+    const input = document.getElementById('participant_count');
+    if (input.value > 1) input.value = parseInt(input.value) - 1;
+}
+
+function increaseCount() {
+    const input = document.getElementById('participant_count');
+    if (input.value < 10) input.value = parseInt(input.value) + 1;
+}
+</script>
+
+<style>
+.form-select-lg, .form-control-lg {
+    padding: 0.75rem 1rem;
+    font-size: 1.1rem;
+}
+
+.card {
+    border-radius: 0.5rem;
+}
+
+.card-header {
+    border-radius: 0.5rem 0.5rem 0 0 !important;
+}
+</style>
+{% endblock %}

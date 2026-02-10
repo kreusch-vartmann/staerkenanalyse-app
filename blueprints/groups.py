@@ -3,11 +3,11 @@
 
 from datetime import datetime
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, redirect, render_template, request, url_for, jsonify
 from flask_login import current_user, login_required
 
 from extensions import db
-from models import Group, Participant
+from models import Group, Participant, Task
 from decorators import admin_required, filter_groups_by_access
 
 groups_bp = Blueprint("groups", __name__)
@@ -138,3 +138,106 @@ def delete_group(group_id):
 
     flash("Gruppe und alle zugehörigen Teilnehmer wurden gelöscht.", "success")
     return redirect(url_for("groups.manage_groups"))
+
+
+# ============================================================================
+# API Routes für Task-Zuordnung per Drag & Drop
+# ============================================================================
+
+@groups_bp.route("/api/tasks/available")
+@login_required
+def get_available_tasks():
+    """Gibt alle verfügbaren Aufgaben als JSON zurück (für Drag & Drop UI)."""
+    tasks = db.session.scalars(db.select(Task).filter_by(is_active=True).order_by(Task.observation_area, Task.title)).all()
+    
+    return jsonify({
+        "tasks": [
+            {
+                "id": task.id,
+                "title": task.title,
+                "observation_area": task.observation_area,
+                "participant_count": task.participant_count,
+                "duration_minutes": task.duration_minutes,
+            }
+            for task in tasks
+        ]
+    })
+
+
+@groups_bp.route("/api/groups/<int:group_id>/tasks", methods=["POST"])
+@login_required
+@admin_required
+def assign_task_to_group(group_id):
+    """Ordnet eine Aufgabe einer Gruppe zu. Max. 1 pro Beobachtungsbereich."""
+    group = db.get_or_404(Group, group_id)
+    data = request.get_json()
+    task_id = data.get("task_id")
+    
+    if not task_id:
+        return jsonify({"error": "task_id ist erforderlich"}), 400
+    
+    task = db.get_or_404(Task, task_id)
+    
+    # Prüfe ob die Aufgabe bereits zugeordnet ist
+    if task in group.tasks:
+        return jsonify({"error": "Aufgabe ist bereits dieser Gruppe zugeordnet"}), 400
+    
+    # Prüfe ob bereits eine Aufgabe für diesen Beobachtungsbereich zugeordnet ist
+    existing_task = group.tasks.filter_by(observation_area=task.observation_area).first()
+    if existing_task:
+        return jsonify({
+            "error": f"Für den Beobachtungsbereich '{task.observation_area}' ist bereits die Aufgabe '{existing_task.title}' zugeordnet. Pro Bereich kann nur eine Aufgabe zugewiesen werden."
+        }), 400
+    
+    # Ordne zu
+    group.tasks.append(task)
+    db.session.commit()
+    
+    return jsonify({
+        "success": True,
+        "task": {
+            "id": task.id,
+            "title": task.title,
+            "observation_area": task.observation_area,
+            "participant_count": task.participant_count,
+            "duration_minutes": task.duration_minutes,
+        }
+    })
+
+
+@groups_bp.route("/api/groups/<int:group_id>/tasks/<int:task_id>", methods=["DELETE"])
+@login_required
+@admin_required
+def unassign_task_from_group(group_id, task_id):
+    """Entfernt die Zuordnung einer Aufgabe von einer Gruppe."""
+    group = db.get_or_404(Group, group_id)
+    task = db.get_or_404(Task, task_id)
+    
+    if task not in group.tasks:
+        return jsonify({"error": "Diese Aufgabe ist nicht dieser Gruppe zugeordnet"}), 404
+    
+    group.tasks.remove(task)
+    db.session.commit()
+    
+    return jsonify({"success": True})
+
+
+@groups_bp.route("/api/groups/<int:group_id>/tasks")
+@login_required
+def get_group_tasks(group_id):
+    """Gibt alle Aufgaben einer Gruppe als JSON zurück."""
+    group = db.get_or_404(Group, group_id)
+    tasks = group.tasks.all()
+    
+    return jsonify({
+        "tasks": [
+            {
+                "id": task.id,
+                "title": task.title,
+                "observation_area": task.observation_area,
+                "participant_count": task.participant_count,
+                "duration_minutes": task.duration_minutes,
+            }
+            for task in tasks
+        ]
+    })

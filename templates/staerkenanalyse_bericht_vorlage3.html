@@ -16,7 +16,7 @@
             <i class="fas fa-eye me-2"></i>Beobachtungen
         </button>
 
-        <a href="{{ url_for('analysis.ai_analysis_select_participants', group_id=group.id) }}" class="py-2 px-5 rounded-md text-white bg-green-600 hover:bg-green-700 font-semibold">
+        <a href="{{ url_for('analysis.ai_analysis_select_participants', group_id=group.id, preselect=participant.id) }}" class="py-2 px-5 rounded-md text-white bg-green-600 hover:bg-green-700 font-semibold">
             <i class="fas fa-robot me-2"></i>NEU!
         </a>
 
@@ -124,6 +124,64 @@
                 <p><strong>Ort:</strong> <span contenteditable="true" data-key="footer_location" class="editable-field">{{ (participant.footer_data or {}).footer_location or current_location }}</span></p>
                 <p><strong>Datum:</strong> <span contenteditable="true" data-key="footer_date" class="editable-field">{{ (participant.footer_data or {}).footer_date or current_date }}</span></p>
             </div>
+            
+            <!-- KI Model Badge -->
+            {% if participant.ki_model %}
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <p class="text-xs text-gray-500 mb-2">KI-Analyse Informationen:</p>
+                <div class="space-y-2">
+                    <!-- Modell -->
+                    <div class="flex items-center gap-2">
+                        {% if participant.ki_model == 'mistral' %}
+                            <svg width="20" height="20" viewBox="0 0 100 100" style="display: inline-block;">
+                                <rect x="0" y="0" width="35" height="35" fill="#FFE500"/>
+                                <rect x="35" y="0" width="30" height="35" fill="#FFFFFF"/>
+                                <rect x="65" y="0" width="35" height="35" fill="#FFE500"/>
+                                <rect x="0" y="35" width="50" height="30" fill="#FFA500"/>
+                                <rect x="50" y="35" width="50" height="30" fill="#FFA500"/>
+                                <rect x="0" y="65" width="30" height="35" fill="#FF6600"/>
+                                <rect x="30" y="65" width="40" height="35" fill="#FFFFFF"/>
+                                <rect x="70" y="65" width="30" height="35" fill="#FF6600"/>
+                            </svg>
+                            <span class="text-sm font-medium text-gray-700">Mistral Large</span>
+                        {% elif participant.ki_model == 'gemini' %}
+                            <svg width="20" height="20" viewBox="0 0 100 100" style="display: inline-block;">
+                                <defs>
+                                    <linearGradient id="geminiGradFooter" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#FF6B9D;stop-opacity:1" />
+                                        <stop offset="25%" style="stop-color:#C239B3;stop-opacity:1" />
+                                        <stop offset="50%" style="stop-color:#4285F4;stop-opacity:1" />
+                                        <stop offset="75%" style="stop-color:#00D4AA;stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:#FFC107;stop-opacity:1" />
+                                    </linearGradient>
+                                </defs>
+                                <path d="M50,5 L60,35 L95,50 L60,65 L50,95 L40,65 L5,50 L40,35 Z" fill="url(#geminiGradFooter)"/>
+                            </svg>
+                            <span class="text-sm font-medium text-gray-700">Google Gemini</span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Erstellungsdatum -->
+                    {% if ki_report_created_at %}
+                    <div class="flex items-center gap-2 text-xs text-gray-600">
+                        <i class="fas fa-calendar-alt" style="width: 20px; text-align: center;"></i>
+                        <span>Erstellt: {{ ki_report_created_at }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Bearbeitet-Status -->
+                    <div class="flex items-center gap-2 text-xs">
+                        {% if ki_report_edited %}
+                            <i class="fas fa-edit text-amber-600" style="width: 20px; text-align: center;"></i>
+                            <span class="text-amber-700 font-medium">Manuell bearbeitet</span>
+                        {% else %}
+                            <i class="fas fa-robot text-blue-600" style="width: 20px; text-align: center;"></i>
+                            <span class="text-blue-700 font-medium">Unbearbeitet (KI-Original)</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 

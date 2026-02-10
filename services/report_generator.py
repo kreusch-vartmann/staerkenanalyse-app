@@ -25,7 +25,6 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 from flask import render_template_string
-from weasyprint import CSS, HTML
 
 from models import (ClientLogo, CompanyLogo, ExplanationBlock, Group,
                     Participant, ReportConfiguration, ReportTemplate,
@@ -913,6 +912,9 @@ class ReportGenerator:
 
     def to_pdf(self, mode: str = "combined") -> bytes:
         """Konvertiert HTML zu PDF."""
+        # Lazy-load WeasyPrint um App-Startup nicht zu blockieren
+        from weasyprint import HTML
+        
         html_string = self.build_html(mode=mode)
         pdf_bytes = HTML(
             string=html_string, base_url=str(self.project_root)

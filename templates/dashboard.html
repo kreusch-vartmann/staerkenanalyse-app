@@ -11,7 +11,7 @@
     
     <div class="bg-white p-6 rounded-lg shadow-md">
         <h3 class="text-lg font-semibold text-gray-600 mb-4">Projektübersicht</h3>
-        <div class="flex justify-around text-center">
+        <div class="grid grid-cols-3 gap-4 text-center">
             <div>
                 <p class="text-4xl font-bold text-blue-600">{{ stats.total_groups }}</p>
                 <p class="text-sm text-gray-500">Gruppen</p>
@@ -24,6 +24,21 @@
                 <p class="text-4xl font-bold text-green-600">{{ stats.completed_analyses }}</p>
                 <p class="text-sm text-gray-500">Analysen</p>
             </div>
+            {% if current_user.is_admin and ai_gym_stats %}
+            <div class="border-t pt-4 col-span-3"></div>
+            <div>
+                <p class="text-4xl font-bold text-purple-600">{{ ai_gym_stats.total_raw_responses }}</p>
+                <p class="text-sm text-gray-500">🏋️ KI-Generierungen</p>
+            </div>
+            <div>
+                <p class="text-4xl font-bold text-pink-600">{{ ai_gym_stats.edited_responses }}</p>
+                <p class="text-sm text-gray-500">✏️ Bearbeitet</p>
+            </div>
+            <div>
+                <p class="text-4xl font-bold text-indigo-600">{{ ai_gym_stats.active_rules }}</p>
+                <p class="text-sm text-gray-500">✓ Aktive Rules</p>
+            </div>
+            {% endif %}
         </div>
     </div>
 
@@ -44,6 +59,7 @@
             <p class="text-sm text-gray-500">Noch keine Teilnehmer bearbeitet.</p>
         {% endif %}
     </div>
+    
 </div>
 
 <h2 class="text-2xl font-bold text-gray-700 mb-4">Workflow</h2>
@@ -93,11 +109,21 @@
             <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">🔄 Prompts</h5>
             <p class="font-normal text-gray-700">KI-Analyseanweisungen erstellen, bearbeiten und verwalten.</p>
         </a>
-
+        <a href="{{ url_for('observation_tasks.task_library') }}" class="block p-6 bg-white border border-teal-200 rounded-lg shadow hover:bg-teal-100">
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">📚 Beobachtungsaufgaben</h5>
+            <p class="font-normal text-gray-700">AC-Aufgaben erstellen, verwalten und mit KI verfeinern.</p>
+        </a>
         <a href="{{ url_for('explanation_blocks.manage_explanation_blocks') }}" class="block p-6 bg-white border border-orange-200 rounded-lg shadow hover:bg-orange-100">
             <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">📝 Text</h5>
             <p class="font-normal text-gray-700">Erklärungstexte für Abschlussberichte erstellen und verwalten.</p>
         </a>
+        
+        {% if current_user.is_admin %}
+        <a href="{{ url_for('admin.ki_gym_dashboard') }}" class="block p-6 bg-white border border-purple-200 rounded-lg shadow hover:bg-purple-50 transition-colors">
+            <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">🏋️ KI-Gym Training</h5>
+            <p class="font-normal text-gray-700">KI-System durch User-Edits trainieren und kontinuierlich verbessern.</p>
+        </a>
+        {% endif %}
 
         <a href="{{ url_for('data_io.import_page') }}" class="block p-6 bg-white border border-blue-200 rounded-lg shadow hover:bg-blue-100">
             <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900">📥 Import</h5>

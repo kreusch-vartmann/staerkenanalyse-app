@@ -331,8 +331,8 @@ def _create_group(index):
 
     group = Group(
         name=f"Trainingsgruppe {season} {year}",
-        date_from=datetime.now(UTC).date() - timedelta(days=random.randint(30, 180)),
-        date_to=datetime.now(UTC).date() + timedelta(days=random.randint(7, 60)),
+        date_from=datetime.now(timezone.utc).date() - timedelta(days=random.randint(30, 180)),
+        date_to=datetime.now(timezone.utc).date() + timedelta(days=random.randint(7, 60)),
         location=city,
         leitung_fremdeinschatzung=leiter_name,
         beobachter1=beobachter_name,

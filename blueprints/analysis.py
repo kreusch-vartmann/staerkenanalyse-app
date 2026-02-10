@@ -15,13 +15,14 @@ import numpy as np
 from flask import (Blueprint, Response, flash, jsonify, redirect,
                    render_template, request, url_for)
 from flask_login import login_required, current_user
-from weasyprint import HTML
 
 from extensions import csrf, db
 from ki_services import generate_report_with_ai
 from models import ExplanationBlock, Group, Participant, Prompt, SelfAssessment
-from utils import clean_json_response, get_file_content, sanitize_html
-from decorators import admin_required, group_access_required, filter_groups_by_access
+from utils import clean_json_response, get_file_content, sanitize_html, html_to_plaintext
+from decorators import admin_required, group_access_required, participant_access_required, filter_groups_by_access
+
+# WeasyPrint wird lazy-loaded (unten in den Funktionen) um die App schneller zu starten
 
 analysis_bp = Blueprint("analysis", __name__)
 
@@ -84,6 +85,61 @@ def _prepare_pdf_data(participant):
     sk_chart = create_radar_chart(sk_ratings, sk_keys, sk_labels, "#5A7D7C")
     vk_chart = create_radar_chart(vk_ratings, vk_keys, vk_labels, "#2F4F4F")
     return sk_chart, vk_chart
+
+
+def get_group_task_descriptions(group):
+    """
+    Extrahiert die Beschreibungen aller Aufgaben einer Gruppe.
+    
+    Sammelt für jede Aufgabe:
+    - title
+    - description (Kurztext)
+    - Inhalt aus current_version (HTML → Plaintext)
+    
+    Args:
+        group: Group-Objekt mit .tasks Beziehung
+        
+    Returns:
+        str: Formatierter String mit alle Aufgabenbeschreibungen, oder leerer String wenn keine Aufgaben
+        
+    Beispiel:
+        task_descriptions = get_group_task_descriptions(group)
+        # Output:
+        # AUFGABENBESCHREIBUNG 1 — Soziale Kompetenzen:
+        # Titel: Brückenbau-Übung
+        # ...
+    """
+    if not group:
+        return ""
+    
+    # Hole alle Tasks aus der Beziehung (funktioniert mit SQLAlchemy .all() und Python-Listen)
+    try:
+        task_list = group.tasks.all() if hasattr(group.tasks, 'all') else group.tasks
+    except:
+        task_list = []
+    
+    if not task_list:
+        return ""
+    
+    descriptions = []
+    
+    for idx, task in enumerate(task_list, 1):
+        task_section = f"\nAUFGABENBESCHREIBUNG {idx} — {task.observation_area}:\n"
+        task_section += f"Titel: {task.title}\n"
+        
+        # Kurztext-Beschreibung wenn vorhanden
+        if task.description:
+            task_section += f"Kurzbeschreibung: {task.description}\n"
+        
+        # HTML→Plaintext Konversion des Hauptinhalts
+        if task.current_version and task.current_version.content:
+            content_plaintext = html_to_plaintext(task.current_version.content)
+            if content_plaintext:
+                task_section += f"Inhaltsdetails:\n{content_plaintext}\n"
+        
+        descriptions.append(task_section)
+    
+    return "\n".join(descriptions)
 
 
 def _normalize_ki_data(ki_data):
@@ -149,11 +205,34 @@ def _normalize_ki_data(ki_data):
 
 @analysis_bp.route("/edit_report/<int:participant_id>")
 @login_required
-@group_access_required
+@participant_access_required
 def edit_report(participant_id):
     """Zeigt die bearbeitbare Version des Berichts an."""
     participant = db.get_or_404(Participant, participant_id)
     group = participant.group
+    
+    # KI-Report Metadata ZUERST erfassen (vom ORM-Objekt)
+    german_tz = pytz.timezone("Europe/Berlin")
+    ki_report_created_at = None
+    ki_report_edited = False
+    
+    if participant.created_at:
+        ki_report_created_at = participant.created_at.astimezone(german_tz).strftime("%d.%m.%Y um %H:%M Uhr")
+    
+    # Check if report has been edited
+    try:
+        from models import AIRawResponse
+        raw_response = db.session.scalars(
+            db.select(AIRawResponse)
+            .where(AIRawResponse.type == 'report')
+            .where(AIRawResponse.context_id == participant_id)
+            .order_by(AIRawResponse.created_at.desc())
+            .limit(1)
+        ).first()
+        if raw_response and raw_response.processing_status == 'edited':
+            ki_report_edited = True
+    except Exception as e:
+        print(f"   ⚠️  Fehler beim Prüfen des Edit-Status: {e}")
 
     # Konvertiere in dict-Format für Template-Kompatibilität
     participant_dict = {
@@ -171,6 +250,7 @@ def edit_report(participant_id):
         ),
         "ki_texts": json.loads(participant.ki_texts) if participant.ki_texts else {},
         "ki_raw_response": participant.ki_raw_response,
+        "ki_model": participant.ki_model,
         "footer_data": (
             json.loads(participant.footer_data) if participant.footer_data else {}
         ),
@@ -200,6 +280,27 @@ def edit_report(participant_id):
     german_tz = pytz.timezone("Europe/Berlin")
     current_date = datetime.now(pytz.utc).astimezone(german_tz).strftime("%d.%m.%Y")
     current_location = group_dict["location"] if group_dict else "Unbekannter Ort"
+    
+    # KI-Report Metadata
+    ki_report_created_at = None
+    ki_report_edited = False
+    if participant.created_at:
+        ki_report_created_at = participant.created_at.astimezone(german_tz).strftime("%d.%m.%Y um %H:%M Uhr")
+    
+    # Check if report has been edited
+    try:
+        from models import AIRawResponse
+        raw_response = db.session.scalars(
+            db.select(AIRawResponse)
+            .where(AIRawResponse.type == 'report')
+            .where(AIRawResponse.context_id == participant_id)
+            .order_by(AIRawResponse.created_at.desc())
+            .limit(1)
+        ).first()
+        if raw_response and raw_response.processing_status == 'edited':
+            ki_report_edited = True
+    except Exception as e:
+        print(f"   ⚠️  Fehler beim Prüfen des Edit-Status: {e}")
 
     return render_template(
         "staerkenanalyse_bericht_vorlage3.html",
@@ -208,12 +309,14 @@ def edit_report(participant_id):
         ki_original=ki_original,
         current_date=current_date,
         current_location=current_location,
+        ki_report_created_at=ki_report_created_at,
+        ki_report_edited=ki_report_edited,
     )
 
 
 @analysis_bp.route("/save_report/<int:participant_id>", methods=["POST"])
 @login_required
-@group_access_required
+@participant_access_required
 @csrf.exempt
 def save_report(participant_id):
     """Speichert bearbeitete Berichtsdaten (KI-Analyse)."""
@@ -221,6 +324,53 @@ def save_report(participant_id):
     data = request.get_json()
 
     if data:
+        # --- KI-GYM: Track edits before saving ---
+        if "ki_texts" in data:
+            try:
+                from models import AIRawResponse, ContentEdit
+                from ki_services import compute_content_diff
+                
+                # Find the latest raw response for this participant
+                raw_response = db.session.scalars(
+                    db.select(AIRawResponse)
+                    .where(AIRawResponse.type == 'report')
+                    .where(AIRawResponse.context_id == participant_id)
+                    .order_by(AIRawResponse.created_at.desc())
+                    .limit(1)
+                ).first()
+                
+                if raw_response and raw_response.processing_status != 'edited':
+                    # Get old and new content
+                    old_ki_texts = json.loads(participant.ki_texts) if participant.ki_texts else {}
+                    new_ki_texts = data["ki_texts"]
+                    
+                    # Combine all text fields for comparison
+                    old_content = "\n\n".join([str(v) for v in old_ki_texts.values() if v])
+                    new_content = "\n\n".join([str(v) for v in new_ki_texts.values() if v])
+                    
+                    # Only track if content actually changed
+                    if old_content != new_content:
+                        diff_metrics = compute_content_diff(old_content, new_content)
+                        
+                        # Create ContentEdit record
+                        content_edit = ContentEdit(
+                            raw_response_id=raw_response.id,
+                            version_type='report',
+                            version_id=participant_id,
+                            diff_metrics=diff_metrics,
+                            edit_reason='Manuelle Verbesserungen',
+                            edited_by_id=current_user.id
+                        )
+                        db.session.add(content_edit)
+                        
+                        # Update status
+                        raw_response.processing_status = 'edited'
+                        
+                        print(f"   ✏️ KI-Gym: Report edit tracked (Magnitude: {diff_metrics['edit_magnitude']})")
+            except Exception as e:
+                print(f"   ⚠️  KI-Gym Edit Tracking Fehler: {e}")
+                # Non-critical: continue without breaking
+        
         # Speichere die verschiedenen Berichtsteile als JSON
         if "sk_ratings" in data:
             participant.sk_ratings = json.dumps(data["sk_ratings"])
@@ -246,9 +396,12 @@ def save_report(participant_id):
 
 @analysis_bp.route("/bericht/<int:participant_id>/pdf")
 @login_required
-@group_access_required
+@participant_access_required
 def bericht_pdf(participant_id):
     """Generiert eine PDF-Version des Berichts serverseitig."""
+    # Lazy-load WeasyPrint um App-Startup nicht zu blockieren
+    from weasyprint import HTML
+    
     participant = db.get_or_404(Participant, participant_id)
     group = participant.group
 
@@ -470,13 +623,25 @@ def run_ki_analysis(participant_id):
             additional_content = get_file_content(file)
     final_prompt = final_prompt.replace("{{additional_content}}", additional_content)
 
+    # Hole die Aufgabenbeschreibungen aus der Gruppe des Teilnehmers
+    task_descriptions = ""
+    if participant.group:
+        task_descriptions = get_group_task_descriptions(participant.group)
+    
     # Falls keine Kontext-Platzhalter vorhanden sind, Kontextblock ergänzen
     context_block = (
         f"ANALYSE-SUBJEKT:\n- Vorname: {first_name}\n- Ganzer Name: {full_name}\n\n"
         f"BEOBACHTUNGEN ZUM VERHALTEN:\n- Soziale Kompetenzen: {social_obs}\n"
         f"- Verbale Kompetenzen: {verbal_obs}\n\n"
-        f"ZUSÄTZLICHER KONTEXT:\n{additional_content}"
     )
+    
+    # Füge Aufgabenbeschreibungen ein wenn vorhanden
+    if task_descriptions:
+        context_block += f"AUFGABENBESCHREIBUNGEN:{task_descriptions}\n\n"
+    
+    # Füge zusätzlichen Kontext am Ende an
+    context_block += f"ZUSÄTZLICHER KONTEXT:\n{additional_content}"
+    
     if "{{context}}" in final_prompt:
         final_prompt = final_prompt.replace("{{context}}", context_block)
     elif (
@@ -488,10 +653,36 @@ def run_ki_analysis(participant_id):
 
     ki_response_str = generate_report_with_ai(final_prompt, ki_model)
     participant.ki_raw_response = ki_response_str
+    participant.ki_model = ki_model  # Track which KI model generated this report
+    
+    # --- KI-GYM: Save raw response ---
+    try:
+        from ki_services import save_ai_raw_response
+        save_ai_raw_response(
+            response_text=ki_response_str,
+            response_type='report',
+            context_id=participant_id,
+            ki_model=ki_model,
+            observation_area=None  # Reports don't have observation areas
+        )
+        print(f"   💾 KI-Gym: Raw response saved for participant {participant_id}")
+    except Exception as e:
+        print(f"   ⚠️  KI-Gym Save Error: {e}")
+    
     db.session.commit()
 
+    # Prüfe ob die Antwort leer ist
+    if not ki_response_str or ki_response_str.strip() == "":
+        return jsonify(
+            {
+                "status": "error",
+                "message": "Die KI hat keine Antwort generiert. Bitte versuchen Sie es erneut.",
+            }
+        )
+
     try:
-        ki_data = json.loads(clean_json_response(ki_response_str))
+        cleaned_response = clean_json_response(ki_response_str)
+        ki_data = json.loads(cleaned_response)
         if "error" in ki_data:
             return jsonify(
                 {"status": "error", "message": f"KI-Fehler: {ki_data['error']}"}
@@ -511,7 +702,7 @@ def run_ki_analysis(participant_id):
             return jsonify(
                 {
                     "status": "error",
-                    "message": "Die KI-Antwort enthält keine verwertbaren Daten.",
+                    "message": "Die KI-Antwort enthält keine verwertbaren Daten. Bitte überprüfen Sie den Prompt und versuchen Sie es erneut.",
                 }
             )
 
@@ -530,11 +721,20 @@ def run_ki_analysis(participant_id):
             }
         )
     except json.JSONDecodeError as e:
+        print(f"JSON Parse Error: {e}")
+        print(f"Raw Response (first 500 chars): {ki_response_str[:500]}")
         return jsonify(
             {
                 "status": "error",
-                "message": f"Fehler beim Verarbeiten der KI-Antwort: {e}",
-                "raw_response": ki_response_str,
+                "message": "Die KI-Antwort hat ein ungültiges Format. Bitte versuchen Sie es erneut oder kontaktieren Sie den Administrator.",
+            }
+        )
+    except Exception as e:
+        print(f"Unexpected Error in run_ki_analysis: {e}")
+        return jsonify(
+            {
+                "status": "error",
+                "message": f"Ein unerwarteter Fehler ist aufgetreten: {str(e)}",
             }
         )
 
@@ -557,12 +757,25 @@ def run_single_analysis_api(participant_id):
     first_name = full_name.split(" ")[0] if full_name else ""
     obs = json.loads(participant.observations) if participant.observations else {}
 
+    # Hole die Aufgabenbeschreibungen aus der Gruppe des Teilnehmers
+    task_descriptions = ""
+    if participant.group:
+        task_descriptions = get_group_task_descriptions(participant.group)
+    
+    # Baue den Kontextblock mit Aufgabenbeschreibungen
     context_block = (
         f"ANALYSE-SUBJEKT:\n- Vorname: {first_name}\n- Ganzer Name: {full_name}\n\n"
         f"BEOBACHTUNGEN ZUM VERHALTEN:\n- Soziale Kompetenzen: {obs.get('social', '')}\n"
         f"- Verbale Kompetenzen: {obs.get('verbal', '')}\n\n"
-        f"ZUSÄTZLICHER KONTEXT:\n{data.get('additional_content', '')}"
     )
+    
+    # Füge Aufgabenbeschreibungen ein wenn vorhanden
+    if task_descriptions:
+        context_block += f"AUFGABENBESCHREIBUNGEN:{task_descriptions}\n\n"
+    
+    # Füge zusätzlichen Kontext am Ende an
+    context_block += f"ZUSÄTZLICHER KONTEXT:\n{data.get('additional_content', '')}"
+    
     prompt_template = data.get("prompt_template", "")
     prompt = (
         prompt_template.replace("{{context}}", context_block)
@@ -587,10 +800,37 @@ def run_single_analysis_api(participant_id):
 
     response_str = generate_report_with_ai(prompt, data.get("ki_model"))
     participant.ki_raw_response = response_str
+    participant.ki_model = data.get("ki_model", "mistral")  # Track which KI model generated this report
+    
+    # --- KI-GYM: Save raw response ---
+    try:
+        from ki_services import save_ai_raw_response
+        save_ai_raw_response(
+            response_text=response_str,
+            response_type='report',
+            context_id=participant_id,
+            ki_model=data.get("ki_model", "mistral"),
+            observation_area=None
+        )
+    except Exception as e:
+        print(f"   ⚠️  KI-Gym Save Error: {e}")
+    
     db.session.commit()
 
+    # Prüfe ob die Antwort leer ist
+    if not response_str or response_str.strip() == "":
+        return jsonify(
+            {
+                "status": "error",
+                "message": "Die KI hat keine Antwort generiert. Bitte versuchen Sie es erneut.",
+            }
+        )
+
     try:
-        ki_data = json.loads(clean_json_response(response_str))
+        cleaned_response = clean_json_response(response_str)
+
+        
+        ki_data = json.loads(cleaned_response)
         if "error" in ki_data:
             return jsonify(
                 {"status": "error", "message": f"KI-Fehler: {ki_data['error']}"}
@@ -610,7 +850,7 @@ def run_single_analysis_api(participant_id):
             return jsonify(
                 {
                     "status": "error",
-                    "message": "Die KI-Antwort enthält keine verwertbaren Daten.",
+                    "message": "Die KI-Antwort enthält keine verwertbaren Daten. Bitte überprüfen Sie den Prompt und versuchen Sie es erneut.",
                 }
             )
 
@@ -621,11 +861,20 @@ def run_single_analysis_api(participant_id):
 
         return jsonify({"status": "success", "message": "Analyse erfolgreich."})
     except json.JSONDecodeError as e:
+        print(f"JSON Parse Error (Batch): {e}")
+        print(f"Raw Response (first 500 chars): {response_str[:500]}")
         return jsonify(
             {
                 "status": "error",
-                "message": f"Formatfehler: {e}",
-                "raw_response": response_str,
+                "message": "Die KI-Antwort hat ein ungültiges Format. Bitte versuchen Sie es erneut oder kontaktieren Sie den Administrator.",
+            }
+        )
+    except Exception as e:
+        print(f"Unexpected Error in run_single_analysis_api: {e}")
+        return jsonify(
+            {
+                "status": "error",
+                "message": f"Ein unerwarteter Fehler ist aufgetreten: {str(e)}",
             }
         )
 
@@ -761,7 +1010,7 @@ def manage_final_reports():
 
 @analysis_bp.route("/final_report/<int:participant_id>")
 @login_required
-@group_access_required
+@participant_access_required
 def final_report(participant_id):
     """Zeigt den Abschlussbericht für einen Teilnehmer an."""
     participant = db.get_or_404(Participant, participant_id)
@@ -776,7 +1025,7 @@ def final_report(participant_id):
 
 @analysis_bp.route("/final_report/<int:participant_id>/pdf", methods=["POST"])
 @login_required
-@group_access_required
+@participant_access_required
 def final_report_pdf(participant_id):
     """Generiert eine PDF-Version des Abschlussberichts."""
     participant = db.get_or_404(Participant, participant_id)

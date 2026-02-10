@@ -260,3 +260,121 @@ def toggle_active(user_id: int):
     status = "aktiviert" if user.is_active else "deaktiviert"
     flash(f"Benutzer {user.email} {status}.", "success")
     return redirect(url_for("admin.manage_users"))
+
+
+# =============================================================================
+# KI-GYM: TRAINING & ANALYTICS
+# =============================================================================
+
+@admin_bp.route("/ki-gym", methods=["GET"])
+@login_required
+@admin_required
+def ki_gym_dashboard():
+    """KI-Gym Dashboard: Training-Status, Analytics, Manuelle Steuerung."""
+    import ai_gym
+    from models import LearnedPromptRule
+    
+    # Status für Tasks
+    task_status = ai_gym.get_training_status('task')
+    task_status_social = ai_gym.get_training_status('task', 'Soziale Kompetenzen')
+    task_status_verbal = ai_gym.get_training_status('task', 'Verbale Kompetenzen')
+    
+    # Status für Reports
+    report_status = ai_gym.get_training_status('report')
+    
+    # Active Rules
+    active_task_rules = LearnedPromptRule.query.filter_by(type='task', is_active=True).count()
+    active_report_rules = LearnedPromptRule.query.filter_by(type='report', is_active=True).count()
+    
+    # All rules for management
+    all_rules = LearnedPromptRule.query.order_by(
+        LearnedPromptRule.trained_at.desc()
+    ).all()
+    
+    breadcrumbs = [
+        {"link": url_for("dashboard"), "text": "Dashboard"},
+        {"text": "KI-Gym Training"},
+    ]
+    
+    return render_template(
+        "admin/ki_gym.html",
+        task_status=task_status,
+        task_status_social=task_status_social,
+        task_status_verbal=task_status_verbal,
+        report_status=report_status,
+        active_task_rules=active_task_rules,
+        active_report_rules=active_report_rules,
+        all_rules=all_rules,
+        breadcrumbs=breadcrumbs,
+    )
+
+
+@admin_bp.route("/ki-gym/train/<response_type>", methods=["POST"])
+@login_required
+@admin_required
+def ki_gym_train(response_type):
+    """Trigger Training für Tasks oder Reports."""
+    import ai_gym
+    from flask_login import current_user
+    
+    if response_type not in ['task', 'report']:
+        flash("Ungültiger Typ", "error")
+        return redirect(url_for("admin.ki_gym_dashboard"))
+    
+    observation_area = request.form.get('observation_area', None)
+    if observation_area == '':
+        observation_area = None
+    
+    result = ai_gym.apply_training(
+        response_type=response_type,
+        observation_area=observation_area,
+        created_by_id=current_user.id
+    )
+    
+    if result['status'] == 'success':
+        flash(result['message'], "success")
+    else:
+        flash(result['message'], "error")
+    
+    return redirect(url_for("admin.ki_gym_dashboard"))
+
+
+@admin_bp.route("/ki-gym/rule/<int:rule_id>/toggle", methods=["POST"])
+@login_required
+@admin_required
+def ki_gym_toggle_rule(rule_id):
+    """Aktiviere/Deaktiviere eine LearnedPromptRule."""
+    from models import LearnedPromptRule
+    
+    rule = db.session.get(LearnedPromptRule, rule_id)
+    if not rule:
+        flash("Rule nicht gefunden", "error")
+        return redirect(url_for("admin.ki_gym_dashboard"))
+    
+    rule.is_active = not rule.is_active
+    db.session.commit()
+    
+    status = "aktiviert" if rule.is_active else "deaktiviert"
+    flash(f"Rule '{rule.rule_type}' {status}", "success")
+    
+    return redirect(url_for("admin.ki_gym_dashboard"))
+
+
+@admin_bp.route("/ki-gym/rule/<int:rule_id>/delete", methods=["POST"])
+@login_required
+@admin_required
+def ki_gym_delete_rule(rule_id):
+    """Lösche eine LearnedPromptRule."""
+    from models import LearnedPromptRule
+    
+    rule = db.session.get(LearnedPromptRule, rule_id)
+    if not rule:
+        flash("Rule nicht gefunden", "error")
+        return redirect(url_for("admin.ki_gym_dashboard"))
+    
+    db.session.delete(rule)
+    db.session.commit()
+    
+    flash(f"Rule '{rule.rule_type}' gelöscht", "success")
+    
+    return redirect(url_for("admin.ki_gym_dashboard"))

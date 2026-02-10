@@ -12,7 +12,8 @@
 # - 0.3.0 (2026-02-07): Umfassende Test-Suite + CI/CD-Pipeline
 # - 0.4.0 (2026-02-08): Report-Konfiguration + Backup-System + Prompt-Management
 # - 1.0.0 (2026-02-09): Phase 1 COMPLETE - Benutzerverwaltung + Sicherheitskonzept
-APP_VERSION = "1.0.0"
+# - 1.1.0 (2026-02-10): KI-Gym Learning System + Phase 2 Beobachtungsaufgaben + KI-Modell-Auswahl
+APP_VERSION = "1.1.0"
 
 # Export-Schema-Version (unabhängig von App-Version)
 # Ändert sich nur bei Änderungen der CSV/Excel-Export-Struktur

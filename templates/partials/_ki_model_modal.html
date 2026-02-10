@@ -1,0 +1,155 @@
+<!-- KI Model Selection Modal (Reusable Partial) -->
+<div id="kiModelModal" class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center" style="display: none; z-index: 9999;">
+    <div class="bg-white rounded-lg shadow-xl p-8 max-w-2xl w-full mx-4">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">Wählen Sie das KI-Modell</h2>
+        
+        <form id="kiModelForm">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <!-- Mistral Option -->
+                <div class="ki-model-option border-2 border-gray-200 rounded-lg p-6 cursor-pointer hover:border-yellow-400 hover:bg-yellow-50 transition" onclick="selectKiModel('mistral', this)">
+                    <div class="mb-4">
+                        <input type="radio" id="mistral_radio" name="ki_model" value="mistral" checked class="mr-3">
+                        <label for="mistral_radio" class="font-bold text-lg flex items-center gap-2 cursor-pointer">
+                            <!-- Mistral SVG Logo -->
+                            <svg width="24" height="24" viewBox="0 0 100 100" style="display: inline-block;">
+                                <rect x="0" y="0" width="35" height="35" fill="#FFE500"/>
+                                <rect x="35" y="0" width="30" height="35" fill="#FFFFFF"/>
+                                <rect x="65" y="0" width="35" height="35" fill="#FFE500"/>
+                                <rect x="0" y="35" width="50" height="30" fill="#FFA500"/>
+                                <rect x="50" y="35" width="50" height="30" fill="#FFA500"/>
+                                <rect x="0" y="65" width="30" height="35" fill="#FF6600"/>
+                                <rect x="30" y="65" width="40" height="35" fill="#FFFFFF"/>
+                                <rect x="70" y="65" width="30" height="35" fill="#FF6600"/>
+                            </svg>
+                            Mistral Large
+                        </label>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-3">Schneller, gute Qualität, Default</p>
+                    <p class="text-xs text-gray-500 flex items-center gap-2">
+                        <span>🇪🇺 EU-based</span>
+                    </p>
+                </div>
+
+                <!-- Gemini Option -->
+                <div class="ki-model-option border-2 border-gray-200 rounded-lg p-6 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition" onclick="selectKiModel('gemini', this)">
+                    <div class="mb-4">
+                        <input type="radio" id="gemini_radio" name="ki_model" value="gemini" class="mr-3">
+                        <label for="gemini_radio" class="font-bold text-lg flex items-center gap-2 cursor-pointer">
+                            <!-- Gemini SVG Logo -->
+                            <svg width="24" height="24" viewBox="0 0 100 100" style="display: inline-block;">
+                                <defs>
+                                    <linearGradient id="geminiGradModal" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#FF6B9D;stop-opacity:1" />
+                                        <stop offset="25%" style="stop-color:#C239B3;stop-opacity:1" />
+                                        <stop offset="50%" style="stop-color:#4285F4;stop-opacity:1" />
+                                        <stop offset="75%" style="stop-color:#00D4AA;stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:#FFC107;stop-opacity:1" />
+                                    </linearGradient>
+                                </defs>
+                                <path d="M50,5 L60,35 L95,50 L60,65 L50,95 L40,65 L5,50 L40,35 Z" fill="url(#geminiGradModal)"/>
+                            </svg>
+                            Google Gemini
+                        </label>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-3">Sehr detailliert, etwas langsamer</p>
+                    <p class="text-xs text-gray-500 flex items-center gap-2">
+                        <span>🇺🇸 US-based</span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex gap-4 justify-end">
+                <button type="button" onclick="closeKiModelModal()" class="px-6 py-2 border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                    Abbrechen
+                </button>
+                <button type="button" onclick="confirmKiModelSelection()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">
+                    Starten
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openKiModelModal(callback) {
+    console.log('[KI-Modal] openKiModelModal called');
+    window.kiModelCallback = callback;
+    var modal = document.getElementById('kiModelModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        console.log('[KI-Modal] Modal is now visible');
+    } else {
+        console.error('[KI-Modal] ERROR: Modal element #kiModelModal not found!');
+    }
+}
+
+function closeKiModelModal() {
+    var modal = document.getElementById('kiModelModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+    window.kiModelCallback = null;
+}
+
+function selectKiModel(model, element) {
+    console.log('[KI-Modal] selectKiModel called with model:', model);
+    
+    // Deselect all model options
+    var options = document.querySelectorAll('.ki-model-option');
+    for (var i = 0; i < options.length; i++) {
+        options[i].classList.remove('border-yellow-400', 'border-blue-400', 'bg-yellow-50', 'bg-blue-50');
+        options[i].classList.add('border-gray-200');
+    }
+    
+    // Select clicked element
+    element.classList.remove('border-gray-200');
+    if (model === 'mistral') {
+        element.classList.add('border-yellow-400', 'bg-yellow-50');
+    } else {
+        element.classList.add('border-blue-400', 'bg-blue-50');
+    }
+    
+    // Check the radio button
+    var radio = document.getElementById(model + '_radio');
+    if (radio) {
+        radio.checked = true;
+        console.log('[KI-Modal] Radio checked for:', model);
+    }
+}
+
+function confirmKiModelSelection() {
+    var radios = document.querySelectorAll('#kiModelForm input[name="ki_model"]');
+    var selectedModel = 'mistral'; // default
+    for (var i = 0; i < radios.length; i++) {
+        if (radios[i].checked) {
+            selectedModel = radios[i].value;
+            break;
+        }
+    }
+    
+    console.log('[KI-Modal] confirmKiModelSelection:', selectedModel);
+    
+    // WICHTIG: Callback ZUERST speichern, DANN Modal schließen
+    var callback = window.kiModelCallback;
+    closeKiModelModal();
+    
+    if (callback) {
+        console.log('[KI-Modal] Executing callback with model:', selectedModel);
+        callback(selectedModel);
+    } else {
+        console.error('[KI-Modal] ERROR: No callback set!');
+    }
+}
+
+// Close modal when clicking the dark overlay background
+(function() {
+    var modal = document.getElementById('kiModelModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeKiModelModal();
+            }
+        });
+    }
+})();
+</script>

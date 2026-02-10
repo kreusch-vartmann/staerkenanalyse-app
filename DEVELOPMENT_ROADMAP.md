@@ -1,10 +1,10 @@
 # DEVELOPMENT ROADMAP — Stärkenanalyse-App
 
-> **Erstellt**: 2026-02-09 | **Version**: 0.4.0 → 1.0.0  
+> **Erstellt**: 2026-02-09 | **Aktualisiert**: 2026-02-10 | **Version**: 1.0.0 → 1.1.0  
 > **Ziel**: Produktionsreife, öffentlich zugängliche Web-Applikation  
 > **Hosting**: Infomaniak | **Auth**: Eigene Benutzerverwaltung | **Tenant**: Single-Tenant  
 > **Zeitrahmen**: So schnell wie möglich  
-> **Status**: � Phase 1 COMPLETE - Ready for Phase 2
+> **Status**: ✅ Phase 1 COMPLETE | 🟡 Phase 2 PARTIAL (KI-Gym + Tasks)
 
 ---
 
@@ -13,7 +13,7 @@
 | Phase | Inhalt | Status | Zielversion |
 |-------|--------|--------|-------------|
 | **1** | Benutzerverwaltung + Basis-Sicherheit | ✅ COMPLETE | v1.0.0 |
-| **2** | Aufgabengenerator | ⬜ Offen | v1.1.0 |
+| **2** | Aufgabengenerator + KI-Gym Learning System | 🟡 PARTIAL | v1.1.0 |
 | **3** | Stabilisierung (Sicherheit, Tests, Funktions-Feinschliff) | ⬜ Offen | v1.2.0 |
 | **4** | Design-Feinschliff | ⬜ Offen | v1.3.0 |
 | **5** | Dokumentation + Produktions-Deployment | ⬜ Offen | v2.0.0 |
@@ -56,30 +56,59 @@
 
 ---
 
-## Phase 2: Aufgabengenerator (v0.6.0)
+## Phase 2: Aufgabengenerator + KI-Gym System (v1.1.0) 🟡 PARTIAL
 
-### B — Aufgabengenerator
+### B — Aufgabengenerator (Beobachtungsaufgaben)
 
 | # | Aufgabe | Status | Details |
 |---|---------|--------|---------|
-| B1 | Datenmodell: `Task`, `TaskVersion` | ⬜ | Aufgaben-DB mit Versionierung, Beobachtungsbereich (SK/VK), TN-Zahl, Dauer |
-| B2 | Import bestehender Aufgaben | ⬜ | .doc-Import der 2 bestehenden Aufgaben (je 1× SK, 1× VK) als Referenz |
-| B3 | Aufgaben-Bibliothek UI | ⬜ | Übersicht aller Aufgaben, Filter nach Bereich/Dimension, Vorschau |
-| B4 | KI-Generierungslogik | ⬜ | Prompt-Engineering für Aufgabenerstellung, Mistral (default) + Gemini |
-| B5 | Web-Recherche-Integration | ⬜ | Recherche zu AC-Best-Practices pro Beobachtungsdimension |
-| B6 | Automatische Generierung | ⬜ | Parameter: Beobachtungsbereich, TN-Zahl (1-6), Dauer (25-35 Min) |
-| B7 | Bearbeitbare Vorschau | ⬜ | Rich-Text-Editor (Quill.js, bereits im Projekt) unter dem Chat |
-| B8 | Chat-Interface | ⬜ | Chat-Fenster über der Vorschau für iterative Änderungswünsche an die KI |
-| B9 | Chat-Kontext-Management | ⬜ | Konversationshistorie, Aufgabe + Änderungen als Kontext mitgeben |
-| B10 | Aufgabe speichern/versionieren | ⬜ | Speichern als neue Version, Versionshistorie einsehbar |
-| B11 | Berechtigungen | ⬜ | Nur Admins dürfen Aufgaben erstellen/bearbeiten |
-| B12 | Zusätzliche Daten einpflegen | ⬜ | Anonymisierte Beobachtungsdaten, Berichte, Dimensionen-Infos als Kontext |
+| B1 | Datenmodell: `Task`, `TaskVersion` | ✅ | Vollständig implementiert mit circular dependency handling |
+| B2 | Import bestehender Aufgaben | ✅ | Als hardcoded EXAMPLE_TASKS (Erbengemeinschaft, Plakat) |
+| B3 | Aufgaben-Bibliothek UI | ✅ | `/beobachtungsaufgaben` Library mit Beispiel- und eigenen Aufgaben |
+| B4 | KI-Generierungslogik | ✅ | Best-Practice Prompt-Engineering für AC-Tasks (ki_services.py) |
+| B5 | Web-Recherche-Integration | ⬜ | Noch offen, aktuell basierend auf hardcoded Best Practices |
+| B6 | Automatische Generierung | ✅ | Parameter: Beobachtungsbereich (SK/VK), TN-Zahl (1-10), Dauer (5-120 Min) |
+| B7 | Bearbeitbare Vorschau | ✅ | Quill.js Rich-Text-Editor mit HTML-Unterstützung |
+| B8 | Chat-Interface | ✅ | Chat-Seitenleiste mit KI-Iteration für Aufgaben-Verfeinerung |
+| B9 | Chat-Kontext-Management | ✅ | `refine_task_content()` mit conversation_history Parameter |
+| B10 | Aufgabe speichern/versionieren | ✅ | Vollständiges Versions-Management mit change_notes |
+| B11 | Berechtigungen | ✅ | `@admin_required` auf allen Task-Routes |
+| B12 | Zusätzliche Daten einpflegen | 🟡 | Beispiel-Tasks als Context, AIRawResponse-Tracking via KI-Gym |
+| **B13** | **KI-Modell-Auswahl** | ✅ | **NEU**: Reusable Modal für Mistral vs. Gemini (visual branding) |
+| **B14** | **Group-Tasks Integration** | ✅ | **NEU**: Aufgaben können Gruppen zugeordnet werden (many-to-many) |
+
+### B* — KI-Gym Learning System (BONUS Feature) 🧠
+
+| # | Aufgabe | Status | Details |
+|---|---------|--------|---------|
+| X1 | Datenmodell: `AIRawResponse`, `ContentEdit` | ✅ | Tracking von KI-Outputs und manuellen Edits |
+| X2 | Datenmodell: `LearnedPromptRule` | ✅ | Speicherung generierter Prompt-Verbesserungsregeln |
+| X3 | Pattern-Extraktion Service | ✅ | `ai_gym.py` mit length/magnitude/similarity Analyse |
+| X4 | Rule-Generierung | ✅ | Automatische Analyse und Regel-Vorschlags-Erstellung |
+| X5 | Admin Dashboard | ✅ | `/admin/ki-gym` UI für Training und Rule-Management |
+| X6 | Auto-Integration (Tasks) | ✅ | Task-Rules werden automatisch in Prompts eingebunden |
+| X7 | Manuelle Integration (Reports) | ✅ | Report-Rules als Vorschläge mit Bestätigung |
+| X8 | Confidence-Scoring | ✅ | Bewertung von Rules basierend auf Sample-Anzahl |
+| X9 | Content-Edit Auto-Tracking | ✅ | Automatisches Diff-Tracking bei Task-Speicherung |
+| X10 | Training-Status-Dashboard | ✅ | Anzeige pro Typ/Bereich mit min. Samples-Anforderung |
 
 **Entscheidungen Phase 2:**
-- Kein Prompt-Auswahl-System (anders als Berichterstellung), sondern automatischer Prompt
-- Chat-basierte Iteration statt Prompt-Editing
-- Bestehende KI-Infrastruktur (`ki_services.py`) erweitern, nicht ersetzen
-- TN-Zahl beeinflusst Komplexität und Dauer der generierten Aufgabe
+- ✅ Chat-basierte Iteration statt Prompt-Editing (umgesetzt)
+- ✅ Bestehende KI-Infrastruktur erweitert (nicht ersetzt)
+- ✅ TN-Zahl beeinflusst Komplexität (in Prompts berücksichtigt)
+- ✅ **BONUS**: KI-Gym Learning System für kontinuierliche Verbesserung
+- ✅ **BONUS**: Modell-Auswahl-Modal für bessere UX
+
+**Neu implementiert in v1.1.0:**
+- 🎓 **KI-Gym Learning System**: Automatisches Pattern-Learning aus User-Edits
+- 📋 **Beobachtungsaufgaben-Verwaltung**: Vollständige Task-Library mit KI-Generierung
+- 🤖 **KI-Modell-Auswahl**: Reusable Modal für Mistral/Gemini Auswahl
+- 📊 **Content-Edit-Tracking**: Diff-Metriken für alle manuellen Änderungen
+- 🔧 **API-Fixes**: Group-Tasks JSON Response, Batch-Analysis Stabilität
+
+**Noch offen für Phase 2 Completion:**
+- ⬜ Web-Recherche-Integration für Best-Practice-Updates
+- ⬜ Multi-Tenant-Support für Aufgaben (aktuell Single-Tenant)
 
 ---
 

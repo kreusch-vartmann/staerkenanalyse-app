@@ -1,7 +1,8 @@
 # 📁 Vollständige Dateistruktur - Stärkenanalyse-App
 
 **Erstellt am**: 7. Februar 2026  
-**Version**: 0.2.0-WIP  
+**Aktualisiert am**: 10. Februar 2026  
+**Version**: 1.1.0  
 **Beschreibung**: Vollständige Übersicht aller Projektdateien mit ihren Funktionen
 
 ---
@@ -25,6 +26,10 @@ Diese Dokumentation beschreibt **alle** Dateien des Stärkenanalyse-App Projekts
 - **models.py**: SQLAlchemy-Datenbankmodelle für alle Entitäten (Participant, Group, Observation, Competency, SelfAssessment, AnalysisResult, ExplanationBlock, Prompt, ReportTemplate, GeneratedReport, SignatureImage). Enthält Beziehungen und Validierungen.
 
 - **ki_services.py**: KI-API-Integration für Mistral AI und Google Gemini. Stellt Funktionen für strukturierte Kompetenz-Analysen, Report-Generierung und Prompt-basierte KI-Anfragen bereit.
+
+- **ki_services_backup.py**: Backup-Version von ki_services.py vor Phase 2 Refactoring. Enthält Legacy-Implementierung für Task-Generierung.
+
+- **ai_gym.py**: KI-Gym Learning System (NEU v1.1.0). Pattern-Extraktion aus Content-Edits, automatische Prompt-Rule-Generierung basierend auf User-Verbesserungen.
 
 - **utils.py**: Hilfsfunktionen für Dateiverarbeitung. Extrahiert Text aus PDF- und DOCX-Dateien für Import-Funktionalität.
 
@@ -125,6 +130,12 @@ Flask-Blueprints organisieren die Anwendung in logische Module.
 - **prompts.py**: Blueprint für KI-Prompt-Verwaltung. 4 Routes zum Erstellen/Bearbeiten von Prompt-Templates für verschiedene Analyse-Typen.
 
 - **reports.py**: Blueprint für Report-System (NEU in v0.2.0). Verwaltet Report-Templates, Konfiguration, Vorschau und PDF-Generierung.
+
+- **observation_tasks.py**: Blueprint für Beobachtungsaufgaben-Verwaltung **(NEU v1.1.0)**. 10+ Routes für Task-Library, KI-Generierung, Chat-basierte Iteration und Versions-Management.
+
+- **admin.py**: Blueprint für Admin-Bereich **(NEU v1.1.0)**. Enthält KI-Gym Training Dashboard, Rule-Management und System-Verwaltung.
+
+- **_tasks_deprecated.py**: Deprecated Phase 2 Task Generator Blueprint. Legacy-Code, wird nicht mehr verwendet (obsolete durch observation_tasks.py).
 
 ---
 

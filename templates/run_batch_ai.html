@@ -6,8 +6,9 @@
 <h2 class="text-3xl font-bold text-gray-800 mb-2">Analyse für Gruppe: {{ group.name }}</h2>
 <p class="text-gray-600 mb-6">Konfigurieren Sie hier die KI-Analyse für die ausgewählten Teilnehmer.</p>
 
-<form action="{{ url_for('analysis.execute_batch_ai_analysis') }}" method="post" enctype="multipart/form-data">
+<form id="analysisForm" method="post" enctype="multipart/form-data">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    <input type="hidden" name="ki_model" id="ki_model_input" value="mistral">
 
     <div class="mb-8 p-6 bg-white border border-gray-200 rounded-lg shadow">
         <h3 class="text-xl font-semibold mb-4">Analyse wird für folgende {{ participants|length }} Teilnehmer ausgeführt:</h3>
@@ -22,72 +23,166 @@
     <div class="mb-8 p-6 bg-white border border-gray-200 rounded-lg shadow">
         <h3 class="text-xl font-semibold mb-4">Einstellungen</h3>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <label for="prompt_selection" class="block text-sm font-medium text-gray-700">Prompt-Vorlage</label>
-                <select id="prompt_selection" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+        <div class="mb-6">
+            <label for="prompt_selection" class="block text-sm font-medium text-gray-700 mb-2">Prompt-Vorlage</label>
+            <div class="flex gap-3">
+                <select id="prompt_selection" class="flex-1 block px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                     <option value="">-- Bitte eine Vorlage wählen --</option>
                     {% for prompt in prompts %}
                         <option value="{{ prompt.id }}">{{ prompt.name }}</option>
                     {% endfor %}
                 </select>
-            </div>
-            <div>
-                <label for="ki_model" class="block text-sm font-medium text-gray-700">KI-Modell</label>
-                <select id="ki_model" name="ki_model" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                    <option value="mistral">Mistral (Empfohlen)</option>
-                    <option value="gemini">Google Gemini</option>
-                </select>
+                <button type="button" id="togglePromptPreview" class="px-4 py-2 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700 font-medium transition" style="display: none;">
+                    👁️ Ansehen
+                </button>
             </div>
         </div>
 
-        <div class="mt-6">
-            <label for="ki_prompt" class="block text-sm font-medium text-gray-700">Prompt-Inhalt</label>
-            <textarea name="ki_prompt" id="ki_prompt" rows="15" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"></textarea>
-            <p class="mt-1 text-xs text-gray-500">Der Inhalt wird automatisch geladen, kann aber hier vor der Analyse noch angepasst werden.</p>
-        </div>
-
-        <div class="mt-6">
-            <label for="additional_files" class="block mb-2 text-sm font-medium text-gray-900">Optionale Zusatzdatei(en) (STRG/CMD zum Mehrfachauswählen)</label>
-            <input name="additional_files" class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none" id="additional_files" type="file" multiple>
+        <!-- Prompt-Vorschau (Akkordeon) -->
+        <div id="promptPreviewContainer" style="display: none;" class="mb-6">
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <p class="text-xs text-gray-600 mb-3 font-semibold">PROMPT-VORSCHAU:</p>
+                <pre id="promptPreviewText" class="text-sm text-gray-800 font-mono overflow-auto max-h-60 whitespace-pre-wrap word-wrap break-words"></pre>
+            </div>
         </div>
     </div>
 
     <div class="mt-8">
-        <button type="submit" class="w-full md:w-auto py-3 px-8 rounded-md text-white bg-green-600 hover:bg-green-700 font-semibold text-lg">
+        <button type="button" onclick="startAnalysisWithKiSelection()" class="w-full md:w-auto py-3 px-8 rounded-md text-white bg-green-600 hover:bg-green-700 font-semibold text-lg transition">
             <i class="fas fa-brain me-2"></i>Analysen jetzt für alle ausführen
         </button>
     </div>
 </form>
 
-<script>
-    document.getElementById('prompt_selection').addEventListener('change', async function() {
-        const promptId = this.value;
-        const promptTextarea = document.getElementById('ki_prompt');
-        if (!promptId) {
-            promptTextarea.value = '';
-            return;
-        }
+{% include 'partials/_ki_model_modal.html' %}
 
-        try {
-            const url = `/api/prompt/${promptId}`;
-            const response = await fetch(url);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            if (data.content) {
-                promptTextarea.value = data.content;
-            } else if (data.error) {
-                promptTextarea.value = `Fehler: ${data.error}`;
-            }
-        } catch (error) {
-            console.error('Fehler beim Laden des Prompts:', error);
-            console.error('URL würde sein: /api/prompt/' + promptId);
-            promptTextarea.value = 'Fehler: Prompt konnte nicht geladen werden. Siehe Konsole für Details.';
-        }
+<script>
+// Initialize selectedPromptId from current dropdown value
+var selectedPromptId = document.getElementById('prompt_selection').value || null;
+console.log('[BatchAI] Initial selectedPromptId:', selectedPromptId);
+
+document.getElementById('prompt_selection').addEventListener('change', function() {
+    selectedPromptId = this.value || null;
+    console.log('[BatchAI] Prompt changed to:', selectedPromptId);
+    const previewBtn = document.getElementById('togglePromptPreview');
+    const previewContainer = document.getElementById('promptPreviewContainer');
+    
+    if (!selectedPromptId) {
+        previewBtn.style.display = 'none';
+        previewContainer.style.display = 'none';
+        return;
+    }
+
+    previewBtn.style.display = 'block';
+});
+
+document.getElementById('togglePromptPreview').addEventListener('click', function() {
+    var previewContainer = document.getElementById('promptPreviewContainer');
+    var previewText = document.getElementById('promptPreviewText');
+    var btn = this;
+    
+    // Toggle
+    if (previewContainer.style.display === 'none') {
+        // Load and show
+        fetch('/api/prompt/' + selectedPromptId)
+            .then(function(response) {
+                if (!response.ok) throw new Error('Prompt konnte nicht geladen werden (Status ' + response.status + ')');
+                return response.json();
+            })
+            .then(function(data) {
+                previewText.textContent = data.content || 'Kein Inhalt';
+                previewContainer.style.display = 'block';
+                btn.textContent = '👁️ Verbergen';
+            })
+            .catch(function(error) {
+                previewText.textContent = 'Fehler: ' + error.message;
+                previewContainer.style.display = 'block';
+            });
+    } else {
+        previewContainer.style.display = 'none';
+        this.textContent = '👁️ Ansehen';
+    }
+});
+
+function startAnalysisWithKiSelection() {
+    console.log('[BatchAI] startAnalysisWithKiSelection called, selectedPromptId:', selectedPromptId);
+    
+    // Validate prompt selection
+    if (!selectedPromptId) {
+        alert('Bitte wählen Sie zuerst eine Prompt-Vorlage aus.');
+        return;
+    }
+
+    // Open KI model selection modal
+    openKiModelModal(function(selectedModel) {
+        console.log('[BatchAI] Model selected:', selectedModel);
+        
+        // Set model in hidden input
+        document.getElementById('ki_model_input').value = selectedModel;
+        
+        // Fetch prompt content, then submit form
+        console.log('[BatchAI] Fetching prompt content for ID:', selectedPromptId);
+        fetch('/api/prompt/' + selectedPromptId)
+            .then(function(response) {
+                console.log('[BatchAI] Fetch response status:', response.status);
+                if (!response.ok) {
+                    throw new Error('Prompt konnte nicht geladen werden (HTTP ' + response.status + ')');
+                }
+                return response.json();
+            })
+            .then(function(data) {
+                console.log('[BatchAI] Prompt content received, length:', (data.content || '').length);
+                
+                // Build a new form with all required data
+                var actionForm = document.createElement('form');
+                actionForm.method = 'POST';
+                actionForm.action = '{{ url_for("analysis.execute_batch_ai_analysis") }}';
+                actionForm.style.display = 'none';
+                
+                // CSRF token
+                var csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrf_token';
+                csrfInput.value = document.querySelector('input[name="csrf_token"]').value;
+                actionForm.appendChild(csrfInput);
+                
+                // KI model
+                var modelInput = document.createElement('input');
+                modelInput.type = 'hidden';
+                modelInput.name = 'ki_model';
+                modelInput.value = selectedModel;
+                actionForm.appendChild(modelInput);
+                
+                // KI prompt content
+                var promptInput = document.createElement('input');
+                promptInput.type = 'hidden';
+                promptInput.name = 'ki_prompt';
+                promptInput.value = data.content || '';
+                actionForm.appendChild(promptInput);
+                
+                // Participant IDs - collect ALL hidden inputs
+                var participantInputs = document.querySelectorAll('input[name="participant_ids"]');
+                console.log('[BatchAI] Found participant_ids inputs:', participantInputs.length);
+                for (var i = 0; i < participantInputs.length; i++) {
+                    var pInput = document.createElement('input');
+                    pInput.type = 'hidden';
+                    pInput.name = 'participant_ids';
+                    pInput.value = participantInputs[i].value;
+                    actionForm.appendChild(pInput);
+                }
+                
+                // Additional files (if any file input exists)
+                // Note: File inputs can't be copied programmatically, but the original form handles this
+                
+                document.body.appendChild(actionForm);
+                console.log('[BatchAI] Submitting form to:', actionForm.action);
+                actionForm.submit();
+            })
+            .catch(function(error) {
+                console.error('[BatchAI] ERROR:', error);
+                alert('Fehler beim Laden des Prompts: ' + error.message);
+            });
     });
+}
 </script>
 {% endblock %}

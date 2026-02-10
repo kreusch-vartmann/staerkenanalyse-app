@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+
+{% block title %}KI-Gym Training{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            {% for item in breadcrumbs %}
+                {% if item.link %}
+                    <li class="breadcrumb-item"><a href="{{ item.link }}">{{ item.text }}</a></li>
+                {% else %}
+                    <li class="breadcrumb-item active" aria-current="page">{{ item.text }}</li>
+                {% endif %}
+            {% endfor %}
+        </ol>
+    </nav>
+    
+    <h1 class="mb-4">
+        <i class="bi bi-robot"></i> KI-Gym Training System
+    </h1>
+    
+    <p class="lead text-muted">
+        Trainiere die KI basierend auf deinen manuellen Verbesserungen. 
+        Das System lernt aus allen Edits und passt zukünftige Generierungen automatisch an.
+    </p>
+    
+    <hr class="my-4">
+    
+    <!-- TASKS TRAINING SECTION -->
+    <div class="card mb-4 border-primary">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">
+                <i class="bi bi-list-check"></i> Beobachtungsaufgaben Training
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <!-- Global Task Stats -->
+                <div class="col-md-4 mb-3">
+                    <div class="card border-info">
+                        <div class="card-header bg-info text-white">
+                            <strong>Global (Alle Bereiche)</strong>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled mb-0">
+                                <li><strong>Gesamt Responses:</strong> {{ task_status.total_raw_responses }}</li>
+                                <li><strong>Bearbeitet:</strong> {{ task_status.edited_responses }}</li>
+                                <li><strong>Pending:</strong> {{ task_status.pending_analysis }}</li>
+                                <li><strong>Ø Edit-Größe:</strong> <span class="badge bg-secondary">{{ task_status.avg_edit_magnitude }}</span></li>
+                                <li><strong>Ø Ähnlichkeit:</strong> {{ task_status.avg_similarity }}%</li>
+                                <li><strong>Minimum nötig:</strong> {{ task_status.min_samples_required }}</li>
+                            </ul>
+                            
+                            <form method="POST" action="{{ url_for('admin.ki_gym_train', response_type='task') }}" class="mt-3">
+                                <input type="hidden" name="observation_area" value="">
+                                {% if task_status.ready_for_training %}
+                                    <button type="submit" class="btn btn-success btn-sm w-100">
+                                        <i class="bi bi-gear-fill"></i> Training Starten
+                                    </button>
+                                {% else %}
+                                    <button type="button" class="btn btn-secondary btn-sm w-100" disabled>
+                                        <i class="bi bi-hourglass-split"></i> Nicht genug Daten
+                                    </button>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Social Skills -->
+                <div class="col-md-4 mb-3">
+                    <div class="card border-success">
+                        <div class="card-header bg-success text-white">
+                            <strong>Soziale Kompetenzen</strong>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled mb-0">
+                                <li><strong>Gesamt:</strong> {{ task_status_social.total_raw_responses }}</li>
+                                <li><strong>Bearbeitet:</strong> {{ task_status_social.edited_responses }}</li>
+                                <li><strong>Ø Edit:</strong> <span class="badge bg-secondary">{{ task_status_social.avg_edit_magnitude }}</span></li>
+                                <li><strong>Ähnlichkeit:</strong> {{ task_status_social.avg_similarity }}%</li>
+                            </ul>
+                            
+                            <form method="POST" action="{{ url_for('admin.ki_gym_train', response_type='task') }}" class="mt-3">
+                                <input type="hidden" name="observation_area" value="Soziale Kompetenzen">
+                                {% if task_status_social.ready_for_training %}
+                                    <button type="submit" class="btn btn-success btn-sm w-100">
+                                        <i class="bi bi-gear-fill"></i> Training Starten
+                                    </button>
+                                {% else %}
+                                    <button type="button" class="btn btn-secondary btn-sm w-100" disabled>
+                                        Nicht genug Daten
+                                    </button>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Verbal Skills -->
+                <div class="col-md-4 mb-3">
+                    <div class="card border-warning">
+                        <div class="card-header bg-warning text-dark">
+                            <strong>Verbale Kompetenzen</strong>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled mb-0">
+                                <li><strong>Gesamt:</strong> {{ task_status_verbal.total_raw_responses }}</li>
+                                <li><strong>Bearbeitet:</strong> {{ task_status_verbal.edited_responses }}</li>
+                                <li><strong>Ø Edit:</strong> <span class="badge bg-secondary">{{ task_status_verbal.avg_edit_magnitude }}</span></li>
+                                <li><strong>Ähnlichkeit:</strong> {{ task_status_verbal.avg_similarity }}%</li>
+                            </ul>
+                            
+                            <form method="POST" action="{{ url_for('admin.ki_gym_train', response_type='task') }}" class="mt-3">
+                                <input type="hidden" name="observation_area" value="Verbale Kompetenzen">
+                                {% if task_status_verbal.ready_for_training %}
+                                    <button type="submit" class="btn btn-success btn-sm w-100">
+                                        <i class="bi bi-gear-fill"></i> Training Starten
+                                    </button>
+                                {% else %}
+                                    <button type="button" class="btn btn-secondary btn-sm w-100" disabled>
+                                        Nicht genug Daten
+                                    </button>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alert alert-info mt-3">
+                <i class="bi bi-info-circle"></i>
+                <strong>Automatische Integration:</strong> Gelernte Rules werden automatisch in Task-Prompts eingebunden.
+                Aktive Task-Rules: <strong>{{ active_task_rules }}</strong>
+            </div>
+        </div>
+    </div>
+    
+    <!-- REPORTS TRAINING SECTION -->
+    <div class="card mb-4 border-warning">
+        <div class="card-header bg-warning text-dark">
+            <h3 class="mb-0">
+                <i class="bi bi-file-earmark-text"></i> Fremdeinschätzungs-Berichte Training
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <ul class="list-unstyled">
+                        <li><strong>Gesamt Responses:</strong> {{ report_status.total_raw_responses }}</li>
+                        <li><strong>Bearbeitet:</strong> {{ report_status.edited_responses }}</li>
+                        <li><strong>Pending:</strong> {{ report_status.pending_analysis }}</li>
+                        <li><strong>Ø Edit-Größe:</strong> <span class="badge bg-secondary">{{ report_status.avg_edit_magnitude }}</span></li>
+                        <li><strong>Ø Ähnlichkeit:</strong> {{ report_status.avg_similarity }}%</li>
+                        <li><strong>Minimum nötig:</strong> {{ report_status.min_samples_required }}</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <form method="POST" action="{{ url_for('admin.ki_gym_train', response_type='report') }}">
+                        {% if report_status.ready_for_training %}
+                            <button type="submit" class="btn btn-warning btn-lg w-100">
+                                <i class="bi bi-gear-fill"></i> Training Starten
+                            </button>
+                        {% else %}
+                            <button type="button" class="btn btn-secondary btn-lg w-100" disabled>
+                                <i class="bi bi-hourglass-split"></i> Nicht genug Daten
+                                <br>
+                                <small>({{ report_status.edited_responses }} / {{ report_status.min_samples_required }})</small>
+                            </button>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+            
+            <div class="alert alert-warning mt-3">
+                <i class="bi bi-exclamation-triangle"></i>
+                <strong>Manuelle Integration:</strong> Gelernte Rules für Reports werden als Prompt-Vorschläge angeboten, die du manuell bestätigen musst.
+                Aktive Report-Rules: <strong>{{ active_report_rules }}</strong>
+            </div>
+        </div>
+    </div>
+    
+    <!-- LEARNED RULES SECTION -->
+    <div class="card mb-4">
+        <div class="card-header bg-secondary text-white">
+            <h3 class="mb-0">
+                <i class="bi bi-lightbulb"></i> Gelernte Regeln ({{ all_rules|length }})
+            </h3>
+        </div>
+        <div class="card-body">
+            {% if all_rules %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Typ</th>
+                                <th>Bereich</th>
+                                <th>Regel-Typ</th>
+                                <th>Confidence</th>
+                                <th>Samples</th>
+                                <th>Trainiert am</th>
+                                <th>Status</th>
+                                <th>Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rule in all_rules %}
+                            <tr>
+                                <td>
+                                    {% if rule.type == 'task' %}
+                                        <span class="badge bg-primary">Task</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Report</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ rule.observation_area or '<i>Global</i>'|safe }}</td>
+                                <td><code>{{ rule.rule_type }}</code></td>
+                                <td>
+                                    <div class="progress" style="width: 100px;">
+                                        <div class="progress-bar" role="progressbar" 
+                                             style="width: {{ (rule.confidence * 100)|int }}%"
+                                             aria-valuenow="{{ (rule.confidence * 100)|int }}" 
+                                             aria-valuemin="0" aria-valuemax="100">
+                                            {{ (rule.confidence * 100)|int }}%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ rule.samples_analyzed }}</td>
+                                <td>{{ rule.trained_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                                <td>
+                                    {% if rule.is_active %}
+                                        <span class="badge bg-success">Aktiv</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inaktiv</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <form method="POST" action="{{ url_for('admin.ki_gym_toggle_rule', rule_id=rule.id) }}" class="d-inline">
+                                            <button type="submit" class="btn btn-outline-primary" 
+                                                    title="{% if rule.is_active %}Deaktivieren{% else %}Aktivieren{% endif %}">
+                                                <i class="bi bi-{% if rule.is_active %}pause{% else %}play{% endif %}-circle"></i>
+                                            </button>
+                                        </form>
+                                        <button type="button" class="btn btn-outline-info" 
+                                                data-bs-toggle="collapse" 
+                                                data-bs-target="#rule-details-{{ rule.id }}"
+                                                title="Details anzeigen">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                        <form method="POST" action="{{ url_for('admin.ki_gym_delete_rule', rule_id=rule.id) }}" 
+                                              class="d-inline"
+                                              onsubmit="return confirm('Rule wirklich löschen?');">
+                                            <button type="submit" class="btn btn-outline-danger" title="Löschen">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="8" class="p-0">
+                                    <div class="collapse" id="rule-details-{{ rule.id }}">
+                                        <div class="card card-body bg-light m-2">
+                                            <h6>Regel-Details:</h6>
+                                            <pre class="mb-2"><code>{{ rule.rule_content|tojson(indent=2) }}</code></pre>
+                                            {% if rule.reasoning %}
+                                                <p class="mb-0"><strong>Begründung:</strong> {{ rule.reasoning }}</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> Noch keine Rules vorhanden. Führe ein Training durch, sobald genug Edits verfügbar sind.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- HELP SECTION -->
+    <div class="card border-light">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="bi bi-question-circle"></i> Wie funktioniert KI-Gym?</h5>
+        </div>
+        <div class="card-body">
+            <ol>
+                <li>
+                    <strong>Sammlung:</strong> Jede KI-Generierung (Tasks & Reports) wird zusammen mit der Original-Antwort gespeichert.
+                </li>
+                <li>
+                    <strong>Tracking:</strong> Wenn du eine KI-generierte Aufgabe bearbeitest, werden die Unterschiede automatisch erfasst.
+                </li>
+                <li>
+                    <strong>Analyse:</strong> Nach genügend Samples ({{ task_status.min_samples_required }} für Tasks, {{ report_status.min_samples_required }} für Reports) 
+                    kann das System Muster erkennen.
+                </li>
+                <li>
+                    <strong>Integration:</strong>
+                    <ul>
+                        <li><strong>Tasks:</strong> Gelernte Rules werden automatisch in zukünftige Prompts integriert.</li>
+                        <li><strong>Reports:</strong> Gelernte Rules werden als Prompt-Vorschläge angeboten (manuelle Bestätigung).</li>
+                    </ul>
+                </li>
+            </ol>
+            
+            <div class="alert alert-success mt-3">
+                <strong><i class="bi bi-check-circle"></i> Best Practice:</strong> 
+                Trainiere regelmäßig (z.B. nach 20-30 neuen Edits), damit die KI kontinuierlich besser wird!
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -4,6 +4,7 @@ Jede Klasse repräsentiert eine Tabelle in der Datenbank.
 """
 
 from datetime import datetime, timezone  # timezone für UTC
+from enum import Enum
 
 from flask_login import UserMixin
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -12,14 +13,33 @@ from extensions import db
 
 
 # =============================================================================
+# Enums für Task-System
+# =============================================================================
+class ObservationArea(Enum):
+    """Beobachtungsbereiche für Assessment-Center Aufgaben."""
+    SOZIALE_KOMPETENZEN = "Soziale Kompetenzen"
+    VERBALE_KOMPETENZEN = "Verbale Kompetenzen"
+
+
+# =============================================================================
 # User Management & Authentication Models
 # =============================================================================
 
-# Many-to-Many Association Table: User ↔ Group
+# Many-to-Many Association Tables
+
+# User ↔ Group
 user_groups = db.Table(
     "user_groups",
     db.Column("user_id", db.Integer, db.ForeignKey("users.id"), primary_key=True),
     db.Column("group_id", db.Integer, db.ForeignKey("groups.id"), primary_key=True),
+)
+
+# Group ↔ Task (Aufgaben einer Gruppe)
+group_tasks = db.Table(
+    "group_tasks",
+    db.Column("group_id", db.Integer, db.ForeignKey("groups.id"), primary_key=True),
+    db.Column("task_id", db.Integer, db.ForeignKey("tasks.id"), primary_key=True),
+    db.Column("assigned_at", db.DateTime, default=datetime.now(timezone.utc)),
 )
 
 
@@ -109,12 +129,19 @@ class Group(db.Model):
     # --- NEU ---
     leitung_selbsteinschatzung = db.Column(db.String(100), nullable=True)
 
-    # Relationship zu den Teilnehmern
+    # Relationships
     participants = db.relationship(
         "Participant",
         back_populates="group",
         lazy="dynamic",
         cascade="all, delete-orphan",
+    )
+    
+    tasks = db.relationship(
+        "Task",
+        secondary=group_tasks,
+        lazy="dynamic",
+        backref="groups"
     )
 
 
@@ -131,6 +158,7 @@ class Participant(db.Model):
     vk_ratings = db.Column(db.Text, nullable=True)
     ki_texts = db.Column(db.Text, nullable=True)
     ki_raw_response = db.Column(db.Text, nullable=True)
+    ki_model = db.Column(db.String(20), nullable=True)  # "mistral" oder "gemini" - welche KI den Bericht generiert hat
     footer_data = db.Column(db.Text, nullable=True)
 
     created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
@@ -353,3 +381,183 @@ class SignatureImage(db.Model):
     filename = db.Column(db.String(100), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
     uploaded_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+
+
+# =============================================================================
+# Phase 2: Task Generator System
+# =============================================================================
+
+
+class Task(db.Model):
+    """
+    Task-Template für Assessment-Center Aufgaben.
+    Versionsverwaltung erlaubt Iteration und History-Tracking.
+    """
+
+    __tablename__ = "tasks"
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Metadaten
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    notes = db.Column(db.Text, nullable=True)
+    
+    # Task-Klassifizierung
+    observation_area = db.Column(
+        db.String(50), nullable=False
+    )  # "Soziale Kompetenzen" oder "Verbale Kompetenzen"
+    participant_count = db.Column(
+        db.Integer, nullable=True
+    )  # 1–6, oder null für variabel
+    duration_minutes = db.Column(
+        db.Integer, nullable=True
+    )  # 25–35 typisch, oder null
+    
+    # Version Control
+    current_version_id = db.Column(
+        db.Integer, db.ForeignKey("task_versions.id"), nullable=True
+    )
+    
+    # Status & Audit
+    is_active = db.Column(db.Boolean, default=True)
+    is_example = db.Column(db.Boolean, default=False)  # True für vordefinierte Beispiel-Aufgaben
+    ki_model = db.Column(db.String(20), nullable=True)  # "mistral" oder "gemini" - welche KI die Aufgabe generiert hat
+    created_by_id = db.Column(
+        db.Integer, db.ForeignKey("users.id"), nullable=False
+    )
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc)
+    )
+    
+    # Relationships
+    versions = db.relationship(
+        "TaskVersion",
+        back_populates="task",
+        cascade="all, delete-orphan",
+        foreign_keys="TaskVersion.task_id",
+    )
+    current_version = db.relationship(
+        "TaskVersion",
+        foreign_keys=[current_version_id],
+        uselist=False,
+        lazy="joined"
+    )
+    created_by = db.relationship("User")
+    
+    def __repr__(self):
+        return f"<Task {self.title} (v{len(self.versions)})>"
+
+
+class TaskVersion(db.Model):
+    """
+    Versionierte Task-Inhalte mit Change-History.
+    Jeder Save erzeugt neue Version; Revert zu Altversion möglich.
+    """
+
+    __tablename__ = "task_versions"
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Relationship zu Task
+    task_id = db.Column(db.Integer, db.ForeignKey("tasks.id"), nullable=False)
+    
+    # Versionierungsinformation
+    version_number = db.Column(
+        db.Float, nullable=False
+    )  # 1.0, 1.1, 1.2, 2.0, etc.
+    
+    # Inhalt
+    content = db.Column(
+        db.Text, nullable=False
+    )  # HTML von Quill.js Editor
+    
+    # Kontext-Daten (JSON)
+    # Enthält Observation Area, Participant Count, Duration bei Version-Create
+    context_data = db.Column(db.Text, nullable=True)  # JSON
+    
+    # Änderungs-Metadaten
+    change_notes = db.Column(
+        db.Text, nullable=True
+    )  # "Präsentations-Element hinzugefügt", etc.
+    created_by_id = db.Column(
+        db.Integer, db.ForeignKey("users.id"), nullable=False
+    )
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+    
+    # Relationships
+    task = db.relationship("Task", back_populates="versions", foreign_keys=[task_id])
+    created_by = db.relationship("User")
+    
+    def __repr__(self):
+        return f"<TaskVersion {self.task.title} v{self.version_number}>"
+
+
+# ============================================================================
+# KI-GYM: Edit-Based Learning System
+# ============================================================================
+
+class AIRawResponse(db.Model):
+    """Stores raw AI outputs before user editing for learning purposes."""
+    __tablename__ = "ai_raw_responses"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    type = db.Column(db.String(50), nullable=False)  # 'task' or 'report'
+    context_id = db.Column(db.Integer, nullable=False)  # task_id or participant_id
+    ki_model = db.Column(db.String(100), nullable=False)  # e.g., 'mistral-large-latest'
+    raw_response = db.Column(db.Text, nullable=False)  # Original AI output
+    processing_status = db.Column(db.String(20), default='pending')  # 'pending', 'edited', 'analyzed'
+    observation_area = db.Column(db.String(100), nullable=True)  # e.g., 'Sozialverhalten'
+    context_metadata = db.Column(db.JSON, nullable=True)  # Additional context (prompt, temperature, etc.)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    
+    # Relationships
+    edits = db.relationship("ContentEdit", back_populates="raw_response", cascade="all, delete-orphan")
+    
+    def __repr__(self):
+        return f"<AIRawResponse {self.type} #{self.context_id} ({self.ki_model})>"
+
+
+class ContentEdit(db.Model):
+    """Tracks differences between AI output and user's final version."""
+    __tablename__ = "content_edits"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    raw_response_id = db.Column(db.Integer, db.ForeignKey("ai_raw_responses.id"), nullable=False)
+    version_type = db.Column(db.String(50), nullable=False)  # 'task_version' or 'report'
+    version_id = db.Column(db.Integer, nullable=False)  # ID of TaskVersion or report record
+    diff_metrics = db.Column(db.JSON, nullable=False)  # {char_diff%, structure_changes, tone_shift}
+    edit_reason = db.Column(db.Text, nullable=True)  # Optional: user-provided reason
+    edited_by_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    
+    # Relationships
+    raw_response = db.relationship("AIRawResponse", back_populates="edits")
+    edited_by = db.relationship("User")
+    
+    def __repr__(self):
+        return f"<ContentEdit for AIRawResponse {self.raw_response_id}>"
+
+
+class LearnedPromptRule(db.Model):
+    """Stores learned patterns and rules extracted from user edits."""
+    __tablename__ = "learned_prompt_rules"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    type = db.Column(db.String(50), nullable=False)  # 'task' or 'report'
+    observation_area = db.Column(db.String(100), nullable=True)  # Specific area or NULL for global
+    rule_type = db.Column(db.String(50), nullable=False)  # e.g., 'length', 'structure', 'tone', 'content'
+    rule_content = db.Column(db.JSON, nullable=False)  # {pattern: "...", instruction: "..."}
+    confidence = db.Column(db.Float, nullable=False, default=0.0)  # 0.0-1.0
+    samples_analyzed = db.Column(db.Integer, nullable=False, default=0)
+    trained_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    applied_in_prompt_version = db.Column(db.Integer, nullable=True)  # For tracking
+    reasoning = db.Column(db.Text, nullable=True)  # AI's explanation of the rule
+    is_active = db.Column(db.Boolean, default=True)  # Can be deactivated by admin
+    created_by_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)  # NULL for auto-generated
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    
+    # Relationships
+    created_by = db.relationship("User")
+    
+    def __repr__(self):
+        return f"<LearnedPromptRule {self.type}/{self.rule_type} (confidence: {self.confidence:.2f})>"

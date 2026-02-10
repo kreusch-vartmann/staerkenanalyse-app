@@ -10,10 +10,12 @@ import os
 from datetime import datetime, timezone
 
 from flask import Flask, render_template, url_for
-from flask_login import login_required
+from flask_login import current_user, login_required
 
 import models
 from blueprints.analysis import analysis_bp
+from blueprints.auth import auth_bp
+from blueprints.admin import admin_bp
 from blueprints.data_io import data_io_bp
 from blueprints.explanation_blocks import explanation_blocks_bp
 # Blueprints importieren
@@ -21,6 +23,7 @@ from blueprints.groups import groups_bp
 from blueprints.participants import participants_bp
 from blueprints.prompts import prompts_bp
 from blueprints.reports import bp as reports_bp
+from blueprints.observation_tasks import observation_tasks_bp
 # Neue Imports
 from config import DevelopmentConfig, ProductionConfig
 from extensions import csrf, db, login_manager, migrate
@@ -72,6 +75,7 @@ app.register_blueprint(data_io_bp)
 app.register_blueprint(prompts_bp)
 app.register_blueprint(explanation_blocks_bp)
 app.register_blueprint(reports_bp)
+app.register_blueprint(observation_tasks_bp)
 
 
 # --- ZENTRALE FUNKTIONEN ---
@@ -128,11 +132,36 @@ def dashboard():
         "completed_analyses": completed_analyses,
     }
 
+    # KI-Gym Statistiken (nur für Admins)
+    ai_gym_stats = None
+    if current_user.is_admin:
+        try:
+            total_raw_responses = db.session.scalar(
+                db.select(db.func.count(models.AIRawResponse.id))
+            )
+            edited_responses = db.session.scalar(
+                db.select(db.func.count(models.ContentEdit.id))
+            )
+            active_rules = db.session.scalar(
+                db.select(db.func.count(models.LearnedPromptRule.id)).where(
+                    models.LearnedPromptRule.is_active == True
+                )
+            )
+            ai_gym_stats = {
+                "total_raw_responses": total_raw_responses or 0,
+                "edited_responses": edited_responses or 0,
+                "active_rules": active_rules or 0,
+            }
+        except Exception:
+            # Falls KI-Gym-Tabellen noch nicht existieren
+            ai_gym_stats = None
+
     breadcrumbs = [{"text": "Dashboard"}]
     return render_template(
         "dashboard.html",
         breadcrumbs=breadcrumbs,
         stats=stats,
+        ai_gym_stats=ai_gym_stats,
         recently_updated_participants=recently_updated,
     )
 

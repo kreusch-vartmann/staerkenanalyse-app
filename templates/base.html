@@ -3,10 +3,11 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{% block title %}Stärkenanalyse{% endblock %}</title>
 
-    <!-- Altes Bootstrap CSS für Kompatibilität -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- Bootstrap 5 aus CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -25,17 +26,14 @@
             vertical-align: text-bottom;
         }
         .sidebar {
-            position: fixed;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            z-index: 100;
-            padding: 48px 0 0;
-            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+            position: relative;
+            padding: 1rem 0;
+            background-color: #f8f9fa;
+            border-right: 1px solid #dee2e6;
         }
         .sidebar-sticky {
-            position: relative;
-            top: 0;
+            position: sticky;
+            top: 48px;
             height: calc(100vh - 48px);
             padding-top: .5rem;
             overflow-x: hidden;
@@ -195,7 +193,7 @@
 <body>
     <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
         <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" href="{{ url_for('dashboard') }}">Stärkenanalyse</a>
-        <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-toggle="collapse" data-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <!-- Undo/Redo Buttons (nur auf Edit-Seiten sichtbar) -->
@@ -211,10 +209,10 @@
         <ul class="navbar-nav px-3">
             {% if current_user.is_authenticated %}
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <i class="fas fa-user-circle"></i> {{ current_user.full_name }}
                     </a>
-                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
+                    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <span class="dropdown-item-text"><strong>{{ current_user.email }}</strong></span>
                         <span class="dropdown-item-text"><small>Rolle: <span class="badge {% if current_user.is_admin %}badge-danger{% else %}badge-info{% endif %}">{{ current_user.role.name | upper }}</span></small></span>
                         <div class="dropdown-divider"></div>
@@ -225,6 +223,9 @@
                             <div class="dropdown-divider"></div>
                             <a class="dropdown-item" href="{{ url_for('admin.manage_users') }}">
                                 <i class="fas fa-users-cog"></i> Benutzerverwaltung
+                            </a>
+                            <a class="dropdown-item" href="{{ url_for('admin.ki_gym_dashboard') }}">
+                                <i class="bi bi-robot"></i> KI-Gym Training
                             </a>
                         {% endif %}
                         <div class="dropdown-divider"></div>
@@ -300,6 +301,11 @@
                     </h6>
                     <ul class="nav flex-column mb-2">
                         <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint and 'observation_tasks' in request.endpoint %}active{% endif %}" href="{{ url_for('observation_tasks.task_library') }}">
+                                <span style="font-size: 1.2rem;">📚</span> Beobachtungsaufgaben
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link {% if request.endpoint and 'prompts' in request.endpoint %}active{% endif %}" href="{{ url_for('prompts.manage_prompts') }}">
                                 <span style="font-size: 1.2rem;">🔄</span> Prompts
                             </a>
@@ -307,6 +313,11 @@
                         <li class="nav-item">
                             <a class="nav-link {% if request.endpoint and 'explanation_blocks' in request.endpoint %}active{% endif %}" href="{{ url_for('explanation_blocks.manage_explanation_blocks') }}">
                                 <span style="font-size: 1.2rem;">📝</span> Text
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint and 'ki_gym' in request.endpoint %}active{% endif %}" href="{{ url_for('admin.ki_gym_dashboard') }}">
+                                <span style="font-size: 1.2rem;">🏋️</span> KI-Gym
                             </a>
                         </li>
                         <li class="nav-item">
@@ -332,7 +343,7 @@
             </nav>
             {% endif %}
 
-            <main role="main" class="{% if request.endpoint == 'dashboard' %}col-12{% else %}col-md-9 ml-sm-auto col-lg-10{% endif %} px-md-4 bg-gray-50">
+            <main role="main" class="{% if request.endpoint == 'dashboard' %}col-12{% else %}col-md-9 col-lg-10{% endif %} px-md-4">
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         <div class="mt-3">
@@ -360,13 +371,19 @@
             </div>
         </div>
     </footer>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
     <script>
       feather.replace()
     </script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const userDropdown = document.getElementById('userDropdown');
+                if (userDropdown && window.bootstrap?.Dropdown) {
+                    window.bootstrap.Dropdown.getOrCreateInstance(userDropdown);
+                }
+            });
+        </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

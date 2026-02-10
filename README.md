@@ -1,8 +1,8 @@
 # Stärkenanalyse-App
 
-**Version:** 1.0.0  
-**Status:** Phase 1 Complete - Production Ready ✅  
-**Benutzerverwaltung & Sicherheitskonzept:** Implementiert und getestet
+**Version:** 1.1.0  
+**Status:** Phase 2 Development - KI-Gym & Task Management ✅  
+**Neue Features:** KI-Gym Learning System, Beobachtungsaufgaben-Verwaltung, KI-Modell-Auswahl
 
 Eine lokale Flask-Webanwendung zur Verwaltung von Gruppen und Teilnehmenden mit rollenbasierter Zugriffskontrolle und zur Durchführung von KI-gestützten Stärkenanalysen.
 
@@ -123,8 +123,56 @@ python -m flask run --port 5002
   - `blueprints/prompts.py` — Verwaltung von KI-Prompts
   - `blueprints/explanation_blocks.py` — Erklärungstexte für Abschlussberichte
   - `blueprints/reports.py` — **NEUE** Report-Konfiguration, Vorschau & PDF-Generierung
+  - `blueprints/observation_tasks.py` — **NEU v1.1.0** Beobachtungsaufgaben-Verwaltung mit KI-Generierung
+  - `blueprints/admin.py` — **NEU v1.1.0** Admin-Bereich mit KI-Gym Training
 
 - `services/report_generator.py` — **NEUE** ReportGenerator-Klasse für HTML-Rendering und PDF-Export mit konfigurierbarem Sidebar-Layout
+- `ai_gym.py` — **NEU v1.1.0** KI-Gym Service für Pattern-Extraktion und automatisches Prompt-Learning
+
+## Neu in Version 1.1.0 🚀
+
+### KI-Gym Learning System 🧠
+Automatisches Machine Learning-System, das aus manuellen Bearbeitungen lernt und KI-Prompts optimiert:
+
+#### Features
+- **Content-Edit-Tracking**: Automatische Erfassung aller manuellen Änderungen an KI-generierten Inhalten
+- **Pattern-Extraktion**: Analyse von Edit-Metriken (Länge, Magnitude, Ähnlichkeit)
+- **Automatische Rule-Generierung**: Erstellung von Prompt-Verbesserungsregeln basierend auf User-Edits
+- **Confidence-Scoring**: Bewertung der Regeln nach Datenqualität
+- **Training Dashboard**: Admin-UI zur Verwaltung und Aktivierung von gelernten Regeln
+
+#### Status ✅
+- ✅ `AIRawResponse` & `ContentEdit` Models für Tracking
+- ✅ `LearnedPromptRule` Model für generierte Regeln
+- ✅ `ai_gym.py` Service mit Pattern-Extraktion und Rule-Generierung
+- ✅ Admin KI-Gym Dashboard (`/admin/ki-gym`)
+- ✅ Automatische Integration von Task-Rules in Prompts
+- ✅ Manuelle Integration von Report-Rules (mit Bestätigung)
+
+### Beobachtungsaufgaben-Verwaltung 📋
+Vollständige Task-Library mit KI-gestützter Generierung für Assessment-Center:
+
+#### Features
+- **KI-Task-Generierung**: Automatische Erstellung von AC-Aufgaben basierend auf Beobachtungsbereichen
+- **Rich-Text-Editor**: Quill.js-basierter Editor mit HTML-Unterstützung
+- **Chat-basierte Iterationen**: Verfeinern von Tasks durch Chat mit der KI
+- **Versions-Management**: Vollständige Versionierung aller Task-Änderungen
+- **Referenz-Aufgaben**: Hardcoded Best-Practice-Beispiele für KI-Training
+- **KI-Modell-Auswahl**: Wählbare KI-Modelle (Mistral Large / Google Gemini) mit visuellem Modal
+
+#### Status ✅
+- ✅ `Task` & `TaskVersion` Models mit circular dependency handling
+- ✅ `observation_tasks` Blueprint mit Create/Edit/Generate Workflow
+- ✅ KI-Generierung mit Context-Data und Example-Tasks
+- ✅ Quill.js Editor mit Chat-Seitenleiste
+- ✅ Task-Library mit Filterung und Pagination
+- ✅ KI-Modell-Auswahl-Modal mit Mistral/Gemini Logos
+
+### Weitere Verbesserungen 🔧
+- **Report-Metadaten**: Anzeige von Erstellungsdatum, verwendetem KI-Modell und Edit-Status in Berichten
+- **Group-Tasks API-Fix**: Korrigierte JSON-Response-Struktur für Aufgaben-Zuordnung zu Gruppen
+- **Batch-Analysen-Stabilität**: Links öffnen in neuen Tabs, verhindert Unterbrechung der Batch-Verarbeitung
+- **Modal-System Fixes**: Verbessertes CSS z-index Handling und Callback-Execution Order
 
 ## Report-Generierung & Konfiguration ✅
 

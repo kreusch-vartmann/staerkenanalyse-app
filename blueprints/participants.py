@@ -10,7 +10,7 @@ from flask_login import login_required, current_user
 from extensions import csrf, db
 from models import Group, Participant, SelfAssessment
 from utils import sanitize_html
-from decorators import admin_required, group_access_required, filter_groups_by_access
+from decorators import admin_required, group_access_required, participant_access_required, filter_groups_by_access
 
 participants_bp = Blueprint("participants", __name__)
 
@@ -106,7 +106,7 @@ def delete_participant(participant_id):
 
 @participants_bp.route("/participant/<int:participant_id>/data_entry")
 @login_required
-@group_access_required
+@participant_access_required
 def show_data_entry(participant_id):
     """Zeigt die Dateneingabeseite für einen Teilnehmer an."""
     participant = db.get_or_404(Participant, participant_id)
@@ -183,7 +183,7 @@ def manage_self_assessments():
 
 @participants_bp.route("/participant/<int:participant_id>/self_assessment")
 @login_required
-@group_access_required
+@participant_access_required
 def show_self_assessment(participant_id):
     """Zeigt die Selbsteinschätzungs-Eingabeseite für einen Teilnehmer an."""
     participant = db.get_or_404(Participant, participant_id)
@@ -219,7 +219,7 @@ def show_self_assessment(participant_id):
 
 @participants_bp.route("/save_self_assessment/<int:participant_id>", methods=["POST"])
 @login_required
-@group_access_required
+@participant_access_required
 @csrf.exempt
 def save_self_assessment(participant_id):
     """Speichert die Selbsteinschätzung für einen Teilnehmer (API-Endpunkt)."""

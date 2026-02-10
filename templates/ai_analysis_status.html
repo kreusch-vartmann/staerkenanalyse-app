@@ -20,7 +20,7 @@
     </div>
 
     <div class="mt-8">
-        <a id="finish-button" href="{{ url_for('analysis.manage_final_reports') }}" class="hidden py-3 px-8 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold text-lg">
+        <a id="finish-button" href="{{ url_for('analysis.manage_final_reports') }}" target="_blank" class="hidden py-3 px-8 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold text-lg" title="Öffnet in neuem Tab">
             <i class="fas fa-check-circle me-2"></i>Alle Berichte ansehen
         </a>
     </div>
@@ -58,8 +58,10 @@
 
                     const reportLink = document.createElement('a');
                     reportLink.href = `${editReportUrlBase}/${participantId}`;
+                    reportLink.target = '_blank';
                     reportLink.className = 'ml-3 text-sm text-blue-600 hover:text-blue-800 font-semibold whitespace-nowrap';
                     reportLink.innerHTML = '<i class="fas fa-edit me-1"></i>Bericht bearbeiten';
+                    reportLink.title = 'Öffnet in neuem Tab';
                     participantRow.appendChild(reportLink);
                 } else {
                     indicator.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i> Fehler: ${result.message}`;

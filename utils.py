@@ -157,12 +157,74 @@ def clean_json_response(raw_response):
     """
     Bereinigt die JSON-Antwort von KI-Modellen, entfernt Code-Blöcke
     und Zeilenumbrüche.
+    
+    Returns:
+        str: Bereinigte JSON-Response oder leerer String wenn Eingabe leer/None
     """
+    if not raw_response:
+        return ""
+    
+    raw_response = str(raw_response).strip()
+    
+    if not raw_response:
+        return ""
+    
     if "```json" in raw_response:
         raw_response = raw_response.split("```json", 1)[-1]
         raw_response = raw_response.rsplit("```", 1)[0]
+    
     cleaned_response = re.sub(r"[\r\n]+", "", raw_response)
     return cleaned_response.strip()
+
+
+def html_to_plaintext(html_content):
+    """
+    Konvertiert HTML zu Plaintext durch Entfernen aller HTML-Tags.
+    Verwendet regex für einfache und performante Konvertierung.
+    
+    Args:
+        html_content (str): HTML string, z.B. aus Quill.js Editor
+        
+    Returns:
+        str: Plaintext ohne HTML-Tags, kondensiert auf max. 1 Leerzeile zwischen Absätzen
+        
+    Beispiel:
+        html = '<p>Hallo <strong>Welt</strong></p>'
+        plaintext = html_to_plaintext(html)
+        # Output: "Hallo Welt"
+    """
+    if not html_content:
+        return ""
+    
+    text = str(html_content)
+    
+    # Ersetze Absatz-Tags durch Zeilenumbrüche
+    text = re.sub(r'</p>', '\n', text)
+    text = re.sub(r'<p[^>]*>', '', text)
+    
+    # Ersetze andere Block-Level Tags
+    text = re.sub(r'</div>', '\n', text)
+    text = re.sub(r'<div[^>]*>', '', text)
+    text = re.sub(r'<br\s*/?>', '\n', text)
+    
+    # Entferne alle restlichen HTML-Tags via regex
+    text = re.sub(r'<[^>]+>', '', text)
+    
+    # Dekodiere HTML-Entities (z.B. &nbsp; → Leerzeichen)
+    text = text.replace('&nbsp;', ' ')
+    text = text.replace('&lt;', '<')
+    text = text.replace('&gt;', '>')
+    text = text.replace('&amp;', '&')
+    text = text.replace('&quot;', '"')
+    text = text.replace('&#39;', "'")
+    
+    # Kondensiere mehrere Leerzeilen zu max. 2 (Absatzumbruch)
+    text = re.sub(r'\n\n\n+', '\n\n', text)
+    
+    # Entferne führende/nachfolgende Whitespace
+    text = text.strip()
+    
+    return text
 
 
 def generate_secure_password(length: int = 16) -> str:

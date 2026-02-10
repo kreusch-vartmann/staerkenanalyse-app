@@ -1,0 +1,432 @@
+{% extends "base.html" %}
+
+{% block title %}{% if task %}Edit Task{% else %}Create Task{% endif %} - Stärkenanalyse{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.0/dist/quill.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.0/dist/quill.snow.css" rel="stylesheet">
+<style>
+    #taskEditor { height: 300px; }
+    #chatContainer {
+        height: 400px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 10px;
+        background: #f9f9f9;
+    }
+    .message {
+        margin-bottom: 10px;
+        padding: 8px 12px;
+        border-radius: 4px;
+    }
+    .message.user {
+        background: #e3f2fd;
+        text-align: right;
+        margin-left: 20%;
+    }
+    .message.ai {
+        background: #f5f5f5;
+        margin-right: 20%;
+    }
+    .ql-toolbar {
+        border: 1px solid #ccc;
+        border-radius: 4px 4px 0 0;
+    }
+    .ql-container {
+        border: 1px solid #ccc;
+        border-radius: 0 0 4px 4px;
+        font-size: 14px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    {# Breadcrumbs #}
+    {% if breadcrumbs %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            {% for crumb in breadcrumbs %}
+                {% if crumb.link %}
+                    <li class="breadcrumb-item">
+                        <a href="{{ crumb.link }}">{{ crumb.text }}</a>
+                    </li>
+                {% else %}
+                    <li class="breadcrumb-item active" aria-current="page">
+                        {{ crumb.text }}
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ol>
+    </nav>
+    {% endif %}
+
+    {# Header #}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{% if task %}Edit: {{ task.title }}{% else %}Create New Task{% endif %}</h1>
+        <a href="{{ url_for('tasks.task_library') }}" class="btn btn-secondary">
+            &times; Close
+        </a>
+    </div>
+
+    <div class="row">
+        {# Left Column: Chat Interface #}
+        <div class="col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">AI Assistant</h5>
+                </div>
+                <div class="card-body d-flex flex-column" style="max-height: calc(100vh - 250px);">
+                    {# Chat Messages #}
+                    <div id="chatContainer" class="flex-grow-1 mb-3">
+                        {% if task %}
+                        <div class="message ai">
+                            Editing <strong>{{ task.title }}</strong>. How would you like to modify this task?
+                        </div>
+                        {% else %}
+                        <div class="message ai">
+                            Welcome! Let's create a new AC task. You can describe what you want, and I'll help you refine it.
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {# Message Input #}
+                    <div class="input-group">
+                        <input type="text" id="chatInput" class="form-control" 
+                               placeholder="Ask to modify, add, or change..." 
+                               autocomplete="off">
+                        <button class="btn btn-primary" type="button" id="sendBtn" onclick="sendMessage()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+
+                    {# Save as Version Button #}
+                    <button class="btn btn-success btn-sm mt-3 w-100" onclick="saveVersion()">
+                        <i class="fas fa-save"></i> Save as Version
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {# Right Column: Task Metadata + Rich Editor #}
+        <div class="col-lg-8">
+            {# Task Metadata Card #}
+            <div class="card shadow-sm mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Task Metadata</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label for="taskTitle" class="form-label">Title *</label>
+                            <input type="text" class="form-control" id="taskTitle" 
+                                   value="{% if task %}{{ task.title }}{% endif %}" 
+                                   placeholder="Task title (e.g., 'Conflict Resolution Exercise')">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="observationArea" class="form-label">Observation Area *</label>
+                            <input type="text" class="form-control" id="observationArea" 
+                                   value="{% if task %}{{ task.observation_area }}{% endif %}"
+                                   placeholder="e.g., 'Sozialverhalten'">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="participantCount" class="form-label">Participants (1-6)</label>
+                            <input type="number" class="form-control" id="participantCount" 
+                                   value="{% if task and task.participant_count %}{{ task.participant_count }}{% endif %}"
+                                   min="1" max="6" placeholder="1-6">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="duration" class="form-label">Duration (min)</label>
+                            <input type="number" class="form-control" id="duration" 
+                                   value="{% if task and task.duration_minutes %}{{ task.duration_minutes }}{% endif %}"
+                                   min="25" max="35" placeholder="25-35">
+                        </div>
+                        <div class="col-12">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" rows="2" 
+                                      placeholder="Brief description of the task">{% if task %}{{ task.description }}{% endif %}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Editor Card #}
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Task Content (HTML Editor)</h5>
+                    <small class="text-muted">
+                        {% if current_version %}
+                        Editing v{{ current_version.version_number }}
+                        {% endif %}
+                    </small>
+                </div>
+                <div class="card-body">
+                    {# Quill Rich Text Editor #}
+                    <div id="taskEditor">
+                        {% if current_version %}
+                        {{ current_version.content|safe }}
+                        {% endif %}
+                    </div>
+
+                    {# Action Buttons #}
+                    <div class="mt-3 d-flex gap-2 justify-content-end">
+                        <button class="btn btn-outline-secondary" onclick="resetEditor()">
+                            <i class="fas fa-redo"></i> Reset
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="generateContent()">
+                            <i class="fas fa-magic"></i> AI Generate
+                        </button>
+                        <button class="btn btn-success" onclick="saveTask()">
+                            <i class="fas fa-save"></i> {% if task %}Update{% else %}Create{% endif %} Task
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {# Version History Card (if editing) #}
+            {% if task %}
+            <div class="card shadow-sm mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Version History</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-sm" id="versionsList">
+                        <div class="spinner-border spinner-border-sm" role="status"></div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{# Save Version Modal #}
+<div class="modal fade" id="saveVersionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Save as New Version</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label">Change Notes (optional)</label>
+                <textarea class="form-control" id="changeNotes" rows="3" 
+                          placeholder="e.g., 'Added presentation element', 'Refined instructions'"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="confirmSaveVersion()">Save Version</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# AI Generate Modal #}
+<div class="modal fade" id="generateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Generate Task Content</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Generate AI-powered task content based on observation area.</p>
+                <div id="generateStatus" class="alert alert-info">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    Generating...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize Quill editor
+const quill = new Quill('#taskEditor', {
+    theme: 'snow',
+    modules: {
+        toolbar: [
+            ['bold', 'italic', 'underline', 'strike'],
+            ['blockquote', 'code-block'],
+            [{ 'header': 1 }, { 'header': 2 }],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            ['link', 'image'],
+            ['clean']
+        ]
+    },
+    placeholder: 'Describe your AC task here...'
+});
+
+let chatHistory = [];
+const taskId = {{ task.id if task else 'null' }};
+
+// Send chat message
+function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    if (!message) return;
+
+    // Add to UI
+    addChatMessage(message, 'user');
+    input.value = '';
+
+    // Send to API
+    fetch('/tasks/chat/message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            message: message,
+            draft_id: taskId || 'new',
+            history: chatHistory
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        addChatMessage(data.ai_response, 'ai');
+        if (data.updated_content) {
+            quill.root.innerHTML = data.updated_content;
+        }
+        chatHistory.push({ user: message, ai: data.ai_response });
+    })
+    .catch(err => addChatMessage(`Error: ${err.message}`, 'ai'));
+}
+
+function addChatMessage(text, role) {
+    const container = document.getElementById('chatContainer');
+    const msg = document.createElement('div');
+    msg.className = `message ${role}`;
+    msg.textContent = text;
+    container.appendChild(msg);
+    container.scrollTop = container.scrollHeight;
+}
+
+// Save Version
+function saveVersion() {
+    const saveModal = new bootstrap.Modal(document.getElementById('saveVersionModal'));
+    saveModal.show();
+}
+
+function confirmSaveVersion() {
+    const changeNotes = document.getElementById('changeNotes').value;
+    const content = quill.root.innerHTML;
+
+    fetch(`/tasks/${taskId}/save-version`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, change_notes: changeNotes })
+    })
+    .then(r => r.json())
+    .then(data => {
+        alert(`Saved as v${data.version_number}`);
+        bootstrap.Modal.getInstance(document.getElementById('saveVersionModal')).hide();
+        location.reload();
+    })
+    .catch(err => alert(`Error: ${err.message}`));
+}
+
+// Generate Content
+function generateContent() {
+    const modal = new bootstrap.Modal(document.getElementById('generateModal'));
+    const status = document.getElementById('generateStatus');
+    modal.show();
+
+    const area = document.getElementById('observationArea').value;
+    const count = document.getElementById('participantCount').value;
+    const duration = document.getElementById('duration').value;
+
+    fetch('/tasks/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            observation_area: area,
+            participant_count: count,
+            duration: duration
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        quill.root.innerHTML = data.content;
+        status.innerHTML = '<div class="alert alert-success mb-0">Content generated!</div>';
+        setTimeout(() => modal.hide(), 1500);
+    })
+    .catch(err => {
+        status.innerHTML = `<div class="alert alert-danger mb-0">Error: ${err.message}</div>`;
+    });
+}
+
+// Save Task
+function saveTask() {
+    const title = document.getElementById('taskTitle').value.trim();
+    const area = document.getElementById('observationArea').value.trim();
+    const content = quill.root.innerHTML;
+    const description = document.getElementById('description').value.trim();
+    const count = document.getElementById('participantCount').value;
+    const duration = document.getElementById('duration').value;
+
+    if (!title || !area || !content) {
+        alert('Please fill in title, observation area, and content');
+        return;
+    }
+
+    const url = taskId ? `/tasks/${taskId}` : '/tasks';
+    const method = taskId ? 'PUT' : 'POST';
+
+    fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            title, description, content, observation_area: area,
+            participant_count: count || null,
+            duration: duration || null
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        alert('Task saved successfully!');
+        window.location.href = '/tasks/library';
+    })
+    .catch(err => alert(`Error: ${err.message}`));
+}
+
+// Reset Editor
+function resetEditor() {
+    if (confirm('Reset editor to last saved version?')) {
+        location.reload();
+    }
+}
+
+// Load version history (if editing)
+{% if task %}
+document.addEventListener('DOMContentLoaded', () => {
+    fetch(`/tasks/${taskId}/versions`)
+        .then(r => r.json())
+        .then(data => {
+            const list = document.getElementById('versionsList');
+            list.innerHTML = '';
+            data.versions.forEach(v => {
+                const item = document.createElement('div');
+                item.className = 'list-group-item';
+                const date = new Date(v.created_at);
+                item.innerHTML = `
+                    <div class="d-flex justify-content-between">
+                        <strong>v${v.version_number}</strong>
+                        <small class="text-muted">${date.toLocaleString()}</small>
+                    </div>
+                    <p class="mb-0 small">${v.change_notes || 'No notes'}</p>
+                `;
+                list.appendChild(item);
+            });
+        });
+});
+{% endif %}
+
+// Enter key sends message
+document.getElementById('chatInput')?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+});
+</script>
+{% endblock %}

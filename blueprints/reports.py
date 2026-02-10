@@ -22,7 +22,7 @@ from models import (ClientLogo, CompanyLogo, ExplanationBlock, Group,
                     Participant, ReportConfiguration, ReportTemplate,
                     SignatureImage)
 from services.report_generator import ReportGenerator
-from decorators import admin_required, group_access_required
+from decorators import admin_required, group_access_required, participant_access_required
 
 bp = Blueprint("reports", __name__, url_prefix="/reports")
 
@@ -405,7 +405,7 @@ def generate_pdf_report(group_id, participant_id):
 
 @bp.route("/standalone/self-assessment/<int:participant_id>/pdf")
 @login_required
-@group_access_required
+@participant_access_required
 def standalone_se_pdf(participant_id):
     """PDF nur mit Selbsteinschätzung (Sidebar voll, mit Metadaten)."""
     participant = Participant.query.get_or_404(participant_id)
@@ -440,7 +440,7 @@ def standalone_se_pdf(participant_id):
 
 @bp.route("/standalone/foreign-assessment/<int:participant_id>/pdf")
 @login_required
-@group_access_required
+@participant_access_required
 def standalone_fe_pdf(participant_id):
     """PDF nur mit Fremdeinschätzung (Sidebar voll, mit Metadaten)."""
     participant = Participant.query.get_or_404(participant_id)
@@ -475,7 +475,7 @@ def standalone_fe_pdf(participant_id):
 
 @bp.route("/standalone/self-assessment/<int:participant_id>/preview")
 @login_required
-@group_access_required
+@participant_access_required
 def standalone_se_preview(participant_id):
     """HTML-Vorschau nur Selbsteinschätzung."""
     participant = Participant.query.get_or_404(participant_id)
@@ -498,7 +498,7 @@ def standalone_se_preview(participant_id):
 
 @bp.route("/standalone/foreign-assessment/<int:participant_id>/preview")
 @login_required
-@group_access_required
+@participant_access_required
 def standalone_fe_preview(participant_id):
     """HTML-Vorschau nur Fremdeinschätzung."""
     participant = Participant.query.get_or_404(participant_id)
