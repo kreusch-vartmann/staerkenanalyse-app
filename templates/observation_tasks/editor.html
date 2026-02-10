@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="container-fluid mt-4" style="max-width: 100%; margin: 0; padding: 0;">
-    <div class="row g-0" style="height: calc(100vh - 100px);">
+    <div class="row g-0" style="height: calc(100vh - 80px);">
         
         <!-- LINKE SEITE: EDITOR -->
         <div class="col-lg-8 border-end" style="overflow-y: auto;">
@@ -47,21 +47,20 @@
                     </div>
                 </div>
 
-                <!-- Change Notes -->
-                <div class="mb-4">
-                    <label for="changeNotes" class="form-label fw-bold">Änderungsnotiz (optional)</label>
-                    <textarea class="form-control" id="changeNotes" rows="2" 
-                              placeholder="Beschreibe deine Änderungen, z.B. 'Szenario angepasst, Zeiten präzisiert'"></textarea>
-                </div>
-
                 <!-- Speichern -->
-                <div class="d-flex gap-2">
+                <div class="d-flex gap-2 flex-wrap">
                     <button class="btn btn-success btn-lg" onclick="saveVersion()">
                         💾 Version speichern
                     </button>
                     <button class="btn btn-outline-secondary btn-lg" onclick="viewHistory()">
                         📜 Versionshistorie
                     </button>
+                    <form method="POST" action="{{ url_for('observation_tasks.discard_task', task_id=task.id) }}" onsubmit="return confirm('Aufgabe wirklich verwerfen?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline-danger btn-lg">
+                            ✕ Version verwerfen
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -81,22 +80,25 @@
 
             <!-- Chat Panel -->
             <div id="chatPanel" class="flex-grow-1 d-flex flex-column p-3" style="overflow-y: auto;">
-                <div id="chatMessages" class="flex-grow-1" style="overflow-y: auto; margin-bottom: 1rem;">
-                    <div class="alert alert-info small">
-                        <strong>💡 KI-Assistent aktiv</strong><br>
-                        Schreib deine Wünsche zur Aufgabe, z.B.:
-                        <ul class="mb-0 mt-2 ps-3">
-                            <li>Zeitansätze verkürzen</li>
-                            <li>Szenario spannender machen</li>
-                            <li>Mehr Fokus auf Teamfähigkeit</li>
-                        </ul>
-                    </div>
+                <div class="alert alert-info small mb-3">
+                    <strong>💡 KI-Assistent aktiv</strong><br>
+                    Schreib deine Wünsche zur Aufgabe, z.B.:
+                    <ul class="mb-0 mt-2 ps-3">
+                        <li>Zeitansätze verkürzen</li>
+                        <li>Szenario spannender machen</li>
+                        <li>Mehr Fokus auf Teamfähigkeit</li>
+                    </ul>
                 </div>
 
-                <div class="input-group">
-                    <input type="text" id="chatInput" class="form-control" 
-                           placeholder="Schreib deine Anfrage..." 
-                           onkeypress="if(event.key==='Enter') sendChat()">
+                <div id="chatMessages" class="flex-grow-1" style="overflow-y: auto; min-height: 320px; margin-bottom: 1rem;">
+                </div>
+
+                <div class="mb-2">
+                    <textarea id="chatInput" class="form-control" rows="4" 
+                              placeholder="Schreib deine Anfrage..."
+                              onkeypress="if(event.key==='Enter' && !event.shiftKey) { event.preventDefault(); sendChat(); }"></textarea>
+                </div>
+                <div class="d-grid">
                     <button class="btn btn-primary" onclick="sendChat()">
                         Senden
                     </button>
@@ -153,11 +155,55 @@
     </div>
 </div>
 
+<!-- Versionshistorie Modal -->
+<div class="modal fade" id="versionsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Versionshistorie</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <ul id="versionsList" class="list-group list-group-flush"></ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- KI-Generierungs Modal mit animiertem GIF -->
+<div class="modal fade" id="aiLoadingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body text-center py-5">
+                <div class="d-flex justify-content-center mb-4">
+                    <!-- Animiertes Roboter-GIF -->
+                    <img src="/static/loading-robot.webp" 
+                         alt="KI arbeitet..." 
+                         style="width: 200px; height: 200px; object-fit: contain;">
+                </div>
+                <h5 class="fw-bold text-primary mb-2">🤖 KI ist bei der Arbeit...</h5>
+                <p class="text-muted mb-0">Die Aufgabe wird gerade generiert. Bitte haben Sie einen Moment Geduld.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Auto-Generate Form (hidden) -->
+<form id="autoGenerateForm" method="POST" action="{{ url_for('observation_tasks.generate', task_id=task.id) }}" style="display: none;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="ki_model" id="auto_ki_model" value="mistral">
+</form>
+
 <!-- Quill.js CDN -->
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 
 <script>
+const autoGenerateFlag = "{{ '1' if request.args.get('autogen') else '' }}";
+
 // Get CSRF token from Flask-WTF
 function getCsrfToken() {
     return document.querySelector('meta[name="csrf-token"]')?.content || 
@@ -196,7 +242,7 @@ function saveVersion() {
     const data = {
         title: document.getElementById('taskTitle').value,
         content: quill.root.innerHTML,
-        change_notes: document.getElementById('changeNotes').value
+        change_notes: ''
     };
     
     fetch(`/beobachtungsaufgaben/{{ task.id }}/speichern`, {
@@ -211,7 +257,6 @@ function saveVersion() {
     .then(data => {
         if (data.status === 'success') {
             alert('✓ ' + data.message);
-            document.getElementById('changeNotes').value = '';
         } else {
             alert('Fehler: ' + (data.error || 'Unbekannter Fehler'));
         }
@@ -236,6 +281,10 @@ function sendChat() {
     
     document.getElementById('chatInput').value = '';
     
+    // Loading Modal anzeigen
+    const loadingModal = new bootstrap.Modal(document.getElementById('aiLoadingModal'));
+    loadingModal.show();
+    
     // KI Request
     fetch(`/beobachtungsaufgaben/{{ task.id }}/chat`, {
         method: 'POST',
@@ -250,27 +299,96 @@ function sendChat() {
     })
     .then(r => r.json())
     .then(data => {
+        // Loading Modal schließen
+        loadingModal.hide();
+        
         if (data.status === 'success') {
-            // AI Response zeigen
-            messagesDiv.innerHTML += `
-                <div class="mb-3">
-                    <div class="bg-light rounded p-2" style="display: inline-block; max-width: 80%;">
-                        <small>${data.ai_response || 'Aufgabe aktualisiert!'}</small>
-                    </div>
-                </div>
-            `;
             // Editor aktualisieren
             quill.root.innerHTML = data.updated_content;
+            
+            // Automatisch speichern, damit der Content in der DB landet
+            const saveData = {
+                title: document.getElementById('taskTitle').value,
+                content: data.updated_content,  // Direkt den Server-Content verwenden, nicht quill.root.innerHTML
+                change_notes: 'Chat-Refinement: ' + message
+            };
+            
+            fetch(`/beobachtungsaufgaben/{{ task.id }}/speichern`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify(saveData)
+            })
+            .then(r => r.json())
+            .then(saveResult => {
+                console.log('Auto-save result:', saveResult);
+                // Seite neu laden um korrekten Content aus DB anzuzeigen
+                window.location.reload();
+            })
+            .catch(saveErr => {
+                console.error('Auto-save failed:', saveErr);
+                // AI Response trotzdem im Chat zeigen
+                messagesDiv.innerHTML += `
+                    <div class="mb-3">
+                        <div class="bg-light rounded p-2" style="display: inline-block; max-width: 80%;">
+                            <small>${data.ai_response || 'Aufgabe aktualisiert!'}</small>
+                        </div>
+                    </div>
+                `;
+            });
         } else {
             alert('KI-Fehler: ' + (data.error || 'Unbekannter Fehler'));
         }
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
     })
-    .catch(e => alert('Fehler: ' + e));
+    .catch(e => {
+        loadingModal.hide();
+        alert('Fehler: ' + e);
+    });
 }
 
 function viewHistory() {
-    alert('Versionshistorie wird noch implementiert...');
+    fetch(`/beobachtungsaufgaben/{{ task.id }}/versions`)
+    .then(r => r.json())
+    .then(data => {
+        const list = document.getElementById('versionsList');
+        if (!Array.isArray(data) || data.length === 0) {
+            list.innerHTML = '<li class="list-group-item">Keine Versionen vorhanden.</li>';
+        } else {
+            list.innerHTML = data.map(v => `
+                <li class="list-group-item d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="fw-bold">Version ${v.version}</div>
+                        <div class="small text-muted">${new Date(v.created_at).toLocaleString()}</div>
+                        <div class="small">${v.change_notes || 'Keine Notiz'}</div>
+                    </div>
+                    <span class="badge bg-secondary">${v.created_by}</span>
+                </li>
+            `).join('');
+        }
+        const modal = new bootstrap.Modal(document.getElementById('versionsModal'));
+        modal.show();
+    })
+    .catch(e => alert('Fehler beim Laden der Versionshistorie: ' + e));
+}
+
+function startAutoGeneration() {
+    openKiModelModal(function(selectedModel) {
+        // Zeige GIF-Modal
+        const loadingModal = new bootstrap.Modal(document.getElementById('aiLoadingModal'));
+        loadingModal.show();
+        
+        document.getElementById('auto_ki_model').value = selectedModel;
+        document.getElementById('autoGenerateForm').submit();
+        
+        // Modal verschwindet automatisch beim Page-Reload nach Submit
+    });
+}
+
+if (autoGenerateFlag) {
+    setTimeout(startAutoGeneration, 300);
 }
 </script>
 
@@ -301,4 +419,6 @@ function viewHistory() {
     font-family: inherit;
 }
 </style>
+
+{% include 'partials/_ki_model_modal.html' %}
 {% endblock %}

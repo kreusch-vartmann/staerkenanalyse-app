@@ -1,6 +1,6 @@
 # PROJECT_OVERVIEW.md
 
-**Generiert am**: 2026-02-08 (v0.4.0)
+**Generiert am**: 2026-02-10 (v1.2.1)
 
 ---
 
@@ -18,9 +18,9 @@ Flask-basierte Web-Applikation für **Stärkenanalyse** mit KI-gestützter Beric
 ## 📊 Projektstatistik
 
 - **Python-Dateien**: 25+
-- **Blueprints**: 7 (groups, participants, analysis, data_io, prompts, explanation_blocks, reports)
+- **Blueprints**: 8 (groups, participants, analysis, data_io, prompts, explanation_blocks, reports, observation_tasks)
 - **Templates**: 35+
-- **Datenbank-Models**: 10 (Group, Participant, Prompt, SelfAssessment, ExplanationBlock, ReportTemplate, ReportConfiguration, CompanyLogo, ClientLogo, SignatureImage)
+- **Datenbank-Models**: 15+ (inkl. Task/TaskVersion, KI-Gym Modelle, Report-Modelle)
 
 ---
 
@@ -35,6 +35,7 @@ Flask-basierte Web-Applikation für **Stärkenanalyse** mit KI-gestützter Beric
 | prompts | 4 | Prompt-Management |
 | explanation_blocks | 4 | Erklärungstexte für Berichte |
 | reports | 10+ | Report-Konfiguration, PDF-Generierung, Vorschau |
+| observation_tasks | 10+ | Aufgaben-Generierung, Chat-Refinement, Versionierung |
 
 ---
 
@@ -58,7 +59,7 @@ Flask-basierte Web-Applikation für **Stärkenanalyse** mit KI-gestützter Beric
 ## 🛠️ Entwicklungsumgebung
 
 **Voraussetzungen**:
-- Python 3.12.12
+- Python 3.11+
 - venv: `/home/timok/kDrive/Dokumente/staerkenanalyse-app/venv`
 - System-Dependencies: libcairo, libpango (für WeasyPrint)
 
@@ -73,6 +74,20 @@ python app.py
 ```
 
 ---
+
+## 🆕 Neue Features in v1.2.1
+
+### Chat-Refinement Stabilisierung
+- **Sektionen normalisiert**: Ausgabe wird auf 4 Standard-Sektionen vereinheitlicht
+- **Auto-Save + Reload**: Chat-Änderungen werden gespeichert und korrekt geladen
+- **HTML-Cleanup**: Entfernt Markdown-Artefakte und leere Bereiche
+
+## 🆕 Neue Features in v1.2.0
+
+### Assessment-Center Knowledge Base
+- **12 AC-Aufgabentypen** + 10 Kompetenzdimensionen
+- **Zielgruppen-Differenzierung**: Prompts passen sich Zielgruppe an
+- **Prompt-Injection**: Fachwissen wird automatisch in KI-Prompts integriert
 
 ## 🆕 Neue Features in v0.4.0
 

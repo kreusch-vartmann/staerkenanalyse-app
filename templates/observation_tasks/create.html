@@ -43,6 +43,24 @@
                             </small>
                         </div>
                         
+                        <!-- Zielgruppe -->
+                        <div class="mb-4">
+                            <label for="target_group" class="form-label fw-bold">
+                                Zielgruppe (Optional)
+                            </label>
+                            <select class="form-select form-select-lg" id="target_group" 
+                                    name="target_group">
+                                {% for option in target_group_options %}
+                                <option value="{{ option.value or '' }}">
+                                    {{ option.label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted d-block mt-2">
+                                Die KI passt die Aufgabe an die Zielgruppe an (Komplexität, Aufgabentyp, Anforderungen)
+                            </small>
+                        </div>
+                        
                         <!-- Teilnehmerzahl -->
                         <div class="mb-4">
                             <label for="participant_count" class="form-label fw-bold">

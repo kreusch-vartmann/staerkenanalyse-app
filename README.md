@@ -1,8 +1,8 @@
 # Stärkenanalyse-App
 
-**Version:** 1.1.0  
-**Status:** Phase 2 Development - KI-Gym & Task Management ✅  
-**Neue Features:** KI-Gym Learning System, Beobachtungsaufgaben-Verwaltung, KI-Modell-Auswahl
+**Version:** 1.2.1  
+**Status:** Phase 2 Complete - Aufgabengenerator stabilisiert ✅  
+**Neue Features:** AC Knowledge Base, Zielgruppen-Differenzierung, Chat-Refinement Stabilisierung
 
 Eine lokale Flask-Webanwendung zur Verwaltung von Gruppen und Teilnehmenden mit rollenbasierter Zugriffskontrolle und zur Durchführung von KI-gestützten Stärkenanalysen.
 
@@ -128,6 +128,21 @@ python -m flask run --port 5002
 
 - `services/report_generator.py` — **NEUE** ReportGenerator-Klasse für HTML-Rendering und PDF-Export mit konfigurierbarem Sidebar-Layout
 - `ai_gym.py` — **NEU v1.1.0** KI-Gym Service für Pattern-Extraktion und automatisches Prompt-Learning
+
+## Neu in Version 1.2.1 ✅
+
+### Chat-Refinement Stabilisierung
+- **Deterministische Sektionen**: Ausgabe wird auf die 4 Standard-Sektionen normalisiert
+- **HTML-Cleanup**: Markdown-Artefakte (z. B. `**`) werden entfernt
+- **Auto-Save + Reload**: Chat-Änderungen werden direkt gespeichert und korrekt geladen
+- **Konsistente Darstellung**: Generierung und Chat liefern identische Struktur
+
+## Neu in Version 1.2.0 🚀
+
+### Assessment-Center Knowledge Base
+- **Strukturierte Wissensbasis**: 12 Aufgabentypen, 10 Kompetenzdimensionen, 6 Zielgruppen
+- **Zielgruppen-Differenzierung**: KI-Prompts variieren nach Zielgruppe (Schüler, Azubis, Führungskräfte, etc.)
+- **Intelligente Prompt-Injection**: AC-Fachwissen wird automatisch in System-Prompts eingebettet
 
 ## Neu in Version 1.1.0 🚀
 
@@ -411,7 +426,7 @@ cp .env.example .env
 
 Diese App verwendet **Semantic Versioning** (0.MAJOR.MINOR im Pre-Release):
 
-### App-Version (aktuell: `0.3.0-WIP`)
+### App-Version (aktuell: `1.2.1`)
 
 **Pre-Release (0.x.y):**
 - `0.MINOR.PATCH` - Breaking Changes zwischen Minor-Versions erlaubt

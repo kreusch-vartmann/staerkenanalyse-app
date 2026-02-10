@@ -1,10 +1,10 @@
 # DEVELOPMENT ROADMAP — Stärkenanalyse-App
 
-> **Erstellt**: 2026-02-09 | **Aktualisiert**: 2026-02-10 | **Version**: 1.0.0 → 1.1.0  
+> **Erstellt**: 2026-02-09 | **Aktualisiert**: 2026-02-10 | **Version**: 1.0.0 → 1.2.1  
 > **Ziel**: Produktionsreife, öffentlich zugängliche Web-Applikation  
 > **Hosting**: Infomaniak | **Auth**: Eigene Benutzerverwaltung | **Tenant**: Single-Tenant  
 > **Zeitrahmen**: So schnell wie möglich  
-> **Status**: ✅ Phase 1 COMPLETE | 🟡 Phase 2 PARTIAL (KI-Gym + Tasks)
+> **Status**: ✅ Phase 1 COMPLETE | ✅ Phase 2 COMPLETE (v1.1.0: Tasks+KI-Gym; v1.2.0: Knowledge-Base; v1.2.1: Chat-Stabilisierung)
 
 ---
 
@@ -13,8 +13,8 @@
 | Phase | Inhalt | Status | Zielversion |
 |-------|--------|--------|-------------|
 | **1** | Benutzerverwaltung + Basis-Sicherheit | ✅ COMPLETE | v1.0.0 |
-| **2** | Aufgabengenerator + KI-Gym Learning System | 🟡 PARTIAL | v1.1.0 |
-| **3** | Stabilisierung (Sicherheit, Tests, Funktions-Feinschliff) | ⬜ Offen | v1.2.0 |
+| **2** | Aufgabengenerator + KI-Gym Learning System | ✅ COMPLETE | v1.1.0 → v1.2.1 |
+| **3** | Stabilisierung (Sicherheit, Tests, Funktions-Feinschliff) | 🟡 IN PROGRESS | v1.3.0 |
 | **4** | Design-Feinschliff | ⬜ Offen | v1.3.0 |
 | **5** | Dokumentation + Produktions-Deployment | ⬜ Offen | v2.0.0 |
 
@@ -66,7 +66,7 @@
 | B2 | Import bestehender Aufgaben | ✅ | Als hardcoded EXAMPLE_TASKS (Erbengemeinschaft, Plakat) |
 | B3 | Aufgaben-Bibliothek UI | ✅ | `/beobachtungsaufgaben` Library mit Beispiel- und eigenen Aufgaben |
 | B4 | KI-Generierungslogik | ✅ | Best-Practice Prompt-Engineering für AC-Tasks (ki_services.py) |
-| B5 | Web-Recherche-Integration | ⬜ | Noch offen, aktuell basierend auf hardcoded Best Practices |
+| B5 | Knowledge-Base Integration | ✅ | v1.2.0: 12 AC-Aufgabentypen, 10 Kompetenzdimensionen, 6 Zielgruppen, 2 Phasenmodelle |
 | B6 | Automatische Generierung | ✅ | Parameter: Beobachtungsbereich (SK/VK), TN-Zahl (1-10), Dauer (5-120 Min) |
 | B7 | Bearbeitbare Vorschau | ✅ | Quill.js Rich-Text-Editor mit HTML-Unterstützung |
 | B8 | Chat-Interface | ✅ | Chat-Seitenleiste mit KI-Iteration für Aufgaben-Verfeinerung |
@@ -76,6 +76,7 @@
 | B12 | Zusätzliche Daten einpflegen | 🟡 | Beispiel-Tasks als Context, AIRawResponse-Tracking via KI-Gym |
 | **B13** | **KI-Modell-Auswahl** | ✅ | **NEU**: Reusable Modal für Mistral vs. Gemini (visual branding) |
 | **B14** | **Group-Tasks Integration** | ✅ | **NEU**: Aufgaben können Gruppen zugeordnet werden (many-to-many) |
+| **B15** | **Chat-Refinement Stabilisierung** | ✅ | **NEU v1.2.1**: Sektionen normalisiert, Auto-Save + Reload, konsistente Darstellung |
 
 ### B* — KI-Gym Learning System (BONUS Feature) 🧠
 
@@ -92,12 +93,28 @@
 | X9 | Content-Edit Auto-Tracking | ✅ | Automatisches Diff-Tracking bei Task-Speicherung |
 | X10 | Training-Status-Dashboard | ✅ | Anzeige pro Typ/Bereich mit min. Samples-Anforderung |
 
+### B** — Wissensdatenbank für Aufgabengenerator (v1.2.0) ✅ COMPLETE
+
+| # | Aufgabe | Status | Details |
+|---|---------|--------|---------|
+| Y1 | `services/task_knowledge_base.py` erstellen | ✅ | 12 AC-Aufgabentypen (Selbstpräsentation bis Strukturiertes Interview) |
+| Y2 | Kompetenzdimensionen mit Ankern | ✅ | 10 Dimensionen (Kommunikation, Teamfähigkeit, Führung, etc.) mit je 5 pos./neg. Indikatoren |
+| Y3 | Zielgruppen-Kategorien | ✅ | 6 Zielgruppen (Schüler, Azubis, Trainees, Experten, Führungskräfte, Bestandsmitarbeiter) |
+| Y4 | Phasenmodelle | ✅ | 2 Templates (Einfach: 4 Phasen; Komplex: 6 Phasen) mit prozentual Zeitverteilung |
+| Y5 | `get_knowledge_for_prompt()` Funktion | ✅ | Intelligentes Selection von geeigneten Aufgaben/Kompetenzen/Phasen basierend auf Parametern |
+| Y6 | KI-Prompt-Injection | ✅ | AC-Fachwissen wird in `system_prompt` von `generate_task()` injiziert |
+| Y7 | Zielgruppen-Dropdown in UI | ✅ | Neues Form-Feld in `create.html`, speichert in `context_data` |
+| Y8 | Target-Group-Durchleitung | ✅ | `target_group` wird von create → generate → `generate_task()` durchgereicht |
+| Y9 | `get_target_group_options()` Rendering | ✅ | Hilfsfunktion für Template-Rendering mit Label + Value |
+| Y10 | Services-Module erweitern | ✅ | Import in `services/__init__.py` für öffentliche API |
+
 **Entscheidungen Phase 2:**
 - ✅ Chat-basierte Iteration statt Prompt-Editing (umgesetzt)
 - ✅ Bestehende KI-Infrastruktur erweitert (nicht ersetzt)
 - ✅ TN-Zahl beeinflusst Komplexität (in Prompts berücksichtigt)
 - ✅ **BONUS**: KI-Gym Learning System für kontinuierliche Verbesserung
 - ✅ **BONUS**: Modell-Auswahl-Modal für bessere UX
+- ✅ **v1.2.0**: Knowledge-Base statt Web-Recherche (wartbar, versionierbar, offline-ready)
 
 **Neu implementiert in v1.1.0:**
 - 🎓 **KI-Gym Learning System**: Automatisches Pattern-Learning aus User-Edits
@@ -106,9 +123,21 @@
 - 📊 **Content-Edit-Tracking**: Diff-Metriken für alle manuellen Änderungen
 - 🔧 **API-Fixes**: Group-Tasks JSON Response, Batch-Analysis Stabilität
 
+**Neu implementiert in v1.2.0:**
+- 🧠 **Assessment-Center Knowledge Base**: 12 Aufgabentypen + 10 Dimensionen + 6 Zielgruppen
+- 🎯 **Zielgruppen-Differenzierung**: Target-Group-Dropdown mit KI-Prompt-Anpassung
+- 📚 **AC-Fachwissen in Prompts**: Automatische Injection von Best-Practice-Standards in KI-Generierungen
+- 🔗 **Intelligente Aufgaben-Selektion**: `get_knowledge_for_prompt()` wählt geeignete Aufgabentypen basierend auf Kontext
+
+**Neu implementiert in v1.2.1:**
+- ✅ **Chat-Refinement Stabilisierung**: Fixierte 4-Sektionen-Struktur inkl. Fallbacks
+- ✅ **HTML-Cleanup**: Entfernt Markdown-Artefakte und leere Abschnitte
+- ✅ **Auto-Save + Reload**: Chat-Ergebnisse werden direkt gespeichert und korrekt geladen
+
 **Noch offen für Phase 2 Completion:**
-- ⬜ Web-Recherche-Integration für Best-Practice-Updates
-- ⬜ Multi-Tenant-Support für Aufgaben (aktuell Single-Tenant)
+- ⬜ Beobachtungsbögen-Generierung basierend auf Indikatoren-Matrix (v1.3.0+)
+- ⬜ PDF-Export für Observer-Sheets mit Beurteilungsskalen (v1.3.0+)
+- ⬜ Multi-Tenant-Support für Aufgaben (optional)
 
 ---
 

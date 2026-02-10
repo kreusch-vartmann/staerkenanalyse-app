@@ -14,6 +14,7 @@ from extensions import csrf, db
 from ki_services import generate_task, refine_task_content
 from models import Task, TaskVersion, User
 from decorators import admin_required
+from services import get_target_group_options
 
 observation_tasks_bp = Blueprint("observation_tasks", __name__, url_prefix="/beobachtungsaufgaben")
 
@@ -111,12 +112,13 @@ def task_library():
 def create_task():
     """
     Schritt 1: Formular für neue Aufgabe
-    Auswahl: Beobachtungsbereich, Teilnehmer, Dauer
+    Auswahl: Beobachtungsbereich, Teilnehmer, Dauer, Zielgruppe
     """
     if request.method == "POST":
         observation_area = request.form.get("observation_area")
         participant_count = request.form.get("participant_count", type=int)
         duration_minutes = request.form.get("duration_minutes", type=int)
+        target_group = request.form.get("target_group") or None
         use_example = request.form.get("use_example") == "on"
         
         # Validierung
@@ -145,11 +147,12 @@ def create_task():
         db.session.add(task)
         db.session.flush()
         
-        # Initiale Version mit Metadaten erstellen
+        # Initiale Version mit Metadaten erstellen (inklusive Zielgruppe)
         context_data = {
             "observation_area": observation_area,
             "participant_count": participant_count,
             "duration_minutes": duration_minutes,
+            "target_group": target_group,
             "use_example": use_example
         }
         
@@ -167,17 +170,18 @@ def create_task():
         
         db.session.commit()
         
-        # Weiterleitung zur Generierungs-Seite
-        return redirect(url_for("observation_tasks.generate", task_id=task.id))
+        # Direkt zum Editor und Modell-Auswahl-Modal öffnen
+        return redirect(url_for("observation_tasks.edit", task_id=task.id, autogen=1))
     
     return render_template(
         "observation_tasks/create.html",
         observation_areas=["Soziale Kompetenzen", "Verbale Kompetenzen"],
+        target_group_options=get_target_group_options(),
         example_tasks=EXAMPLE_TASKS
     )
 
 
-@observation_tasks_bp.route("/<int:task_id>/generieren", methods=["GET", "POST"])
+@observation_tasks_bp.route("/<int:task_id>/generieren", methods=["POST"])
 @login_required  
 @admin_required
 def generate(task_id):
@@ -185,7 +189,7 @@ def generate(task_id):
     Schritt 2: KI generiert Aufgabenvorschlag basierend auf Metadaten
     """
     task = db.get_or_404(Task, task_id)
-    
+
     if request.method == "POST":
         # KI-Auswahl aus Request (Default: Mistral)
         ki_model = request.form.get("ki_model", "mistral")
@@ -202,7 +206,8 @@ def generate(task_id):
             duration_minutes=task.duration_minutes,
             context_data=context,
             example_tasks=EXAMPLE_TASKS if context.get("use_example") else None,
-            ki_model=ki_model
+            ki_model=ki_model,
+            target_group=context.get("target_group")
         )
         
         if ai_response and ai_response.get("content"):
@@ -268,6 +273,24 @@ def edit(task_id):
         task=task,
         current_version=task.current_version
     )
+
+
+@observation_tasks_bp.route("/<int:task_id>/verwerfen", methods=["POST"])
+@login_required
+@admin_required
+def discard_task(task_id):
+    """Verwirft die aktuelle Aufgabe (Erstellung abbrechen) und führt zur Übersicht zurück."""
+    task = db.get_or_404(Task, task_id)
+    task_title = task.title
+
+    task.current_version_id = None
+    db.session.flush()
+    TaskVersion.query.filter_by(task_id=task.id).delete(synchronize_session=False)
+    db.session.delete(task)
+    db.session.commit()
+
+    flash(f"✕ Aufgabe '{task_title}' verworfen.", "info")
+    return redirect(url_for("observation_tasks.task_library"))
 
 
 @observation_tasks_bp.route("/<int:task_id>/löschen", methods=["POST"])

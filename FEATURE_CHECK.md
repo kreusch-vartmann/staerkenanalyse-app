@@ -1,6 +1,6 @@
 # Feature-Checkliste: Stärkenanalyse-App
 
-**Datum:** 08.02.2026 (v0.4.0)
+**Datum:** 10.02.2026 (v1.2.1)
 **Branch:** main
 **Modus:** Lokale Entwicklung (SQLite)
 
@@ -158,4 +158,22 @@
 
 ---
 
-**Status:** Implementierung abgeschlossen
+**Status:** Implementierung abgeschlossen (inkl. Aufgabengenerator + Chat-Refinement Stabilisierung)
+
+---
+
+## Beobachtungsaufgaben (Assessment-Center Tasks)
+
+### 19. Aufgabenbibliothek & Generierung
+- [x] Aufgabenbibliothek (`/beobachtungsaufgaben`) mit Filter & Suche
+- [x] Neue Aufgabe erstellen (Beobachtungsbereich, Dauer, TN-Zahl)
+- [x] Zielgruppen-Auswahl (Schüler, Azubis, Trainees, Experten, Führungskräfte, Bestandsmitarbeiter)
+- [x] Knowledge-Base-gestützte Generierung (12 Aufgabentypen + Kompetenzdimensionen)
+- [x] HTML-Ausgabe auf 4 Standard-Sektionen normalisiert
+
+### 20. Chat-Refinement
+- [x] Chat-Seitenleiste im Editor
+- [x] KI-Refinement der Aufgaben
+- [x] Auto-Save + Reload nach Chat-Änderungen
+- [x] Keine leeren Sektionen nach Refinement
+- [x] Markdown-Artefakte entfernt

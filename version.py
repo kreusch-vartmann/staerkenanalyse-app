@@ -13,7 +13,9 @@
 # - 0.4.0 (2026-02-08): Report-Konfiguration + Backup-System + Prompt-Management
 # - 1.0.0 (2026-02-09): Phase 1 COMPLETE - Benutzerverwaltung + Sicherheitskonzept
 # - 1.1.0 (2026-02-10): KI-Gym Learning System + Phase 2 Beobachtungsaufgaben + KI-Modell-Auswahl
-APP_VERSION = "1.1.0"
+# - 1.2.0 (2026-02-10): AC Task Knowledge Base + Zielgruppen-Differenzierung
+# - 1.2.1 (2026-02-10): Chat-Refinement stabilisiert (Sektionen normalisiert, Auto-Save + Reload)
+APP_VERSION = "1.2.1"
 
 # Export-Schema-Version (unabhängig von App-Version)
 # Ändert sich nur bei Änderungen der CSV/Excel-Export-Struktur

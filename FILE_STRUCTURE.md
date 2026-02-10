@@ -2,7 +2,7 @@
 
 **Erstellt am**: 7. Februar 2026  
 **Aktualisiert am**: 10. Februar 2026  
-**Version**: 1.1.0  
+**Version**: 1.2.1  
 **Beschreibung**: Vollständige Übersicht aller Projektdateien mit ihren Funktionen
 
 ---
@@ -33,7 +33,7 @@ Diese Dokumentation beschreibt **alle** Dateien des Stärkenanalyse-App Projekts
 
 - **utils.py**: Hilfsfunktionen für Dateiverarbeitung. Extrahiert Text aus PDF- und DOCX-Dateien für Import-Funktionalität.
 
-- **version.py**: Zentrale Versionsnummer der Anwendung (aktuell: 0.3.0-WIP). Wird für Version-Display im Dashboard und für Deployment verwendet.
+- **version.py**: Zentrale Versionsnummer der Anwendung (aktuell: 1.2.1). Wird für Version-Display im Dashboard und für Deployment verwendet.
 
 - **wsgi.py**: WSGI-Entry-Point für Production-Deployment. Lädt Anwendung für Gunicorn oder andere WSGI-Server.
 
@@ -143,9 +143,11 @@ Flask-Blueprints organisieren die Anwendung in logische Module.
 
 Wiederverwendbare Service-Layer für Business-Logic.
 
-- **__init__.py**: Service-Package-Initialisierung. Macht Services importierbar und definiert Public-API.
+- **__init__.py**: Service-Package-Initialisierung. Macht Services importierbar und definiert Public-API für ReportGenerator und Knowledge-Base-Funktionen.
 
 - **report_generator.py**: ReportGenerator-Service-Klasse. Kern-Logik für Report-Generierung: Template-Processing, Sidebar-Layout, Daten-Aggregation, WeasyPrint-Integration.
+
+- **task_knowledge_base.py** (NEU v1.2.0): Assessment-Center Task Knowledge Base. Strukturierte Wissensdatenbank mit 12 AC-Aufgabentypen, 10 Kompetenzdimensionen mit Verhaltensankern, 6 Zielgruppen-Kategorien und vergleichenden Phasenmodellen. Bietet `get_knowledge_for_prompt()` für KI-Prompt-Injection und `get_target_group_options()` für UI-Rendering.
 
 ---
 
@@ -288,6 +290,9 @@ KI-Prompt-Templates für verschiedene Analyse-Typen.
 - Logos, Icons und Grafiken für UI
 - (Spezifische Dateien nicht aufgelistet - enthält UI-Assets)
 
+### Weitere Static Assets
+- **static/loading-robot.webp**: Lade-Animation für KI-Generierung/Chat-Refinement
+
 ---
 
 ## 📂 Instance & Uploads
@@ -384,7 +389,7 @@ Template-Prompts für GitHub-Actions.
 
 ## ✅ Status
 
-- **Version**: 0.3.0-WIP (Work in Progress)
+- **Version**: 1.2.1
 - **Letztes Update**: Commit `59c61de` (isort), `b26b005` (Black formatting), Tests & CI/CD
 - **Tests**: 91/91 Tests bestanden ✅, Coverage: 46.90%
 - **Code-Qualität**: Black + isort angewendet, CI-Checks aktiv, Test-Suite implementiert

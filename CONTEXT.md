@@ -1,13 +1,13 @@
 # CONTEXT.md - Stärkenanalyse-App
 
-**Automatisch aktualisiert am**: 2026-02-10 (Version 1.1.0)
+**Automatisch aktualisiert am**: 2026-02-10 (Version 1.2.1)
 
 ---
 
 ## 📋 Projektübersicht
 
-**Version**: 1.1.0  
-**Status**: Phase 2 Development - KI-Gym & Task Management ✅
+**Version**: 1.2.1  
+**Status**: Phase 2 Complete - Aufgabengenerator stabilisiert ✅
 
 **Technologie-Stack**:
 - **Backend**: Python 3.11+, Flask 3.1.2
@@ -22,6 +22,16 @@
 - **KI-Gym Learning System**: Pattern-Extraktion aus Content-Edits, automatische Prompt-Optimierung
 - **Beobachtungsaufgaben-Verwaltung**: Task-Library mit KI-Generierung und Versions-Management
 - **KI-Modell-Auswahl**: Reusable Modal für Mistral vs. Gemini Auswahl
+
+**Neue Komponenten in v1.2.0**:
+- **Assessment-Center Knowledge Base**: Strukturierte Wissensdatenbank mit 12 AC-Aufgabentypen, 10 Kompetenzdimensionen, 6 Zielgruppen und Phasenmodellen
+- **Zielgrupen-Differenzierung**: UI-Dropdown für Target-Group-Auswahl, KI-Prompt-Injection basierend auf Zielgruppe
+- **AC-Fachwissen in Prompts**: `get_knowledge_for_prompt()` injiziert praxisbasiertes AC-Wissen in KI-Generierungen
+
+**Neue Komponenten in v1.2.1**:
+- **Chat-Refinement Stabilisierung**: Normalisierte 4-Sektionen-Struktur (Szenario, Aufgabe, Ablauf, Materialien)
+- **HTML-Cleanup**: Entfernt Markdown-Artefakte und leere Sektionen
+- **Auto-Save + Reload**: Chat-Änderungen werden direkt gespeichert und korrekt aus DB geladen
 
 ---
 

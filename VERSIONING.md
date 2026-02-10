@@ -5,9 +5,9 @@ Dieses Dokument erklärt, wie die Versionsnummern in dieser App verwaltet werden
 ## Zwei unabhängige Versionen
 
 ### 1. App-Version (`APP_VERSION`)
-**Aktuell:** `1.0.0`  
+**Aktuell:** `1.2.1`  
 **Zweck:** Release-Tracking, Bug-Reports, Changelog  
-**Status:** 🟢 Production Release - Phase 1 Complete
+**Status:** 🟢 Production Release - Phase 2 Complete
 
 **Format:** `MAJOR.MINOR.PATCH` (Semantic Versioning)
 
@@ -231,6 +231,30 @@ A: Nicht schlimm im Pre-Release! Nach 1.0.0 solltest du aber konsequent sein.
 ---
 
 ## Versions-Historie
+
+### v1.2.1 (2026-02-10) - Chat-Refinement Stabilisierung
+**Neue Features:**
+- ✅ Sektionen normalisiert (Szenario, Aufgabe, Ablauf, Materialien)
+- ✅ Auto-Save + Reload für Chat-Änderungen
+- ✅ HTML-Cleanup gegen Markdown-Artefakte
+
+**Bugfixes:**
+- 🐛 Leere Sektionen nach Refinement behoben
+
+**Breaking Changes:** Keine
+
+---
+
+### v1.2.0 (2026-02-10) - AC Knowledge Base
+**Neue Features:**
+- ✅ Assessment-Center Knowledge Base (12 Aufgabentypen, 10 Dimensionen)
+- ✅ Zielgruppen-Differenzierung in KI-Prompts
+
+**Bugfixes:** -
+
+**Breaking Changes:** Keine
+
+---
 
 ### v0.4.0 (2026-02-08) - Report-Konfiguration & Backup-System
 **Neue Features:**
