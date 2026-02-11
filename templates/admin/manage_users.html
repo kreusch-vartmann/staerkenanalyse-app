@@ -23,6 +23,13 @@
         {% endfor %}
     {% endwith %}
 
+    {% if session.get('_temp_password') %}
+        <div class="alert alert-warning" role="alert">
+            Initiales Passwort (einmalige Anzeige):
+            <code>{{ session.pop('_temp_password') }}</code>
+        </div>
+    {% endif %}
+
     <!-- Tabelle -->
     {% if users %}
     <div class="table-responsive">

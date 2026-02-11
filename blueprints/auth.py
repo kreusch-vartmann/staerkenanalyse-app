@@ -7,12 +7,13 @@ from flask_login import current_user, login_required, login_user, logout_user
 from datetime import datetime, timezone
 
 import models
-from extensions import db
+from extensions import db, limiter
 
 auth_bp = Blueprint("auth", __name__)
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
+@limiter.limit("5 per minute", methods=["POST"])
 def login():
     """Login-Route: E-Mail + Passwort."""
     
@@ -57,16 +58,16 @@ def login():
             flash("Bitte ändern Sie Ihr Passwort beim ersten Login.", "info")
             return redirect(url_for("auth.change_password"))
 
-        # Redirect zu next oder Dashboard
+        # Redirect zu next oder Dashboard (nur relative Pfade erlauben)
         next_page = request.args.get("next")
-        if next_page:
+        if next_page and next_page.startswith("/") and not next_page.startswith("//"):
             return redirect(next_page)
         return redirect(url_for("dashboard"))
 
     return render_template("login.html")
 
 
-@auth_bp.route("/logout", methods=["GET"])
+@auth_bp.route("/logout", methods=["POST"])
 @login_required
 def logout():
     """Logout-Route."""

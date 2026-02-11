@@ -26,7 +26,7 @@ from blueprints.reports import bp as reports_bp
 from blueprints.observation_tasks import observation_tasks_bp
 # Neue Imports
 from config import DevelopmentConfig, ProductionConfig
-from extensions import csrf, db, login_manager, migrate
+from extensions import csrf, db, login_manager, migrate, limiter
 from version import APP_VERSION, get_version_info
 
 # App-Initialisierung
@@ -44,6 +44,7 @@ db.init_app(app)
 migrate.init_app(app, db)
 csrf.init_app(app)
 login_manager.init_app(app)
+limiter.init_app(app)
 
 # Flask-Login Konfiguration
 login_manager.login_view = "auth.login"
@@ -216,8 +217,9 @@ def health():
         # Teste DB-Verbindung
         db.session.execute(db.select(db.func.count(models.Group.id)))
         return {"status": "healthy", "database": "connected"}, 200
-    except Exception as e:
-        return {"status": "unhealthy", "error": str(e)}, 500
+    except Exception:
+        app.logger.exception("Health check failed")
+        return {"status": "unhealthy"}, 500
 
 
 # --- CLI COMMANDS ---

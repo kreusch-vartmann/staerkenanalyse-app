@@ -147,7 +147,6 @@ def show_data_entry(participant_id):
 )
 @login_required
 @participant_access_required
-@csrf.exempt
 def save_observations(participant_id):
     """Speichert die Beobachtungen für einen Teilnehmer."""
     participant = db.get_or_404(Participant, participant_id)
@@ -220,7 +219,6 @@ def show_self_assessment(participant_id):
 @participants_bp.route("/save_self_assessment/<int:participant_id>", methods=["POST"])
 @login_required
 @participant_access_required
-@csrf.exempt
 def save_self_assessment(participant_id):
     """Speichert die Selbsteinschätzung für einen Teilnehmer (API-Endpunkt)."""
     participant = db.get_or_404(Participant, participant_id)

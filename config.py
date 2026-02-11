@@ -2,6 +2,7 @@
 """Konfigurations-Klassen für verschiedene Environments (Development, Production)."""
 
 import os
+import secrets
 
 from dotenv import load_dotenv
 
@@ -48,8 +49,8 @@ class DevelopmentConfig(Config):
     DEBUG = True
     TESTING = False
 
-    # Fallback SECRET_KEY für Entwicklung (wenn nicht in .env)
-    SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
+    # Development: zufälligen Key nutzen, falls keiner gesetzt ist
+    SECRET_KEY = os.getenv("SECRET_KEY") or secrets.token_hex(32)
 
     # Development-spezifische Settings
     SQLALCHEMY_ECHO = True  # SQL-Queries in Console loggen
@@ -69,6 +70,7 @@ class ProductionConfig(Config):
 
     # Strikte Security für Production
     SESSION_COOKIE_SECURE = True
+    REMEMBER_COOKIE_SECURE = True
 
     # Logging
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")

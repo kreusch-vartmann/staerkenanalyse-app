@@ -5,7 +5,7 @@ Alle Routes sind Admin-only.
 
 from datetime import datetime, timezone
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 from flask_login import login_required
 
 import models
@@ -98,8 +98,9 @@ def add_user():
         db.session.add(new_user)
         db.session.commit()
 
+        session["_temp_password"] = password
         flash(
-            f"Benutzer {email} erstellt. Initiales Passwort: {password}",
+            f"Benutzer {email} erstellt. Initiales Passwort wird einmalig angezeigt.",
             "success",
         )
         return redirect(url_for("admin.manage_users"))
@@ -236,8 +237,9 @@ def reset_password(user_id: int):
 
     db.session.commit()
 
+    session["_temp_password"] = password
     flash(
-        f"Passwort für {user.email} zurückgesetzt. Neues Passwort: {password}",
+        f"Passwort für {user.email} zurückgesetzt. Neues Passwort wird einmalig angezeigt.",
         "success",
     )
     return redirect(url_for("admin.manage_users"))

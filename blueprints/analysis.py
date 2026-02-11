@@ -321,7 +321,6 @@ def edit_report(participant_id):
 @analysis_bp.route("/save_report/<int:participant_id>", methods=["POST"])
 @login_required
 @participant_access_required
-@csrf.exempt
 def save_report(participant_id):
     """Speichert bearbeitete Berichtsdaten (KI-Analyse)."""
     participant = db.get_or_404(Participant, participant_id)
@@ -743,7 +742,6 @@ def run_ki_analysis(participant_id):
 @analysis_bp.route("/api/run_single_analysis/<int:participant_id>", methods=["POST"])
 @login_required
 @admin_required
-@csrf.exempt
 def run_single_analysis_api(participant_id):
     """API-Endpunkt, um die KI-Analyse für die Batch-Verarbeitung auszuführen."""
     data = request.get_json()

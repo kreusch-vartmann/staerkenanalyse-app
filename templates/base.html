@@ -232,9 +232,12 @@
                         <a class="dropdown-item" href="{{ url_for('info') }}">
                             <i class="fas fa-info-circle"></i> Informationen
                         </a>
-                        <a class="dropdown-item" href="{{ url_for('auth.logout') }}">
-                            <i class="fas fa-sign-out-alt"></i> Abmelden
-                        </a>
+                        <form method="POST" action="{{ url_for('auth.logout') }}" class="m-0">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="dropdown-item">
+                                <i class="fas fa-sign-out-alt"></i> Abmelden
+                            </button>
+                        </form>
                     </div>
                 </li>
             {% else %}
@@ -384,6 +387,22 @@
                 }
             });
         </script>
+    <script>
+        (function() {
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            if (!token || !window.fetch) {
+                return;
+            }
+            const originalFetch = window.fetch.bind(window);
+            window.fetch = (input, init = {}) => {
+                const headers = new Headers(init.headers || {});
+                if (!headers.has('X-CSRFToken')) {
+                    headers.set('X-CSRFToken', token);
+                }
+                return originalFetch(input, { ...init, headers });
+            };
+        })();
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>
