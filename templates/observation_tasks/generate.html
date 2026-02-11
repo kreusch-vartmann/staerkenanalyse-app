@@ -89,7 +89,7 @@
 
 {% include 'partials/_ki_model_modal.html' %}
 
-<script>
+<script nonce="{{ csp_nonce }}">
 function openGenerationModal() {
     openKiModelModal(function(selectedModel) {
         startGenerationWithModel(selectedModel);

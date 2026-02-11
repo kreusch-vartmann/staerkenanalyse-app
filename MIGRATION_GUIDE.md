@@ -1,5 +1,7 @@
 # Testdaten-Migration: Schritt-für-Schritt-Anleitung
 
+**Zuletzt geprüft:** 2026-02-11 (v1.3.1)
+
 ## ⚠️ Wichtig: Vor dem Start
 
 Diese Anleitung ersetzt **alle realen Nutzerdaten** durch **KI-generierte synthetische Testdaten**.

@@ -63,7 +63,7 @@ def upload_company_logo(group_id):
     """
     Uploaded zentral ein Company-Logo (überschreibt das aktuelle).
     """
-    group = Group.query.get_or_404(group_id)
+    group = db.get_or_404(Group, group_id)
 
     if "file" not in request.files:
         return jsonify({"error": "Keine Datei hochgeladen"}), 400
@@ -108,7 +108,7 @@ def upload_client_logo(group_id):
     """
     Uploaded Client/Auftraggeber-Logo für eine Gruppe.
     """
-    group = Group.query.get_or_404(group_id)
+    group = db.get_or_404(Group, group_id)
 
     if "file" not in request.files:
         return jsonify({"error": "Keine Datei hochgeladen"}), 400
@@ -166,7 +166,7 @@ def configure_report(group_id):
     GET: Zeige Report-Konfigurationsformular
     POST: Speichere Konfiguration
     """
-    group = Group.query.get_or_404(group_id)
+    group = db.get_or_404(Group, group_id)
     templates = ReportTemplate.query.filter_by(is_active=True).all()
     company_logo = CompanyLogo.query.filter_by(is_active=True).first()
     client_logo = ClientLogo.query.filter_by(group_id=group_id).first()
@@ -283,9 +283,7 @@ def configure_report(group_id):
                     "closing_page_show_signature_fields"
                 )
                 == "on",
-                "signature_lines_count": int(
-                    request.form.get("closing_page_signature_lines_count", 3)
-                ),
+                "signature_lines_count": 3,
                 "additional_text": request.form.get("closing_page_additional_text", ""),
             },
             "info_page": {
@@ -295,8 +293,17 @@ def configure_report(group_id):
             "toc_enabled": request.form.get("toc_enabled") == "on",
         }
 
+        signature_lines_raw = request.form.get("closing_page_signature_lines_count", "3")
+        try:
+            modules_config["closing_page"]["signature_lines_count"] = max(
+                1, int(signature_lines_raw)
+            )
+        except (TypeError, ValueError):
+            modules_config["closing_page"]["signature_lines_count"] = 3
+            flash("Ungültige Signatur-Anzahl. Standardwert 3 verwendet.", "warning")
+
         template_id = request.form.get("template_id")
-        config.template_id = int(template_id) if template_id else None
+        config.template_id = int(template_id) if template_id and template_id.isdigit() else None
         config.modules_config = json.dumps(modules_config)
         config.updated_at = datetime.now()
         db.session.commit()
@@ -335,8 +342,8 @@ def preview_report_html(group_id, participant_id):
     """
     Zeige HTML-Vorschau des Reports (vor PDF-Generierung).
     """
-    group = Group.query.get_or_404(group_id)
-    participant = Participant.query.get_or_404(participant_id)
+    group = db.get_or_404(Group, group_id)
+    participant = db.get_or_404(Participant, participant_id)
 
     if participant.group_id != group_id:
         return jsonify({"error": "Participant nicht in dieser Gruppe"}), 403
@@ -366,8 +373,8 @@ def generate_pdf_report(group_id, participant_id):
     """
     Generiere PDF-Report für einen Participant.
     """
-    group = Group.query.get_or_404(group_id)
-    participant = Participant.query.get_or_404(participant_id)
+    group = db.get_or_404(Group, group_id)
+    participant = db.get_or_404(Participant, participant_id)
 
     if participant.group_id != group_id:
         return jsonify({"error": "Participant nicht in dieser Gruppe"}), 403
@@ -408,7 +415,7 @@ def generate_pdf_report(group_id, participant_id):
 @participant_access_required
 def standalone_se_pdf(participant_id):
     """PDF nur mit Selbsteinschätzung (Sidebar voll, mit Metadaten)."""
-    participant = Participant.query.get_or_404(participant_id)
+    participant = db.get_or_404(Participant, participant_id)
     group = participant.group
     config = ReportConfiguration.query.filter_by(group_id=group.id).first()
 
@@ -443,7 +450,7 @@ def standalone_se_pdf(participant_id):
 @participant_access_required
 def standalone_fe_pdf(participant_id):
     """PDF nur mit Fremdeinschätzung (Sidebar voll, mit Metadaten)."""
-    participant = Participant.query.get_or_404(participant_id)
+    participant = db.get_or_404(Participant, participant_id)
     group = participant.group
     config = ReportConfiguration.query.filter_by(group_id=group.id).first()
 
@@ -478,7 +485,7 @@ def standalone_fe_pdf(participant_id):
 @participant_access_required
 def standalone_se_preview(participant_id):
     """HTML-Vorschau nur Selbsteinschätzung."""
-    participant = Participant.query.get_or_404(participant_id)
+    participant = db.get_or_404(Participant, participant_id)
     group = participant.group
     config = ReportConfiguration.query.filter_by(group_id=group.id).first_or_404()
 
@@ -501,7 +508,7 @@ def standalone_se_preview(participant_id):
 @participant_access_required
 def standalone_fe_preview(participant_id):
     """HTML-Vorschau nur Fremdeinschätzung."""
-    participant = Participant.query.get_or_404(participant_id)
+    participant = db.get_or_404(Participant, participant_id)
     group = participant.group
     config = ReportConfiguration.query.filter_by(group_id=group.id).first_or_404()
 
@@ -580,7 +587,7 @@ def upload_signature():
 @admin_required
 def delete_signature(sig_id):
     """Löscht eine Unterschrift."""
-    sig = SignatureImage.query.get_or_404(sig_id)
+    sig = db.get_or_404(SignatureImage, sig_id)
     # Datei löschen
     if os.path.exists(sig.image_path):
         os.remove(sig.image_path)
@@ -609,7 +616,7 @@ def list_templates():
 @admin_required
 def view_template(template_id):
     """Zeige Template-Details."""
-    template = ReportTemplate.query.get_or_404(template_id)
+    template = db.get_or_404(ReportTemplate, template_id)
     design_config = json.loads(template.design_config) if template.design_config else {}
     return render_template(
         "reports/template_detail.html", template=template, design_config=design_config

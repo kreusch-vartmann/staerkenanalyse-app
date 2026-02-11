@@ -1,6 +1,6 @@
 # PROJECT_OVERVIEW.md
 
-**Generiert am**: 2026-02-10 (v1.2.1)
+**Generiert am**: 2026-02-11 (v1.3.1)
 
 ---
 
@@ -18,7 +18,7 @@ Flask-basierte Web-Applikation für **Stärkenanalyse** mit KI-gestützter Beric
 ## 📊 Projektstatistik
 
 - **Python-Dateien**: 25+
-- **Blueprints**: 8 (groups, participants, analysis, data_io, prompts, explanation_blocks, reports, observation_tasks)
+- **Blueprints**: 10 (auth, admin, groups, participants, analysis, data_io, prompts, explanation_blocks, reports, observation_tasks)
 - **Templates**: 35+
 - **Datenbank-Models**: 15+ (inkl. Task/TaskVersion, KI-Gym Modelle, Report-Modelle)
 
@@ -28,6 +28,8 @@ Flask-basierte Web-Applikation für **Stärkenanalyse** mit KI-gestützter Beric
 
 | Blueprint | Routen-Anzahl | Zweck |
 |-----------|---------------|-------|
+| auth | 3 | Login, Logout, Passwortwechsel |
+| admin | 10+ | Nutzerverwaltung, Rollen, KI-Gym |
 | groups | 5 | Gruppenverwaltung |
 | participants | 9 | Teilnehmerverwaltung & Selbsteinschätzung |
 | analysis | 12 | KI-Analyse, Fremdeinschätzung & Abschlussberichte |
@@ -74,6 +76,13 @@ python app.py
 ```
 
 ---
+
+## 🆕 Neue Features in v1.3.1
+
+### Stabilisierung & Tests
+- Auth/RBAC Tests für Login, Rollen, Gruppen-/Teilnehmerzugriff
+- Admin-Flow Tests für User-CRUD und Passwort-Reset
+- RBAC Edge-Cases für unzugewiesene Gruppen und fehlende Ressourcen
 
 ## 🆕 Neue Features in v1.2.1
 

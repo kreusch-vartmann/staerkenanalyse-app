@@ -1,5 +1,7 @@
 # Test Summary: ki_original Data Parsing
 
+**Zuletzt geprüft:** 2026-02-11 (unverändert gültig)
+
 ## Test Results
 
 ### 1. Database Data Structure

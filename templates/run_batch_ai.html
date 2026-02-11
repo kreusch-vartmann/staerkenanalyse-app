@@ -56,7 +56,7 @@
 
 {% include 'partials/_ki_model_modal.html' %}
 
-<script>
+<script nonce="{{ csp_nonce }}">
 // Initialize selectedPromptId from current dropdown value
 var selectedPromptId = document.getElementById('prompt_selection').value || null;
 console.log('[BatchAI] Initial selectedPromptId:', selectedPromptId);

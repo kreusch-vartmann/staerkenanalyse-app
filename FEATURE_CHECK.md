@@ -1,6 +1,6 @@
 # Feature-Checkliste: Stärkenanalyse-App
 
-**Datum:** 10.02.2026 (v1.2.1)
+**Datum:** 11.02.2026 (v1.3.1)
 **Branch:** main
 **Modus:** Lokale Entwicklung (SQLite)
 
@@ -105,7 +105,7 @@
 ### 13. CSRF-Protection
 - [x] Flask-WTF integriert
 - [x] CSRF-Token in allen Formularen
-- [x] CSRF-Exempt für AJAX-Endpunkte (explizit konfiguriert)
+- [x] CSRF-Header für AJAX/Fetch-Endpunkte integriert
 
 ### 14. PDF-Generierung (WeasyPrint)
 - [x] WeasyPrint installiert und funktionsfähig

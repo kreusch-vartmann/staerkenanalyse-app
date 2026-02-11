@@ -3,7 +3,7 @@
 **Branch:** `phase3-stabilization`  
 **Start Date:** 11.02.2026  
 **Target Completion:** ~End of February 2026  
-**Current Sprint:** 1.1 - CSP + Security Headers
+**Current Sprint:** 3.2 - Task Generation Tests
 
 ---
 
@@ -26,14 +26,14 @@
 
 | Sprint | Tasks | Status | Est. Time | Completion |
 |--------|-------|--------|-----------|------------|
-| **1.1** | CSP + Security Headers | 🟢 IN PROGRESS | 3h KI + 1h Human | 0% |
-| **1.2** | Input Validation Audit | ⬜ PENDING | 3h KI + 1.5h Human | 0% |
-| **1.3** | SQL Injection Audit | ⬜ PENDING | 2h KI + 1h Human | 0% |
-| **2.1** | Global Exception Handler | ⬜ PENDING | 2h KI + 0.5h Human | 0% |
-| **2.2** | Bugfender Integration | ⬜ PENDING | 3h KI + 1h Human | 0% |
-| **2.3** | Edge Case Handling | ⬜ PENDING | 3h KI + 1.5h Human | 0% |
-| **3.1** | Auth + RBAC Tests | ⬜ PENDING | 2.5h KI + 1h Human | 0% |
-| **3.2** | Task Generation Tests | ⬜ PENDING | 3h KI + 1.5h Human | 0% |
+| **1.1** | CSP + Security Headers | ✅ COMPLETE | 3h KI + 1h Human | 100% |
+| **1.2** | Input Validation Audit | ✅ COMPLETE | 3h KI + 1.5h Human | 100% |
+| **1.3** | SQL Injection Audit | ✅ COMPLETE | 2h KI + 1h Human | 100% |
+| **2.1** | Global Exception Handler | ✅ COMPLETE | 2h KI + 0.5h Human | 100% |
+| **2.2** | Bugfender Integration | ✅ COMPLETE | 3h KI + 1h Human | 100% |
+| **2.3** | Edge Case Handling | ✅ COMPLETE | 3h KI + 1.5h Human | 100% |
+| **3.1** | Auth + RBAC Tests | ✅ COMPLETE | 2.5h KI + 1h Human | 100% |
+| **3.2** | Task Generation Tests | 🟢 IN PROGRESS | 3h KI + 1.5h Human | 0% |
 | **3.3** | Integration Tests | ⬜ PENDING | 2.5h KI + 1h Human | 0% |
 | **3.4** | Security Tests | ⬜ PENDING | 2h KI + 0.5h Human | 0% |
 | **4.1** | Prompt Documentation | ⬜ PENDING | 1.5h KI + 1h Human | 0% |
@@ -48,27 +48,27 @@
 
 **Goal:** Implement Content Security Policy with nonce-based inline scripts and security headers.
 
-**Status:** 🟢 IN PROGRESS  
+**Status:** ✅ COMPLETE  
 **Start Date:** 11.02.2026  
 **Target Completion:** 11.02.2026 EOD
 
 ### Tasks
 
-- [ ] 1. Add CSP middleware to `app.py` with nonce generation
-- [ ] 2. Add security headers (X-Frame-Options, X-Content-Type-Options, HSTS, etc.)
-- [ ] 3. Update `templates/base.html` to inject nonces in inline scripts
-- [ ] 4. Refactor critical inline scripts to use nonces
-- [ ] 5. Local testing: Chrome DevTools Security tab validation
-- [ ] 6. Update config for CSP report-uri (optional)
-- [ ] 7. Document CSP policy in README/Security section
+- [x] 1. Add CSP middleware to `app.py` with nonce generation
+- [x] 2. Add security headers (X-Frame-Options, X-Content-Type-Options, HSTS, etc.)
+- [x] 3. Update `templates/base.html` to inject nonces in inline scripts
+- [x] 4. Refactor critical inline scripts to use nonces
+- [x] 5. Local testing: Chrome DevTools Security tab validation
+- [x] 6. Update config for CSP report-uri (optional)
+- [x] 7. Document CSP policy in README/Security section
 
 ### Deliverables
 
-- [ ] `app.py` with security headers middleware
-- [ ] `templates/base.html` with nonce support
-- [ ] Updated inline script tags in templates
-- [ ] Local test verification (Chrome DevTools)
-- [ ] Documentation update
+- [x] `app.py` with security headers middleware
+- [x] `templates/base.html` with nonce support
+- [x] Updated inline script tags in templates
+- [x] Local test verification (Chrome DevTools)
+- [x] Documentation update
 
 ### Blockers
 
@@ -87,15 +87,28 @@ None currently.
 ### 2026-02-11
 
 **Progress:**
-- Phase 3 planning completed
-- Configuration decisions finalized
-- PHASE3_STATUS.md created
-- Sprint 1.1 kickoff
+- Sprint 1.1 abgeschlossen (CSP + Security Headers)
+- Input-Validation Audit gestartet (Sprint 1.2)
+ - Sprint 1.2 abgeschlossen (Pydantic-Validierung)
+ - Sprint 1.3 abgeschlossen (SQL Injection Audit)
+ - Sprint 2.1 abgeschlossen (Global Exception Handler)
+ - Sprint 2.2 abgeschlossen (Bugfender Integration)
+ - Sprint 2.3 abgeschlossen (Edge Case Handling)
+ - Sprint 3.1 abgeschlossen (Auth + RBAC Tests)
+ - Auth/RBAC Test-Suite ergänzt (Login, Logout, Passwortwechsel, RBAC/Teilnehmerzugriff)
+ - Pytest: `tests/integration/test_auth_rbac.py` grün
+ - Admin-User-Flows getestet (Add/Edit/Deactivate/Reset/Delete)
+ - Pytest: `tests/integration/test_admin_flows.py` grün
+ - RBAC Edge-Cases getestet (fehlende Ressourcen, unzugewiesene Gruppen, no-group Observer)
+ - Pytest: `tests/integration/test_auth_rbac.py` erweitert und grün
+ - Gruppen-RBAC Tests ergänzt (Observer-Sichtbarkeit & Zugriff)
+ - Pytest: `tests/integration/test_groups_blueprint.py` grün
+ - Sprint 3.2 gestartet (Task Generation Tests)
 
 **Next Steps:**
-- Implement CSP middleware in app.py
-- Add nonce generation and injection
-- Refactor base.html for nonce support
+- Task-Generator Workflows testen (Create/Edit/Versioning)
+- Edge-Cases für Task-Zuordnung & Versionen
+- Tests nachziehen und Status aktualisieren
 
 **Blockers:** None
 
@@ -155,4 +168,4 @@ None currently.
 
 ---
 
-**Last Updated:** 2026-02-11 (Sprint 1.1 kickoff)
+**Last Updated:** 2026-02-11 (Sprint 3.1 abgeschlossen, Sprint 3.2 gestartet)

@@ -138,7 +138,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 function openEditParticipantModal(id, name) {
     document.getElementById('editParticipantForm').action = `{{ url_for('participants.edit_participant', participant_id=0) }}`.replace('0', id);
     document.getElementById('participant_name').value = name;

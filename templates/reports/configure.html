@@ -442,7 +442,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script nonce="{{ csp_nonce }}">
 function toggleAccordion(sectionId) {
     const content = document.getElementById(`accordion-content-${sectionId}`);
     const icon = document.getElementById(`icon-${sectionId}`);

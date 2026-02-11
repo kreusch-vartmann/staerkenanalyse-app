@@ -25,11 +25,11 @@
         </a>
     </div>
 
-    <script id="analysis-config" type="application/json">
+    <script nonce="{{ csp_nonce }}" id="analysis-config" type="application/json">
         {{ analysis_data | tojson | safe }}
     </script>
 
-    <script>
+    <script nonce="{{ csp_nonce }}">
         const participantRows = document.querySelectorAll('.participant-row');
         // Die Konfiguration wird sicher aus dem Script-Tag ausgelesen
         const analysisConfig = JSON.parse(document.getElementById('analysis-config').textContent);

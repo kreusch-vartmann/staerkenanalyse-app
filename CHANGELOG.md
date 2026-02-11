@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.1 — 2026-02-11
+
+### Stabilization & Tests
+- Added Auth/RBAC integration tests (login/logout/password change, access control).
+- Added admin user management flow tests (create/edit/toggle/reset/delete).
+- Added RBAC edge-case coverage for groups and missing resources.
+
+### Fixes
+- Fixed group clearing in admin edit flow for dynamic relationships.
+
 ## 1.3.0 — 2026-02-11
 
 ### Security

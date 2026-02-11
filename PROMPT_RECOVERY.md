@@ -1,5 +1,7 @@
 # 🚨 PROMPT-WIEDERHERSTELLUNG - KRITISCHER STATUS
 
+**Update 2026-02-11:** Backup- und Prompt-Export-Workflow ist aktiv, aber die verlorenen Prompts sind weiterhin nicht wiederhergestellt.
+
 **Datum**: 8. Februar 2026  
 **Status**: KRITISCH - Prompts verloren gegangen  
 **Prompt-Namen**: MistralSozVerb4 (und ähnliche)

@@ -186,7 +186,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script nonce="{{ csp_nonce }}">
 // Accordion Toggle Funktion
 function toggleAccordion(groupId) {
     const content = document.getElementById(`accordion-content-${groupId}`);

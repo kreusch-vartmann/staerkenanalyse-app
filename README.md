@@ -2,9 +2,9 @@
 
 [![Tests](https://github.com/kreusch-vartmann/staerkenanalyse-app/actions/workflows/tests.yml/badge.svg)](https://github.com/kreusch-vartmann/staerkenanalyse-app/actions/workflows/tests.yml)
 
-**Version:** 1.3.0  
-**Status:** Phase 2 Complete - Aufgabengenerator stabilisiert ✅  
-**Neue Features:** AC Knowledge Base, Zielgruppen-Differenzierung, Chat-Refinement Stabilisierung
+**Version:** 1.3.1  
+**Status:** Phase 3 Stabilisierung in Arbeit 🟡  
+**Neue Features:** Security-Härtung, Auth/RBAC-Tests, Admin-Flow-Tests
 
 Eine lokale Flask-Webanwendung zur Verwaltung von Gruppen und Teilnehmenden mit rollenbasierter Zugriffskontrolle und zur Durchführung von KI-gestützten Stärkenanalysen.
 
@@ -130,6 +130,13 @@ python -m flask run --port 5002
 
 - `services/report_generator.py` — **NEUE** ReportGenerator-Klasse für HTML-Rendering und PDF-Export mit konfigurierbarem Sidebar-Layout
 - `ai_gym.py` — **NEU v1.1.0** KI-Gym Service für Pattern-Extraktion und automatisches Prompt-Learning
+
+## Neu in Version 1.3.1 ✅
+
+### Stabilisierung & Tests
+- **Auth/RBAC Test-Suite**: Login, Logout, Passwortwechsel, Gruppen-/Teilnehmerzugriff
+- **Admin-Flow Tests**: User anlegen, editieren, deaktivieren, Reset, löschen
+- **RBAC Edge-Cases**: Unzugewiesene Gruppen, fehlende Ressourcen, Observer ohne Gruppen
 
 ## Neu in Version 1.2.1 ✅
 
@@ -291,7 +298,7 @@ with app.app_context():
 
 ### Automatisierte Tests (NEU in v0.3.0)
 
-Das Projekt enthält nun eine **umfassende Test-Suite** mit 91 Tests:
+Das Projekt enthält nun eine **umfassende Test-Suite** mit 170 Tests:
 
 #### Tests ausführen
 
@@ -341,7 +348,7 @@ tests/
 
 #### Test-Features
 
-- ✅ **91 Tests** erfolgreich
+- ✅ **170 Tests** gesammelt
 - ✅ **100% Coverage** für Core-Module (models, extensions, services)
 - ✅ **Fixtures** für Testdaten-Generierung
 - ✅ **Mocking** für externe APIs (Mistral, Google)
@@ -361,7 +368,7 @@ Dieses Projekt nutzt GitHub Actions für automatische Code-Qualitätsprüfungen,
 
 1. **Tests & Coverage** (`.github/workflows/tests.yml`) - ⭐ **NEU in v0.3.0**
    - Läuft bei jedem Push auf `main` oder `feature/*` Branches
-   - Führt komplette Test-Suite aus (91 Tests)
+  - Führt komplette Test-Suite aus (170 Tests)
    - Generiert Coverage-Report (HTMLCov + Codecov)
    - Prüft Coverage-Schwellwerte (≥ 40%)
    - Uploaded Coverage Artifacts für Review
@@ -428,7 +435,7 @@ cp .env.example .env
 
 Diese App verwendet **Semantic Versioning** (0.MAJOR.MINOR im Pre-Release):
 
-### App-Version (aktuell: `1.2.1`)
+### App-Version (aktuell: `1.3.1`)
 
 **Pre-Release (0.x.y):**
 - `0.MINOR.PATCH` - Breaking Changes zwischen Minor-Versions erlaubt
@@ -461,6 +468,11 @@ EXPORT_SCHEMA_VERSION = "1.1"  # Bei Export-Erweiterungen
 ```
 
 ### Changelog
+
+**1.3.1** (2026-02-11) - Phase 3 Stabilisierung
+- ✅ Auth/RBAC- und Admin-Flow-Tests ergänzt
+- ✅ RBAC-Edge-Cases für Gruppen/Teilnehmer abgedeckt
+- ✅ Stabilitätsfix bei Gruppenbereinigung im Admin-Edit
 
 **0.4.0** (2026-02-08) - Report-Konfiguration & Backup-System ✅
 - ✅ **Report-Konfiguration UI**: Tailwind CSS Accordions mit 6 konfigurierbaren Bereichen

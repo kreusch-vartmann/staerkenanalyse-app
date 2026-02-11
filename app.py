@@ -7,10 +7,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import os
+import secrets
 from datetime import datetime, timezone
 
-from flask import Flask, render_template, url_for
+from flask import Flask, jsonify, render_template, url_for, g, request
 from flask_login import current_user, login_required
+from flask_wtf.csrf import CSRFError
+from werkzeug.exceptions import HTTPException
 
 import models
 from blueprints.analysis import analysis_bp
@@ -75,13 +78,69 @@ app.register_blueprint(reports_bp)
 app.register_blueprint(observation_tasks_bp)
 
 
+# --- SECURITY MIDDLEWARE ---
+
+
+@app.before_request
+def generate_nonce():
+    """Generate unique nonce for each request (CSP inline script support)."""
+    g.csp_nonce = secrets.token_urlsafe(16)
+
+
+@app.after_request
+def set_security_headers(response):
+    """
+    Apply security headers to all responses:
+    - Content Security Policy (CSP) with nonce support
+    - X-Frame-Options (Clickjacking protection)
+    - X-Content-Type-Options (MIME sniffing protection)
+    - Strict-Transport-Security (HSTS for HTTPS)
+    - Referrer-Policy (Privacy protection)
+    """
+    nonce = getattr(g, 'csp_nonce', None)
+    
+    # Content Security Policy
+    # WICHTIG: 'unsafe-inline' OHNE nonce in script-src!
+    # Laut CSP-Spec wird 'unsafe-inline' ignoriert wenn ein nonce vorhanden ist.
+    # Da Templates onclick-Handler nutzen, brauchen wir unsafe-inline.
+    # TODO: Alle onclick durch addEventListener ersetzen, dann auf nonce umstellen
+    csp_directives = [
+        "default-src 'self'",
+        f"script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://code.jquery.com https://stackpath.bootstrapcdn.com https://cdn.tailwindcss.com https://cdn.quilljs.com https://js.bugfender.com",
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com https://stackpath.bootstrapcdn.com https://cdnjs.cloudflare.com https://cdn.quilljs.com",
+        "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
+        "img-src 'self' data: https:",
+        "connect-src 'self' https://api.bugfender.com",
+        "frame-ancestors 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+    ]
+    response.headers['Content-Security-Policy'] = "; ".join(csp_directives)
+    
+    # Additional security headers
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    
+    # HSTS (only for HTTPS in production)
+    if request.is_secure and app.config.get('ENV') == 'production':
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    
+    return response
+
+
 # --- ZENTRALE FUNKTIONEN ---
 
 
 @app.context_processor
 def inject_now():
-    """Fügt das aktuelle Jahr und Version in alle Templates ein."""
-    return {"current_year": datetime.now(timezone.utc).year, "app_version": APP_VERSION}
+    """Fügt das aktuelle Jahr, Version und CSP-Nonce in alle Templates ein."""
+    return {
+        "current_year": datetime.now(timezone.utc).year,
+        "app_version": APP_VERSION,
+        "csp_nonce": getattr(g, 'csp_nonce', ''),
+        "bugfender_app_key": app.config.get("BUGFENDER_APP_KEY"),
+    }
 
 
 @app.template_filter("datetimeformat")
@@ -177,30 +236,73 @@ def info():
 # --- ERROR HANDLERS ---
 
 
-@app.errorhandler(404)
-def not_found(error):
-    """404 Not Found Handler."""
+def _wants_json_response() -> bool:
+    if request.path.startswith("/api/"):
+        return True
+    if request.is_json:
+        return True
+    accepts = request.accept_mimetypes
+    return accepts["application/json"] >= accepts["text/html"]
+
+
+@app.errorhandler(CSRFError)
+def handle_csrf_error(error):
+    message = getattr(error, "description", "CSRF-Token fehlt oder ist ungültig.")
+    if _wants_json_response():
+        return jsonify({"error": "Bad Request", "message": message}), 400
     breadcrumbs = [{"link": url_for("dashboard"), "text": "Dashboard"}]
     return (
         render_template(
             "base.html",
             breadcrumbs=breadcrumbs,
-            error_message="Seite nicht gefunden (404)",
+            error_message=message,
         ),
-        404,
+        400,
     )
 
 
-@app.errorhandler(500)
-def internal_error(error):
-    """500 Internal Server Error Handler."""
-    db.session.rollback()
+@app.errorhandler(HTTPException)
+def handle_http_exception(error):
+    code = error.code or 500
+    description = error.description if getattr(error, "description", None) else error.name
+    if code >= 500:
+        db.session.rollback()
+    if _wants_json_response():
+        return jsonify({"error": error.name, "message": description}), code
     breadcrumbs = [{"link": url_for("dashboard"), "text": "Dashboard"}]
     return (
         render_template(
             "base.html",
             breadcrumbs=breadcrumbs,
-            error_message="Interner Serverfehler (500)",
+            error_message=f"{description} ({code})",
+        ),
+        code,
+    )
+
+
+@app.errorhandler(Exception)
+def handle_unhandled_exception(error):
+    error_id = secrets.token_hex(8)
+    app.logger.exception("Unhandled exception [%s]", error_id)
+    db.session.rollback()
+    message = f"Interner Serverfehler (500). Fehler-ID: {error_id}"
+    if _wants_json_response():
+        return (
+            jsonify(
+                {
+                    "error": "Internal Server Error",
+                    "message": "Ein interner Fehler ist aufgetreten.",
+                    "error_id": error_id,
+                }
+            ),
+            500,
+        )
+    breadcrumbs = [{"link": url_for("dashboard"), "text": "Dashboard"}]
+    return (
+        render_template(
+            "base.html",
+            breadcrumbs=breadcrumbs,
+            error_message=message,
         ),
         500,
     )

@@ -50,9 +50,11 @@
                             </p>
                         </div>
                         <div class="card-footer bg-light">
-                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" 
-                                    data-bs-target="#exampleModal" 
-                                    onclick="loadExample('{{ key }}')">
+                            <button class="btn btn-sm btn-outline-primary"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#exampleModal"
+                                    onclick="loadExample('{{ key }}')"
+                                    type="button">
                                 👁️ Anschauen
                             </button>
                         </div>
@@ -213,23 +215,28 @@
     </div>
 </div>
 
-<script>
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ csp_nonce }}">
+var examplesData = {{ example_tasks|tojson }};
+
 function loadExample(key) {
-    const examples = {{ example_tasks|tojson }};
-    const example = examples[key];
-    
+    var example = examplesData[key];
+    if (!example) {
+        return;
+    }
     document.getElementById('exampleTitle').textContent = example.title;
-    document.getElementById('exampleContent').innerHTML = `
-        <div>
-            <p><strong>Beobachtungsbereich:</strong> ${example.observation_area}</p>
-            <p><strong>Teilnehmer:</strong> ${example.participant_count} | <strong>Dauer:</strong> ${example.duration_minutes} Min</p>
-            <hr>
-            <div>${example.task_description}</div>
-            <hr>
-            <p><strong>Beobachtungsfokus:</strong></p>
-            <p>${example.observation_focus}</p>
-        </div>
-    `;
+    document.getElementById('exampleContent').innerHTML =
+        '<div>' +
+        '<p><strong>Beobachtungsbereich:</strong> ' + example.observation_area + '</p>' +
+        '<p><strong>Teilnehmer:</strong> ' + example.participant_count + ' | <strong>Dauer:</strong> ' + example.duration_minutes + ' Min</p>' +
+        '<hr>' +
+        '<div>' + example.task_description + '</div>' +
+        '<hr>' +
+        '<p><strong>Beobachtungsfokus:</strong></p>' +
+        '<p>' + example.observation_focus + '</p>' +
+        '</div>';
 }
 </script>
 {% endblock %}

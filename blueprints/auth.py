@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 
 import models
 from extensions import db, limiter
+from validation import ChangePasswordForm, LoginForm, format_validation_error, parse_form
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -22,12 +23,14 @@ def login():
         return redirect(url_for("dashboard"))
 
     if request.method == "POST":
-        email = request.form.get("email", "").strip().lower()
-        password = request.form.get("password", "")
-
-        if not email or not password:
-            flash("E-Mail und Passwort erforderlich.", "error")
+        form_data = request.form.to_dict()
+        parsed, error = parse_form(LoginForm, form_data)
+        if error:
+            flash(format_validation_error(error), "error")
             return redirect(url_for("auth.login"))
+
+        email = parsed.email
+        password = parsed.password
 
         # Finde User
         user = db.session.scalar(
@@ -82,21 +85,18 @@ def change_password():
     """Passwort ändern (für eingeloggte User)."""
     
     if request.method == "POST":
-        old_password = request.form.get("old_password", "")
-        new_password = request.form.get("new_password", "")
-        confirm_password = request.form.get("confirm_password", "")
-
-        # Validierung
-        if not old_password or not new_password or not confirm_password:
-            flash("Alle Felder erforderlich.", "error")
+        form_data = request.form.to_dict()
+        parsed, error = parse_form(ChangePasswordForm, form_data)
+        if error:
+            flash(format_validation_error(error), "error")
             return redirect(url_for("auth.change_password"))
+
+        old_password = parsed.old_password
+        new_password = parsed.new_password
+        confirm_password = parsed.confirm_password
 
         if not current_user.check_password(old_password):
             flash("Altes Passwort ist ungültig.", "error")
-            return redirect(url_for("auth.change_password"))
-
-        if len(new_password) < 8:
-            flash("Neues Passwort muss mindestens 8 Zeichen lang sein.", "error")
             return redirect(url_for("auth.change_password"))
 
         if new_password != confirm_password:

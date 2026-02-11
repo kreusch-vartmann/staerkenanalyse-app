@@ -1,5 +1,7 @@
 # PHASE 1 SETUP & VERIFICATION GUIDE
 
+**Zuletzt geprüft:** 2026-02-11 (Phase 1 abgeschlossen, Tests ergänzt)
+
 ## ⚡ Quick Start (5 Minutes)
 
 ### 1. Install Dependencies
@@ -108,22 +110,11 @@ flask run
 
 ## ⚠️ Known Limitations (Phase 1)
 
-1. **Only 5 of 52 routes fully protected** (groups.py done as example)
-   - Remaining routes in other blueprints need similar @login_required + role decorators
-   - See PHASE1_IMPLEMENTATION_STATUS.md for detailed list
-
-2. **No email-based password reset**
-   - Only admin can reset passwords
-   - Could add in Phase 3 with SMTP configuration
-
-3. **No rate limiting yet**
-   - flask-limiter is installed but not globally configured
-   - Login has 5/minute limit configured in auth.py but not applied
-   - Should add globally in app.py: `limiter.init_app(app)`
-
-4. **Tests not yet updated**
-   - Existing tests will fail because routes now require login
-   - Need to update conftest.py with auth fixtures and apply @login_required decorator knowledge
+1. **Phase 1 abgeschlossen**
+    - Alle Routen sind geschützt (RBAC aktiv)
+    - Login‑Rate‑Limiting aktiv (auth.py)
+    - Tests aktualisiert (Auth/RBAC + Admin‑Flows)
+    - Offene Punkte liegen in Phase 3 (siehe `PHASE3_STATUS.md`)
 
 ---
 

@@ -1,5 +1,7 @@
 # Session-Zusammenfassung — 08. Februar 2026 (Teil 2)
 
+**Update 2026-02-11:** Phase 3 Stabilisierung läuft; Backup-/Prompt-Export aktiv, verlorene Prompts weiterhin offen.
+
 ## Was passiert ist
 
 Während einer vorherigen Session zur Datenbank-Reparatur wurde die **root-level `database.db`** gelöscht, die die wertvollen **KI-Prompts** (MistralSozVerb4 etc.) enthielt — Ergebnis hunderter Testiterationen. Diese Prompts existierten **ausschließlich in der SQLite-Datenbank** und waren weder in Git noch anderswo gesichert.

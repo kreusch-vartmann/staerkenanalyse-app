@@ -16,6 +16,15 @@ from services.task_refinement import refine_task_content
 from models import Task, TaskVersion, User
 from decorators import admin_required
 from services import get_target_group_options
+from validation import (
+    TaskChatPayload,
+    TaskCreateForm,
+    TaskGenerateForm,
+    TaskSaveVersionPayload,
+    format_validation_error,
+    parse_form,
+    parse_json,
+)
 
 observation_tasks_bp = Blueprint("observation_tasks", __name__, url_prefix="/beobachtungsaufgaben")
 
@@ -116,24 +125,17 @@ def create_task():
     Auswahl: Beobachtungsbereich, Teilnehmer, Dauer, Zielgruppe
     """
     if request.method == "POST":
-        observation_area = request.form.get("observation_area")
-        participant_count = request.form.get("participant_count", type=int)
-        duration_minutes = request.form.get("duration_minutes", type=int)
-        target_group = request.form.get("target_group") or None
-        use_example = request.form.get("use_example") == "on"
-        
-        # Validierung
-        if not observation_area or observation_area not in ["Soziale Kompetenzen", "Verbale Kompetenzen"]:
-            flash("Ungültiger Beobachtungsbereich", "error")
+        form_data = request.form.to_dict()
+        parsed, error = parse_form(TaskCreateForm, form_data)
+        if error:
+            flash(format_validation_error(error), "error")
             return redirect(url_for("observation_tasks.create_task"))
-        
-        if not participant_count or participant_count < 1 or participant_count > 10:
-            flash("Teilnehmerzahl muss zwischen 1 und 10 liegen", "error")
-            return redirect(url_for("observation_tasks.create_task"))
-        
-        if not duration_minutes or duration_minutes < 5 or duration_minutes > 120:
-            flash("Dauer muss zwischen 5 und 120 Minuten liegen", "error")
-            return redirect(url_for("observation_tasks.create_task"))
+
+        observation_area = parsed.observation_area
+        participant_count = parsed.participant_count
+        duration_minutes = parsed.duration_minutes
+        target_group = parsed.target_group or None
+        use_example = parsed.use_example
         
         # Neue Task erstellen
         task = Task(
@@ -193,7 +195,12 @@ def generate(task_id):
 
     if request.method == "POST":
         # KI-Auswahl aus Request (Default: Mistral)
-        ki_model = request.form.get("ki_model", "mistral")
+        form_data = {"ki_model": request.form.get("ki_model", "mistral")}
+        parsed, error = parse_form(TaskGenerateForm, form_data)
+        if error:
+            flash(format_validation_error(error), "error")
+            return redirect(url_for("observation_tasks.edit", task_id=task.id))
+        ki_model = parsed.ki_model
         
         # KI-Generierung triggern
         if task.current_version:
@@ -340,16 +347,16 @@ def save_version(task_id):
     """Speichere aktuelle Editor-Version als neue Taskversion."""
     task = db.get_or_404(Task, task_id)
     data = request.get_json()
-    
-    content = data.get("content")
-    change_notes = data.get("change_notes", "Manuelle Bearbeitung")
-    
-    if not content:
-        return jsonify({"error": "Kein Inhalt"}), 400
+    parsed, error = parse_json(TaskSaveVersionPayload, data or {})
+    if error:
+        return jsonify({"error": format_validation_error(error)}), 400
+
+    content = parsed.content
+    change_notes = parsed.change_notes
     
     # Titel aktualisieren falls vorhanden
-    if data.get("title"):
-        task.title = data["title"]
+    if parsed.title:
+        task.title = parsed.title
     
     # Neue Version erstellen
     latest_version = max([v for v in task.versions], key=lambda v: v.version_number, default=None)
@@ -426,12 +433,12 @@ def chat_message(task_id):
     """Chat-Iteration: Nutzer schreibt Anfrage, KI verfeinert Aufgabe."""
     task = db.get_or_404(Task, task_id)
     data = request.get_json()
-    
-    user_message = data.get("message")
-    current_content = data.get("current_content")
-    
-    if not user_message:
-        return jsonify({"error": "Keine Nachricht"}), 400
+    parsed, error = parse_json(TaskChatPayload, data or {})
+    if error:
+        return jsonify({"error": format_validation_error(error)}), 400
+
+    user_message = parsed.message
+    current_content = parsed.current_content
     
     # KI-Refinement
     ai_response = refine_task_content(

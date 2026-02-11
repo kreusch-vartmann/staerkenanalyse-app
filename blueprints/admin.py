@@ -12,8 +12,15 @@ import models
 from decorators import admin_required
 from extensions import db
 from utils import generate_secure_password
+from validation import AdminUserCreateForm, AdminUserUpdateForm, format_validation_error, parse_form
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
+
+
+def _clear_user_groups(user: models.User) -> None:
+    """Entfernt alle Gruppen-Zuordnungen für einen User (kompatibel mit dynamic relationship)."""
+    for group in list(user.groups):
+        user.groups.remove(group)
 
 
 @admin_bp.route("/users", methods=["GET"])
@@ -40,20 +47,18 @@ def add_user():
     """Admin: Neuen Benutzer erstellen."""
     
     if request.method == "POST":
-        email = request.form.get("email", "").strip().lower()
-        first_name = request.form.get("first_name", "").strip()
-        last_name = request.form.get("last_name", "").strip()
-        role_name = request.form.get("role", "beobachter").strip()
+        form_data = request.form.to_dict()
+        form_data["role_name"] = form_data.get("role", "beobachter")
+        parsed, error = parse_form(AdminUserCreateForm, form_data)
+        if error:
+            flash(format_validation_error(error), "error")
+            return redirect(url_for("admin.add_user"))
+
+        email = parsed.email
+        first_name = parsed.first_name
+        last_name = parsed.last_name
+        role_name = parsed.role_name
         group_ids = request.form.getlist("groups")
-
-        # Validierung
-        if not email or not first_name or not last_name:
-            flash("E-Mail, Vor- und Nachname erforderlich.", "error")
-            return redirect(url_for("admin.add_user"))
-
-        if "@" not in email:
-            flash("Ungültige E-Mail-Adresse.", "error")
-            return redirect(url_for("admin.add_user"))
 
         # Prüfe ob E-Mail bereits existiert
         existing_user = db.session.scalar(
@@ -133,16 +138,18 @@ def edit_user(user_id: int):
         return redirect(url_for("admin.manage_users"))
 
     if request.method == "POST":
-        first_name = request.form.get("first_name", "").strip()
-        last_name = request.form.get("last_name", "").strip()
-        role_name = request.form.get("role", user.role.name).strip()
-        group_ids = request.form.getlist("groups")
-        new_password = request.form.get("new_password", "").strip()
-
-        # Validierung
-        if not first_name or not last_name:
-            flash("Vor- und Nachname erforderlich.", "error")
+        form_data = request.form.to_dict()
+        form_data["role_name"] = form_data.get("role", user.role.name)
+        parsed, error = parse_form(AdminUserUpdateForm, form_data)
+        if error:
+            flash(format_validation_error(error), "error")
             return redirect(url_for("admin.edit_user", user_id=user_id))
+
+        first_name = parsed.first_name
+        last_name = parsed.last_name
+        role_name = parsed.role_name
+        group_ids = request.form.getlist("groups")
+        new_password = (parsed.new_password or "").strip()
 
         # Rolle ändern
         if role_name != user.role.name:
@@ -156,7 +163,7 @@ def edit_user(user_id: int):
 
         # Gruppen neu zuordnen (nur für Observer)
         if role_name == "beobachter":
-            user.groups.clear()
+            _clear_user_groups(user)
             for group_id in group_ids:
                 try:
                     group = db.session.get(models.Group, int(group_id))
@@ -165,7 +172,7 @@ def edit_user(user_id: int):
                 except (ValueError, TypeError):
                     pass
         else:
-            user.groups.clear()
+            _clear_user_groups(user)
 
         # Passwort neu setzen (optional)
         if new_password and len(new_password) >= 8:

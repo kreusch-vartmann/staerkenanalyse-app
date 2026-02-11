@@ -1,13 +1,15 @@
 # CONTEXT.md - Stärkenanalyse-App
 
-**Automatisch aktualisiert am**: 2026-02-10 (Version 1.2.1)
+**Automatisch aktualisiert am**: 2026-02-11 (Version 1.3.1)
+
+**Hinweis:** Diese Übersicht ist manuell aktualisiert. Für eine vollständige Route-/Dateiliste den Context Generator Workflow ausführen.
 
 ---
 
 ## 📋 Projektübersicht
 
-**Version**: 1.2.1  
-**Status**: Phase 2 Complete - Aufgabengenerator stabilisiert ✅
+**Version**: 1.3.1  
+**Status**: Phase 3 Stabilisierung in Arbeit 🟡
 
 **Technologie-Stack**:
 - **Backend**: Python 3.11+, Flask 3.1.2
@@ -16,6 +18,7 @@
 - **KI-Integration**: Mistral API (mistralai==0.4.2), Google Generative AI
 - **Frontend**: Vanilla JavaScript, Chart.js, Tailwind CSS, Bootstrap 5, Quill.js
 - **PDF-Generation**: WeasyPrint
+- **Error Tracking**: Bugfender Web SDK
 - **Migrations**: Flask-Migrate 4.0.4 (Alembic)
 
 **Neue Komponenten in v1.1.0**:
@@ -39,12 +42,12 @@
 
 ### Core Application Files
 - **app.py**: Flask-App-Initialisierung, Blueprint-Registrierung, Dashboard-Route
-- **models.py**: SQLAlchemy-Modelle (0 Models: )
+- **models.py**: SQLAlchemy-Modelle (15+ Models, inkl. Tasks, Reports, KI-Gym)
 - **extensions.py**: db, migrate Objekte (verhindert circular imports)
 - **ki_services.py**: KI-API-Integration (Mistral, Google Gemini)
 - **utils.py**: File-Processing (PDF, DOCX Extraktion)
 
-### Blueprints (6 total)
+### Blueprints (10+ total)
 
 #### analysis.py (12 Routes)
 - `GET /edit_report/<int:participant_id>` → `edit_report()`

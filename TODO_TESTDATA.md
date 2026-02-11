@@ -1,6 +1,7 @@
 # TODO: Testdaten-Generator (✅ ERLEDIGT)
 
 **Status:** ✅ Implementiert  
+**Zuletzt geprüft:** 2026-02-11 (v1.3.1)
 **Priorität:** Abgeschlossen  
 **Erstellt:** 2026-02-07  
 **Fertiggestellt:** 2026-02-07

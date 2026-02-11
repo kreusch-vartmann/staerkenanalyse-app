@@ -18,6 +18,12 @@ class TestGroupsRoutes:
         assert response.status_code == 200
         assert sample_group.name.encode() in response.data
 
+    def test_observer_sees_only_assigned_groups(self, observer_client, sample_group, other_group):
+        response = observer_client.get('/groups')
+        assert response.status_code == 200
+        assert sample_group.name.encode() in response.data
+        assert other_group.name.encode() not in response.data
+
     def test_create_group_submit(self, client, db):
         response = client.post(
             '/group/add',
@@ -67,6 +73,16 @@ class TestGroupParticipants:
         response = client.get(f'/group/{sample_group.id}/participants')
         assert response.status_code == 200
         assert sample_participant.name.encode() in response.data
+
+    def test_observer_can_view_assigned_group_participants(self, observer_client, sample_group, sample_participant):
+        response = observer_client.get(f'/group/{sample_group.id}/participants')
+        assert response.status_code == 200
+        assert sample_participant.name.encode() in response.data
+
+    def test_observer_blocked_from_unassigned_group(self, observer_client, other_group):
+        response = observer_client.get(f'/group/{other_group.id}/participants')
+        assert response.status_code == 302
+        assert response.headers.get("Location", "").endswith("/")
 
 
 @pytest.mark.integration

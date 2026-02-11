@@ -10,6 +10,15 @@ from flask_login import login_required, current_user
 from extensions import csrf, db
 from models import Group, Participant, SelfAssessment
 from utils import sanitize_html
+from validation import (
+    ParticipantNameForm,
+    ParticipantNamesForm,
+    SelfAssessmentPayload,
+    format_validation_error,
+    parse_form,
+    parse_json,
+    parse_observations,
+)
 from decorators import admin_required, group_access_required, participant_access_required, filter_groups_by_access
 
 participants_bp = Blueprint("participants", __name__)
@@ -39,7 +48,13 @@ def manage_participants():
 def add_participant(group_id):
     """Fügt einen oder mehrere Teilnehmer zu einer Gruppe hinzu."""
     group = db.get_or_404(Group, group_id)
-    names_input = request.form.get("participant_names", "")
+    form_data = {"participant_names": request.form.get("participant_names", "")}
+    parsed, error = parse_form(ParticipantNamesForm, form_data)
+    if error:
+        flash(format_validation_error(error), "warning")
+        return redirect(url_for("groups.manage_groups"))
+
+    names_input = parsed.participant_names
     valid_names = [name.strip() for name in names_input.splitlines() if name.strip()]
 
     if valid_names:
@@ -65,19 +80,24 @@ def add_participant(group_id):
 def edit_participant(participant_id):
     """Aktualisiert den Namen eines Teilnehmers."""
     participant = db.get_or_404(Participant, participant_id)
-    new_name = request.form.get("participant_name")
-
-    if new_name and new_name.strip():
-        participant.name = new_name.strip()
+    form_data = {
+        "participant_name": request.form.get("participant_name", ""),
+        "redirect_url": request.form.get("redirect_url"),
+    }
+    parsed, error = parse_form(ParticipantNameForm, form_data)
+    if error:
+        flash(format_validation_error(error), "warning")
+    else:
+        participant.name = parsed.participant_name.strip()
         db.session.commit()
         flash("Teilnehmername wurde aktualisiert.", "success")
-    else:
-        flash("Der Name darf nicht leer sein.", "warning")
 
     # Leitet zur vorherigen Seite zurück (entweder Gruppen- oder Gesamtübersicht)
-    redirect_url = request.form.get("redirect_url") or url_for(
-        "groups.show_group_participants", group_id=participant.group_id
-    )
+    redirect_url = request.form.get("redirect_url")
+    if not redirect_url or not redirect_url.startswith("/") or redirect_url.startswith("//"):
+        redirect_url = url_for(
+            "groups.show_group_participants", group_id=participant.group_id
+        )
     return redirect(redirect_url)
 
 
@@ -95,9 +115,11 @@ def delete_participant(participant_id):
     flash("Teilnehmer wurde gelöscht.", "success")
 
     # Leitet ebenfalls zur vorherigen Seite zurück
-    redirect_url = request.form.get("redirect_url") or url_for(
-        "groups.show_group_participants", group_id=group_id
-    )
+    redirect_url = request.form.get("redirect_url")
+    if not redirect_url or not redirect_url.startswith("/") or redirect_url.startswith("//"):
+        redirect_url = url_for(
+            "groups.show_group_participants", group_id=group_id
+        )
     return redirect(redirect_url)
 
 
@@ -151,13 +173,13 @@ def save_observations(participant_id):
     """Speichert die Beobachtungen für einen Teilnehmer."""
     participant = db.get_or_404(Participant, participant_id)
     data = request.get_json()
+    observations, error = parse_observations(data)
+    if error:
+        return jsonify({"status": "error", "message": format_validation_error(error)}), 400
 
-    if data:
-        participant.observations = json.dumps(data)
-        db.session.commit()
-        return jsonify({"status": "success", "message": "Beobachtungen gespeichert!"})
-
-    return jsonify({"status": "error", "message": "Keine Daten erhalten."}), 400
+    participant.observations = json.dumps(observations)
+    db.session.commit()
+    return jsonify({"status": "success", "message": "Beobachtungen gespeichert!"})
 
 
 # --- ROUTEN FÜR SELBSTEINSCHÄTZUNG ---
@@ -223,9 +245,9 @@ def save_self_assessment(participant_id):
     """Speichert die Selbsteinschätzung für einen Teilnehmer (API-Endpunkt)."""
     participant = db.get_or_404(Participant, participant_id)
     data = request.get_json()
-
-    if not data or "content" not in data:
-        return jsonify({"status": "error", "message": "Keine Daten erhalten."}), 400
+    parsed, error = parse_json(SelfAssessmentPayload, data or {})
+    if error:
+        return jsonify({"status": "error", "message": format_validation_error(error)}), 400
 
     # Hole oder erstelle SelfAssessment
     self_assessment = db.session.execute(
@@ -236,7 +258,7 @@ def save_self_assessment(participant_id):
         self_assessment = SelfAssessment(participant_id=participant_id)
         db.session.add(self_assessment)
 
-    self_assessment.content = sanitize_html(data["content"])
+    self_assessment.content = sanitize_html(parsed.content)
     db.session.commit()
 
     return jsonify({"status": "success", "message": "Selbsteinschätzung gespeichert!"})

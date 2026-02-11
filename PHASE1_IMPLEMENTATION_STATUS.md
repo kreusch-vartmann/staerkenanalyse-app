@@ -1,5 +1,7 @@
 # PHASE 1 IMPLEMENTATION STATUS
 
+**Update (2026-02-11):** Phase 1 ist vollständig abgeschlossen. Route‑Protection und Tests sind ergänzt.
+
 ## Completed Components ✅
 
 ### 1. Dependencies (requirements.txt)
@@ -81,47 +83,10 @@ Will generate and display a secure 16-character password.
 - `/change-password` - @login_required
 - `/admin/*` - @login_required + @admin_required
 
-🟡 **Routes Requiring Manual Protection:**
+✅ **Routes Protection:**
 
-The following 52 routes in existing blueprints need @login_required and appropriate role checks:
-
-**groups.py (5 routes)**
-- `/groups` - needs @login_required + group visibility filter
-- `/group/<id>/participants` - needs @login_required + @group_access_required
-- `/group/add` - needs @login_required + @admin_required
-- `/group/edit/<id>` - needs @login_required + @admin_required
-- `/group/delete/<id>` - needs @login_required + @admin_required
-
-**participants.py (8 routes)**
-- `/participants`, `/group/<id>/participant/add` - needs @admin_required
-- `/participant/<id>/data_entry`, `/save_observations` - needs @group_access_required
-- `/self-assessments`, `/participant/<id>/self_assessment` - needs @group_access_required
-- (Edit/Delete - admin only)
-
-**analysis.py (14 routes)**
-- `edit_report`, `save_report`, `bericht_pdf` - needs @group_access_required
-- `ai_analysis_*`, `run_ki_analysis` - needs @admin_required
-- `manage_foreign_assessments`, `manage_final_reports` - needs @login_required + visibility filter
-- `final_report*` - needs @group_access_required
-
-**data_io.py (10 routes)**
-- `data_entry_rework`, `data_entry_search` - needs @login_required + visibility filter
-- `api_get_participants_by_group`, `save_observations_api` - needs @group_access_required
-- `import_*`, `export_*` - needs @admin_required
-
-**prompts.py (5 routes)**
-- All routes - needs @login_required + @admin_required
-
-**explanation_blocks.py (4 routes)**
-- All routes - needs @login_required + @admin_required
-
-**reports.py (14 routes)**
-- Logo/Config/Signature routes - needs @admin_required
-- Preview/PDF routes - needs @group_access_required
-- `serve_upload` - needs @login_required
-
-**API Endpoints with CSRF-exempt** (5 routes)
-- Still need @login_required (cookie-based auth via Flask-Login)
+- Alle Blueprints sind mit `@login_required` und passenden RBAC‑Decorators abgesichert.
+- Historische Liste der offenen Routen ist nicht mehr gültig.
 
 ⚠️ **Public Routes (NO auth required):**
 - `/health` - Health check endpoint (must remain public)
@@ -130,11 +95,10 @@ The following 52 routes in existing blueprints need @login_required and appropri
 
 ## Testing Status
 
-⚠️ **Tests Require Updates:**
-- All integration tests need authenticated clients
-- New auth fixtures required (admin_client, observer_client)
-- New test suite for auth flows
-- Permission tests for RBAC
+✅ **Tests:**
+- Auth/RBAC‑Integrationstests ergänzt
+- Admin‑Flow‑Tests ergänzt
+- Gruppen‑RBAC‑Tests ergänzt
 
 **Test fixtures to create in conftest.py:**
 - `roles` fixture
@@ -208,7 +172,7 @@ pytest -v tests/
 
 ## Known Limitations (Phase 1 MVP)
 
-🔸 Rate limiting is at blueprint level (not yet integrated globally with flask-limiter)
+🔸 Rate limiting ist blueprint‑basiert (Login 5/min); globales Limit optional
 🔸 No email-based password reset (admin-reset only)
 🔸 No account lockout after failed login attempts (could be added in Phase 3)
 🔸 Observer role is basic (no gradual permission expansion yet - extensible via decorators)

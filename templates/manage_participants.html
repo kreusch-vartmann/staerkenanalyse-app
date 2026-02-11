@@ -220,7 +220,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script nonce="{{ csp_nonce }}">
 function toggleAccordion(groupId) {
     const content = document.getElementById(`accordion-content-${groupId}`);
     const icon = document.getElementById(`icon-${groupId}`);

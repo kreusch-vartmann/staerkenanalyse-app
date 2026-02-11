@@ -1,8 +1,8 @@
 # 📁 Vollständige Dateistruktur - Stärkenanalyse-App
 
 **Erstellt am**: 7. Februar 2026  
-**Aktualisiert am**: 10. Februar 2026  
-**Version**: 1.2.1  
+**Aktualisiert am**: 11. Februar 2026  
+**Version**: 1.3.1  
 **Beschreibung**: Vollständige Übersicht aller Projektdateien mit ihren Funktionen
 
 ---
@@ -33,7 +33,7 @@ Diese Dokumentation beschreibt **alle** Dateien des Stärkenanalyse-App Projekts
 
 - **utils.py**: Hilfsfunktionen für Dateiverarbeitung. Extrahiert Text aus PDF- und DOCX-Dateien für Import-Funktionalität.
 
-- **version.py**: Zentrale Versionsnummer der Anwendung (aktuell: 1.2.1). Wird für Version-Display im Dashboard und für Deployment verwendet.
+- **version.py**: Zentrale Versionsnummer der Anwendung (aktuell: 1.3.1). Wird für Version-Display im Dashboard und für Deployment verwendet.
 
 - **wsgi.py**: WSGI-Entry-Point für Production-Deployment. Lädt Anwendung für Gunicorn oder andere WSGI-Server.
 
@@ -380,8 +380,8 @@ Template-Prompts für GitHub-Actions.
 **Gesamt-Dateien**: ~93 Code/Config-Dateien + Templates + Assets  
 **Python-Module**: 23 (Core + Blueprints + Services + Migrations)  
 **Templates**: 31 HTML-Dateien  
-**Blueprints**: 8 (analysis, participants, groups, data_io, data_import, explanation_blocks, prompts, reports)  
-**Routes**: 43+ HTTP-Endpoints  
+**Blueprints**: 11 (auth, admin, analysis, participants, groups, data_io, data_import, explanation_blocks, prompts, reports, observation_tasks)  
+**Routes**: 50+ HTTP-Endpoints  
 **Migrations**: 5 Datenbank-Migrationen  
 **CI/CD-Workflows**: 4 GitHub Actions  
 
@@ -389,9 +389,9 @@ Template-Prompts für GitHub-Actions.
 
 ## ✅ Status
 
-- **Version**: 1.2.1
+- **Version**: 1.3.1
 - **Letztes Update**: Commit `59c61de` (isort), `b26b005` (Black formatting), Tests & CI/CD
-- **Tests**: 91/91 Tests bestanden ✅, Coverage: 46.90%
+- **Tests**: 170 Tests gesammelt ✅, Coverage: 46.90%
 - **Code-Qualität**: Black + isort angewendet, CI-Checks aktiv, Test-Suite implementiert
 
 ---

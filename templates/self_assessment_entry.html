@@ -49,7 +49,7 @@
     <span id="save-status-text"></span>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 let saveTimeout;
 let quillEditor;
 const participantId = {{ participant.id }};

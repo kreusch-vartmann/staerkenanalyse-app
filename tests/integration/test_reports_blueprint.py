@@ -6,6 +6,8 @@ import json
 import pytest
 from unittest.mock import MagicMock, patch
 
+from models import ReportConfiguration
+
 
 @pytest.mark.integration
 class TestReportsRoutes:
@@ -45,3 +47,36 @@ class TestReportsRoutes:
     def test_preview_report_wrong_group(self, client, db, sample_group, sample_participant, sample_report_configuration):
         response = client.get(f'/reports/{sample_group.id + 1}/preview/{sample_participant.id}')
         assert response.status_code in [403, 404]
+
+    def test_configure_report_invalid_signature_lines_falls_back(self, client, db, sample_group, sample_report_configuration):
+        response = client.post(
+            f'/reports/{sample_group.id}/configure',
+            data={
+                "closing_page_signature_lines_count": "abc",
+                "template_id": "",
+            },
+            follow_redirects=False,
+        )
+        assert response.status_code in [302, 303]
+
+        config = db.session.execute(
+            db.select(ReportConfiguration).where(ReportConfiguration.group_id == sample_group.id)
+        ).scalar_one()
+        modules_config = json.loads(config.modules_config)
+        assert modules_config["closing_page"]["signature_lines_count"] == 3
+
+    def test_configure_report_invalid_template_id_ignored(self, client, db, sample_group, sample_report_configuration):
+        response = client.post(
+            f'/reports/{sample_group.id}/configure',
+            data={
+                "closing_page_signature_lines_count": "2",
+                "template_id": "not-a-number",
+            },
+            follow_redirects=False,
+        )
+        assert response.status_code in [302, 303]
+
+        config = db.session.execute(
+            db.select(ReportConfiguration).where(ReportConfiguration.group_id == sample_group.id)
+        ).scalar_one()
+        assert config.template_id is None

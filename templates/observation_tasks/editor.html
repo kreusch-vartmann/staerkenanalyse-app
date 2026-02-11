@@ -3,6 +3,9 @@
 {% block title %}Aufgabe bearbeiten: {{ task.title }}{% endblock %}
 
 {% block content %}
+
+{% include 'partials/_ki_model_modal.html' %}
+
 <div class="container-fluid mt-4" style="max-width: 100%; margin: 0; padding: 0;">
     <div class="row g-0" style="height: calc(100vh - 80px);">
         
@@ -201,197 +204,6 @@
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 
-<script>
-const autoGenerateFlag = "{{ '1' if request.args.get('autogen') else '' }}";
-
-// Get CSRF token from Flask-WTF
-function getCsrfToken() {
-    return document.querySelector('meta[name="csrf-token"]')?.content || 
-           document.querySelector('input[name="csrf_token"]')?.value || '';
-}
-
-// Quill Editor
-const quill = new Quill('#editor', {
-    theme: 'snow',
-    modules: {
-        toolbar: [
-            ['bold', 'italic', 'underline', 'strike'],
-            ['blockquote', 'code-block'],
-            [{ 'header': 1 }, { 'header': 2 }],
-            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-            ['link']
-        ]
-    }
-});
-
-function switchTab(tab) {
-    if (tab === 'chat') {
-        document.getElementById('chatPanel').style.display = 'flex';
-        document.getElementById('infosPanel').style.display = 'none';
-        document.getElementById('chatTab').classList.add('active');
-        document.getElementById('infosTab').classList.remove('active');
-    } else {
-        document.getElementById('chatPanel').style.display = 'none';
-        document.getElementById('infosPanel').style.display = 'block';
-        document.getElementById('chatTab').classList.remove('active');
-        document.getElementById('infosTab').classList.add('active');
-    }
-}
-
-function saveVersion() {
-    const data = {
-        title: document.getElementById('taskTitle').value,
-        content: quill.root.innerHTML,
-        change_notes: ''
-    };
-    
-    fetch(`/beobachtungsaufgaben/{{ task.id }}/speichern`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCsrfToken()
-        },
-        body: JSON.stringify(data)
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.status === 'success') {
-            alert('✓ ' + data.message);
-        } else {
-            alert('Fehler: ' + (data.error || 'Unbekannter Fehler'));
-        }
-    })
-    .catch(e => alert('Fehler: ' + e));
-}
-
-function sendChat() {
-    const message = document.getElementById('chatInput').value.trim();
-    if (!message) return;
-    
-    const messagesDiv = document.getElementById('chatMessages');
-    
-    // User Message anzeigen
-    messagesDiv.innerHTML += `
-        <div class="mb-3 text-end">
-            <div class="bg-primary text-white rounded p-2" style="display: inline-block; max-width: 80%;">
-                <small>${message}</small>
-            </div>
-        </div>
-    `;
-    
-    document.getElementById('chatInput').value = '';
-    
-    // Loading Modal anzeigen
-    const loadingModal = new bootstrap.Modal(document.getElementById('aiLoadingModal'));
-    loadingModal.show();
-    
-    // KI Request
-    fetch(`/beobachtungsaufgaben/{{ task.id }}/chat`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCsrfToken()
-        },
-        body: JSON.stringify({
-            message: message,
-            current_content: quill.root.innerHTML
-        })
-    })
-    .then(r => r.json())
-    .then(data => {
-        // Loading Modal schließen
-        loadingModal.hide();
-        
-        if (data.status === 'success') {
-            // Editor aktualisieren
-            quill.root.innerHTML = data.updated_content;
-            
-            // Automatisch speichern, damit der Content in der DB landet
-            const saveData = {
-                title: document.getElementById('taskTitle').value,
-                content: data.updated_content,  // Direkt den Server-Content verwenden, nicht quill.root.innerHTML
-                change_notes: 'Chat-Refinement: ' + message
-            };
-            
-            fetch(`/beobachtungsaufgaben/{{ task.id }}/speichern`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCsrfToken()
-                },
-                body: JSON.stringify(saveData)
-            })
-            .then(r => r.json())
-            .then(saveResult => {
-                console.log('Auto-save result:', saveResult);
-                // Seite neu laden um korrekten Content aus DB anzuzeigen
-                window.location.reload();
-            })
-            .catch(saveErr => {
-                console.error('Auto-save failed:', saveErr);
-                // AI Response trotzdem im Chat zeigen
-                messagesDiv.innerHTML += `
-                    <div class="mb-3">
-                        <div class="bg-light rounded p-2" style="display: inline-block; max-width: 80%;">
-                            <small>${data.ai_response || 'Aufgabe aktualisiert!'}</small>
-                        </div>
-                    </div>
-                `;
-            });
-        } else {
-            alert('KI-Fehler: ' + (data.error || 'Unbekannter Fehler'));
-        }
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    })
-    .catch(e => {
-        loadingModal.hide();
-        alert('Fehler: ' + e);
-    });
-}
-
-function viewHistory() {
-    fetch(`/beobachtungsaufgaben/{{ task.id }}/versions`)
-    .then(r => r.json())
-    .then(data => {
-        const list = document.getElementById('versionsList');
-        if (!Array.isArray(data) || data.length === 0) {
-            list.innerHTML = '<li class="list-group-item">Keine Versionen vorhanden.</li>';
-        } else {
-            list.innerHTML = data.map(v => `
-                <li class="list-group-item d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="fw-bold">Version ${v.version}</div>
-                        <div class="small text-muted">${new Date(v.created_at).toLocaleString()}</div>
-                        <div class="small">${v.change_notes || 'Keine Notiz'}</div>
-                    </div>
-                    <span class="badge bg-secondary">${v.created_by}</span>
-                </li>
-            `).join('');
-        }
-        const modal = new bootstrap.Modal(document.getElementById('versionsModal'));
-        modal.show();
-    })
-    .catch(e => alert('Fehler beim Laden der Versionshistorie: ' + e));
-}
-
-function startAutoGeneration() {
-    openKiModelModal(function(selectedModel) {
-        // Zeige GIF-Modal
-        const loadingModal = new bootstrap.Modal(document.getElementById('aiLoadingModal'));
-        loadingModal.show();
-        
-        document.getElementById('auto_ki_model').value = selectedModel;
-        document.getElementById('autoGenerateForm').submit();
-        
-        // Modal verschwindet automatisch beim Page-Reload nach Submit
-    });
-}
-
-if (autoGenerateFlag) {
-    setTimeout(startAutoGeneration, 300);
-}
-</script>
-
 <style>
 .nav-link {
     cursor: pointer;
@@ -420,5 +232,173 @@ if (autoGenerateFlag) {
 }
 </style>
 
-{% include 'partials/_ki_model_modal.html' %}
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ csp_nonce }}">
+var autoGenerateFlag = "{{ '1' if request.args.get('autogen') else '' }}";
+
+function getCsrfToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.content || 
+           document.querySelector('input[name="csrf_token"]')?.value || '';
+}
+
+// Quill Editor
+var quill = new Quill('#editor', {
+    theme: 'snow',
+    modules: {
+        toolbar: [
+            ['bold', 'italic', 'underline', 'strike'],
+            ['blockquote', 'code-block'],
+            [{ 'header': 1 }, { 'header': 2 }],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            ['link']
+        ]
+    }
+});
+
+function switchTab(tab) {
+    if (tab === 'chat') {
+        document.getElementById('chatPanel').style.display = 'flex';
+        document.getElementById('infosPanel').style.display = 'none';
+        document.getElementById('chatTab').classList.add('active');
+        document.getElementById('infosTab').classList.remove('active');
+    } else {
+        document.getElementById('chatPanel').style.display = 'none';
+        document.getElementById('infosPanel').style.display = 'block';
+        document.getElementById('chatTab').classList.remove('active');
+        document.getElementById('infosTab').classList.add('active');
+    }
+}
+
+function saveVersion() {
+    var data = {
+        title: document.getElementById('taskTitle').value,
+        content: quill.root.innerHTML,
+        change_notes: ''
+    };
+    
+    fetch('/beobachtungsaufgaben/{{ task.id }}/speichern', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify(data)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.status === 'success') {
+            alert('✓ ' + data.message);
+        } else {
+            alert('Fehler: ' + (data.error || 'Unbekannter Fehler'));
+        }
+    })
+    .catch(function(e) { alert('Fehler: ' + e); });
+}
+
+function sendChat() {
+    var message = document.getElementById('chatInput').value.trim();
+    if (!message) return;
+    
+    var messagesDiv = document.getElementById('chatMessages');
+    
+    messagesDiv.innerHTML += '<div class="mb-3 text-end"><div class="bg-primary text-white rounded p-2" style="display: inline-block; max-width: 80%;"><small>' + message + '</small></div></div>';
+    
+    document.getElementById('chatInput').value = '';
+    
+    var loadingModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('aiLoadingModal'));
+    loadingModal.show();
+    
+    fetch('/beobachtungsaufgaben/{{ task.id }}/chat', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({
+            message: message,
+            current_content: quill.root.innerHTML
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        loadingModal.hide();
+        
+        if (data.status === 'success') {
+            quill.root.innerHTML = data.updated_content;
+            
+            var saveData = {
+                title: document.getElementById('taskTitle').value,
+                content: data.updated_content,
+                change_notes: 'Chat-Refinement: ' + message
+            };
+            
+            fetch('/beobachtungsaufgaben/{{ task.id }}/speichern', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify(saveData)
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(saveResult) {
+                console.log('Auto-save result:', saveResult);
+                window.location.reload();
+            })
+            .catch(function(saveErr) {
+                console.error('Auto-save failed:', saveErr);
+                messagesDiv.innerHTML += '<div class="mb-3"><div class="bg-light rounded p-2" style="display: inline-block; max-width: 80%;"><small>' + (data.ai_response || 'Aufgabe aktualisiert!') + '</small></div></div>';
+            });
+        } else {
+            alert('KI-Fehler: ' + (data.error || 'Unbekannter Fehler'));
+        }
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    })
+    .catch(function(e) {
+        loadingModal.hide();
+        alert('Fehler: ' + e);
+    });
+}
+
+function viewHistory() {
+    fetch('/beobachtungsaufgaben/{{ task.id }}/versions')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        var list = document.getElementById('versionsList');
+        if (!Array.isArray(data) || data.length === 0) {
+            list.innerHTML = '<li class="list-group-item">Keine Versionen vorhanden.</li>';
+        } else {
+            var html = '';
+            for (var i = 0; i < data.length; i++) {
+                var v = data[i];
+                html += '<li class="list-group-item d-flex justify-content-between align-items-start"><div><div class="fw-bold">Version ' + v.version + '</div><div class="small text-muted">' + new Date(v.created_at).toLocaleString() + '</div><div class="small">' + (v.change_notes || 'Keine Notiz') + '</div></div><span class="badge bg-secondary">' + v.created_by + '</span></li>';
+            }
+            list.innerHTML = html;
+        }
+        var modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('versionsModal'));
+        modal.show();
+    })
+    .catch(function(e) { alert('Fehler beim Laden der Versionshistorie: ' + e); });
+}
+
+function startAutoGeneration() {
+    if (typeof openKiModelModal !== 'function') {
+        alert('Fehler: KI-Modal nicht gefunden. Bitte Seite neu laden.');
+        return;
+    }
+    openKiModelModal(function(selectedModel) {
+        var loadingModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('aiLoadingModal'));
+        loadingModal.show();
+        
+        document.getElementById('auto_ki_model').value = selectedModel;
+        document.getElementById('autoGenerateForm').submit();
+    });
+}
+
+if (autoGenerateFlag) {
+    setTimeout(startAutoGeneration, 500);
+}
+</script>
 {% endblock %}

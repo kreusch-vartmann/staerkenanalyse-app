@@ -114,6 +114,7 @@ SECRET_KEY=<generiere neuen Key>
 DATABASE_URL=postgresql://user:pass@postgres.infomaniak.com:5432/dbname
 GOOGLE_API_KEY=<dein_key>
 MISTRAL_API_KEY=<dein_key>
+BUGFENDER_APP_KEY=<dein_key>
 ```
 
 **5. Datenbank-Migrationen anwenden:**
@@ -236,4 +237,4 @@ sudo systemctl restart staerkenanalyse
 
 ---
 
-**Letzte Aktualisierung:** 6. Februar 2026
+**Letzte Aktualisierung:** 11. Februar 2026

@@ -191,7 +191,7 @@
     </div>
 </form>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 // Synchronisiere Checkboxen mit Hidden Inputs für PDF-Form
 document.querySelectorAll('input[name="selected_blocks"]').forEach(checkbox => {
     checkbox.addEventListener('change', updateHiddenInputs);

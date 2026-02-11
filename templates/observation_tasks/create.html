@@ -159,7 +159,7 @@
     </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 function decreaseCount() {
     const input = document.getElementById('participant_count');
     if (input.value > 1) input.value = parseInt(input.value) - 1;

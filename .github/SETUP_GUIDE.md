@@ -1,5 +1,7 @@
 # GitHub Actions Setup Guide
 
+**Zuletzt geprüft:** 2026-02-11
+
 ## 🚀 Schnellstart
 
 Diese Anleitung erklärt, wie du die GitHub Actions Workflows für das Stärkenanalyse-App-Projekt einrichtest.
@@ -17,7 +19,7 @@ Diese Anleitung erklärt, wie du die GitHub Actions Workflows für das Stärkena
    - Generiere API Key unter "API Keys"
 
 3. **Lokale Entwicklungsumgebung**
-   - Python 3.12+
+   - Python 3.11+
    - Git konfiguriert
    - `.env`-Datei mit `MISTRAL_API_KEY`
 

@@ -102,7 +102,7 @@ class User(UserMixin, db.Model):
     @property
     def is_admin(self) -> bool:
         """Prüft ob der Benutzer Admin ist."""
-        return self.role.name == "admin"
+        return self.role.name.lower() == "admin"
 
     @property
     def full_name(self) -> str:
@@ -415,7 +415,13 @@ class Task(db.Model):
     
     # Version Control
     current_version_id = db.Column(
-        db.Integer, db.ForeignKey("task_versions.id"), nullable=True
+        db.Integer,
+        db.ForeignKey(
+            "task_versions.id",
+            use_alter=True,
+            name="fk_tasks_current_version_id",
+        ),
+        nullable=True,
     )
     
     # Status & Audit

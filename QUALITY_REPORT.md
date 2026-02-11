@@ -3,15 +3,18 @@
 Date: 2026-02-11
 
 ## Summary
-- Security hardening completed (CSRF, open-redirect, rate limiting, logout POST-only, health endpoint).
-- AI services refactored into modular components with compatibility layer.
-- Test suite restored and fully green.
+- Phase 3 stabilization ongoing (Auth/RBAC coverage expanded).
+- Admin user-management flows verified with integration tests.
+- RBAC edge cases covered for groups/participants and missing resources.
 
 ## Test Results
-- `./venv/bin/python -m pytest tests/ -q --tb=short`
-  - Result: **91 passed**, 2 warnings
+- `pytest --collect-only -q | wc -l`
+  - Result: **170 tests collected**
+- Targeted runs (all green):
+  - `pytest tests/integration/test_auth_rbac.py`
+  - `pytest tests/integration/test_admin_flows.py`
+  - `pytest tests/integration/test_groups_blueprint.py`
 
 ## Notes
-- CSRF token is now injected globally for `fetch()` requests in `templates/base.html`.
-- Login is rate-limited to 5 requests per minute (POST only).
-- Admin password resets now show a one-time password via session, not in flash messages.
+- Auth/RBAC tests now cover redirects, missing resources, and observer visibility boundaries.
+- Admin edit flow now clears group assignments safely for dynamic relationships.

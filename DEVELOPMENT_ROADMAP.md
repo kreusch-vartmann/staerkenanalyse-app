@@ -1,6 +1,6 @@
 # DEVELOPMENT ROADMAP — Stärkenanalyse-App
 
-> **Erstellt**: 2026-02-09 | **Aktualisiert**: 2026-02-10 | **Version**: 1.0.0 → 1.2.1  
+> **Erstellt**: 2026-02-09 | **Aktualisiert**: 2026-02-11 | **Version**: 1.0.0 → 1.3.1  
 > **Ziel**: Produktionsreife, öffentlich zugängliche Web-Applikation  
 > **Hosting**: Infomaniak | **Auth**: Eigene Benutzerverwaltung | **Tenant**: Single-Tenant  
 > **Zeitrahmen**: So schnell wie möglich  
@@ -14,7 +14,7 @@
 |-------|--------|--------|-------------|
 | **1** | Benutzerverwaltung + Basis-Sicherheit | ✅ COMPLETE | v1.0.0 |
 | **2** | Aufgabengenerator + KI-Gym Learning System | ✅ COMPLETE | v1.1.0 → v1.2.1 |
-| **3** | Stabilisierung (Sicherheit, Tests, Funktions-Feinschliff) | 🟡 IN PROGRESS | v1.3.0 |
+| **3** | Stabilisierung (Sicherheit, Tests, Funktions-Feinschliff) | 🟡 IN PROGRESS | v1.3.x |
 | **4** | Design-Feinschliff | ⬜ Offen | v1.3.0 |
 | **5** | Dokumentation + Produktions-Deployment | ⬜ Offen | v2.0.0 |
 
@@ -147,10 +147,10 @@
 
 | # | Aufgabe | Status | Details |
 |---|---------|--------|---------|
-| C6 | Content Security Policy (CSP) | ⬜ | Headers setzen, Inline-Scripts minimieren |
-| C7 | Input-Validation-Audit | ⬜ | Alle Eingabefelder auf Sanitization prüfen |
-| C8 | Error-Monitoring | ⬜ | Sentry oder vergleichbar, strukturiertes Logging |
-| C9 | SQL-Injection-Check | ⬜ | SQLAlchemy-Queries auditieren |
+| C6 | Content Security Policy (CSP) | ✅ | Headers gesetzt, Inline-Scripts geprüft |
+| C7 | Input-Validation-Audit | ✅ | Pydantic-Validierung eingeführt |
+| C8 | Error-Monitoring | ✅ | Bugfender SDK + Global Error Handler |
+| C9 | SQL-Injection-Check | ✅ | ORM-Queries auditieren, No-raw-SQL |
 
 ### D — Funktionalitäts-Feinschliff
 
@@ -164,7 +164,7 @@
 
 | # | Aufgabe | Status | Details |
 |---|---------|--------|---------|
-| F1 | Auth-Tests | ⬜ | Login, Logout, Rollen, Berechtigungen, Gruppen-Sichtbarkeit |
+| F1 | Auth-Tests | ✅ | Login, Logout, Rollen, Berechtigungen, Gruppen-Sichtbarkeit |
 | F2 | Aufgabengenerator-Tests | ⬜ | Generierung, Chat, Versionierung |
 | F3 | Integrationstests | ⬜ | Komplette Workflows E2E |
 | F4 | Security-Tests | ⬜ | OWASP Top 10, Penetration-Basics |

@@ -1,5 +1,7 @@
 # Commit Summary — Report Generation System (WIP)
 
+**Hinweis (2026-02-11):** Historischer Snapshot für v0.2.0-WIP. Für aktuelle Änderungen siehe `CHANGELOG.md` (v1.3.1).
+
 **Commit Hash**: `1d7c32e`  
 **Branch**: `main`  
 **Date**: 2026-02-07  

@@ -205,7 +205,7 @@
 }
 </style>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 function viewTaskVersions(taskId) {
     const modal = new bootstrap.Modal(document.getElementById('versionsModal'));
     const content = document.getElementById('versionsContent');

@@ -15,6 +15,14 @@ from blueprints.data_import import import_participants_from_export
 from extensions import db
 from models import Group, Participant
 from utils import validate_upload_file
+from validation import (
+    DataEntrySearchQuery,
+    ExportDataForm,
+    ImportNamesForm,
+    format_validation_error,
+    parse_form,
+    parse_observations,
+)
 from version import EXPORT_SCHEMA_VERSION
 from decorators import admin_required, group_access_required, participant_access_required, filter_groups_by_access
 
@@ -164,7 +172,13 @@ def data_entry_rework():
 @login_required
 def data_entry_search():
     """Zeigt eine Suchseite für Teilnehmer an und verarbeitet die Suche."""
-    search_query = request.args.get("query", "").strip()
+    raw_query = request.args.get("query")
+    parsed, error = parse_form(DataEntrySearchQuery, {"query": raw_query})
+    if error:
+        flash(format_validation_error(error), "warning")
+        search_query = ""
+    else:
+        search_query = (parsed.query or "").strip()
     results = []
     if search_query:
         search_term = f"%{search_query}%"
@@ -226,11 +240,13 @@ def save_observations_api(participant_id):
     """Speichert die Beobachtungen für einen Teilnehmer (API-Endpunkt)."""
     participant = db.get_or_404(Participant, participant_id)
     data = request.get_json()
-    if data:
-        participant.observations = json.dumps(data)
-        db.session.commit()
-        return jsonify({"status": "success", "message": "Beobachtungen gespeichert!"})
-    return jsonify({"status": "error", "message": "Keine Daten erhalten."}), 400
+    observations, error = parse_observations(data)
+    if error:
+        return jsonify({"status": "error", "message": format_validation_error(error)}), 400
+
+    participant.observations = json.dumps(observations)
+    db.session.commit()
+    return jsonify({"status": "success", "message": "Beobachtungen gespeichert!"})
 
 
 # --- ROUTEN FÜR IMPORT & EXPORT (ANGEPASST AN SQLAlchemy) ---
@@ -253,7 +269,13 @@ def import_page():
 @admin_required
 def import_names():
     """Importiert Namen aus einer Datei in eine neue Gruppe."""
-    group_name = request.form.get("group_name")
+    form_data = {"group_name": request.form.get("group_name", "")}
+    parsed, error = parse_form(ImportNamesForm, form_data)
+    if error:
+        flash(format_validation_error(error), "warning")
+        return redirect(url_for("data_io.import_page"))
+
+    group_name = parsed.group_name
     file = request.files.get("name_file")
     if not group_name or not file or file.filename == "":
         flash("Bitte Gruppennamen angeben und eine Datei auswählen.", "warning")
@@ -346,8 +368,17 @@ def export_selection():
 @admin_required
 def export_data():
     """Exportiert die ausgewählten Teilnehmerdaten als Excel oder CSV."""
-    select_all = request.form.get("select_all_data") == "true"
-    export_format = request.form.get("format", "xlsx")
+    form_data = {
+        "select_all_data": request.form.get("select_all_data"),
+        "export_format": request.form.get("format", "xlsx"),
+    }
+    parsed, error = parse_form(ExportDataForm, form_data)
+    if error:
+        flash(format_validation_error(error), "error")
+        return redirect(url_for("data_io.export_selection"))
+
+    select_all = parsed.select_all_data
+    export_format = parsed.export_format
     try:
         query = db.select(Participant)
         if not select_all:

@@ -1,5 +1,7 @@
 # Phase 2 Implementation Complete ✅
 
+**Update (2026-02-11):** Diese Dokumentation ist ein Phase‑2 Snapshot. Aktuelle Routen laufen unter `blueprints/observation_tasks.py` mit dem Prefix `/beobachtungsaufgaben`.
+
 **Status**: Full implementation of Task Generator with Chat-based iteration  
 **Date**: 2026-02-09  
 **Scope**: Features B1–B11 (B2, B5, B12 optional/future)  
@@ -11,7 +13,7 @@
 
 ### Phase 1 Closure (Prerequisite) ✅
 - **Route Protection**: All 60+ routes already protected with `@login_required`, `@admin_required`, `@group_access_required`
-- **Auth Tests**: Permission checks built into decorators, no separate test file needed (existing auth system handles it)
+- **Auth Tests**: Separate Auth/RBAC‑Test‑Suite ergänzt (Sprint 3.1)
 - **Prompt Recovery**: Old prompts can be re-inserted; new backup system active
 
 ### Phase 2 Features Implemented

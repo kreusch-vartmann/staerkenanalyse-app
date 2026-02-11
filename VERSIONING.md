@@ -5,9 +5,9 @@ Dieses Dokument erklärt, wie die Versionsnummern in dieser App verwaltet werden
 ## Zwei unabhängige Versionen
 
 ### 1. App-Version (`APP_VERSION`)
-**Aktuell:** `1.2.1`  
+**Aktuell:** `1.3.1`  
 **Zweck:** Release-Tracking, Bug-Reports, Changelog  
-**Status:** 🟢 Production Release - Phase 2 Complete
+**Status:** 🟡 Phase 3 Stabilisierung in Arbeit
 
 **Format:** `MAJOR.MINOR.PATCH` (Semantic Versioning)
 
@@ -231,6 +231,17 @@ A: Nicht schlimm im Pre-Release! Nach 1.0.0 solltest du aber konsequent sein.
 ---
 
 ## Versions-Historie
+
+### v1.3.1 (2026-02-11) - Phase 3 Stabilisierung (Tests & RBAC)
+**Neue Features:**
+- ✅ Auth/RBAC- und Admin-Flow-Integrationstests ergänzt
+
+**Bugfixes:**
+- 🐛 Gruppen-Zuordnungen beim User-Edit zuverlässig bereinigt (dynamic relationship)
+
+**Breaking Changes:** Keine
+
+---
 
 ### v1.2.1 (2026-02-10) - Chat-Refinement Stabilisierung
 **Neue Features:**

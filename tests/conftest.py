@@ -67,7 +67,7 @@ def app():
 
 
 @pytest.fixture(scope="function")
-def client(app, admin_user):
+def client(app, db, admin_user):
     """
     Test-Client für HTTP-Requests.
     Jeder Test bekommt einen frischen Client.
@@ -76,6 +76,24 @@ def client(app, admin_user):
     with client.session_transaction() as session:
         session["_user_id"] = str(admin_user.id)
         session["_fresh"] = True
+        session["_id"] = "test-session"
+    return client
+
+
+@pytest.fixture(scope="function")
+def unauth_client(app):
+    """Test-Client ohne eingeloggten User."""
+    return app.test_client()
+
+
+@pytest.fixture(scope="function")
+def observer_client(app, db, observer_user):
+    """Test-Client mit eingeloggtem Beobachter."""
+    client = app.test_client()
+    with client.session_transaction() as session:
+        session["_user_id"] = str(observer_user.id)
+        session["_fresh"] = True
+        session["_id"] = "test-session"
     return client
 
 
@@ -141,6 +159,32 @@ def admin_user(db, admin_role):
 
 
 @pytest.fixture
+def observer_user(db, observer_role, sample_group):
+    """Erstellt einen Beobachter-User mit Gruppenzuordnung."""
+    user = User.query.filter_by(email="observer@test.de").first()
+    if user:
+        if user.role_id != observer_role.id:
+            user.role_id = observer_role.id
+        user.is_active = True
+        user.force_password_change = False
+        if not user.groups.filter_by(id=sample_group.id).first():
+            user.groups.append(sample_group)
+        db.session.commit()
+        return user
+    user = User(
+        email="observer@test.de",
+        role_id=observer_role.id,
+        force_password_change=False,
+        is_active=True,
+    )
+    user.set_password("testpassword123")
+    user.groups.append(sample_group)
+    db.session.add(user)
+    db.session.commit()
+    return user
+
+
+@pytest.fixture
 def sample_group(db):
     """Erstellt eine Test-Gruppe."""
     group = Group(
@@ -159,11 +203,46 @@ def sample_group(db):
 
 
 @pytest.fixture
+def other_group(db):
+    """Erstellt eine zweite, nicht zugewiesene Gruppe."""
+    group = Group(
+        name="Testgruppe B",
+        date_from=date(2026, 2, 1),
+        date_to=date(2026, 7, 31),
+        location="Test-Ort B",
+        leitung_fremdeinschatzung="Leitung FE B",
+        leitung_selbsteinschatzung="Leitung SE B",
+        beobachter1="Beobachter B1",
+        beobachter2="Beobachter B2",
+    )
+    db.session.add(group)
+    db.session.commit()
+    return group
+
+
+@pytest.fixture
 def sample_participant(db, sample_group):
     """Erstellt einen Test-Teilnehmer."""
     participant = Participant(
         name="Max Mustermann",
         group_id=sample_group.id,
+        observations="{}",
+        sk_ratings="{}",
+        vk_ratings="{}",
+        ki_texts="{}",
+        footer_data="{}",
+    )
+    db.session.add(participant)
+    db.session.commit()
+    return participant
+
+
+@pytest.fixture
+def other_participant(db, other_group):
+    """Erstellt einen Teilnehmer in einer nicht zugewiesenen Gruppe."""
+    participant = Participant(
+        name="Erika Muster",
+        group_id=other_group.id,
         observations="{}",
         sk_ratings="{}",
         vk_ratings="{}",

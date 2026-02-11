@@ -21,6 +21,14 @@ from services.ai_client import generate_report_with_ai
 from models import ExplanationBlock, Group, Participant, Prompt, SelfAssessment
 from utils import clean_json_response, get_file_content, sanitize_html, html_to_plaintext
 from decorators import admin_required, group_access_required, participant_access_required, filter_groups_by_access
+from validation import (
+    BatchAnalysisPayload,
+    KiPromptForm,
+    format_validation_error,
+    parse_form,
+    parse_id_list,
+    parse_json,
+)
 
 # WeasyPrint wird lazy-loaded (unten in den Funktionen) um die App schneller zu starten
 try:
@@ -504,7 +512,7 @@ def ai_analysis_select_participants(group_id):
 @admin_required
 def configure_batch_ai_analysis():
     """Zeigt die Seite zur Konfiguration der KI-Analyse für ausgewählte Teilnehmer."""
-    participant_ids = request.form.getlist("participant_ids")
+    participant_ids = parse_id_list(request.form.getlist("participant_ids"))
     if not participant_ids:
         flash("Keine Teilnehmer ausgewählt.", "warning")
         return redirect(url_for("analysis.ai_analysis_select_group"))
@@ -547,10 +555,25 @@ def configure_batch_ai_analysis():
 @admin_required
 def execute_batch_ai_analysis():
     """Zeigt den Status der KI-Analyse für ausgewählte Teilnehmer an."""
-    participant_ids = request.form.getlist("participant_ids")
+    participant_ids = parse_id_list(request.form.getlist("participant_ids"))
+    if not participant_ids:
+        flash("Keine Teilnehmer ausgewählt.", "warning")
+        return redirect(url_for("analysis.ai_analysis_select_group"))
+
+    prompt_payload, error = parse_form(
+        KiPromptForm,
+        {
+            "ki_prompt": request.form.get("ki_prompt", ""),
+            "ki_model": request.form.get("ki_model", "mistral"),
+        },
+    )
+    if error:
+        flash(format_validation_error(error), "error")
+        return redirect(url_for("analysis.ai_analysis_select_group"))
+
     analysis_data = {
-        "prompt_template": request.form.get("ki_prompt", ""),
-        "ki_model": request.form.get("ki_model", "mistral"),
+        "prompt_template": prompt_payload.ki_prompt,
+        "ki_model": prompt_payload.ki_model,
         "additional_content": "\n\n---\n\n".join(
             [
                 get_file_content(file)
@@ -593,8 +616,18 @@ def execute_batch_ai_analysis():
 def run_ki_analysis(participant_id):
     """Führt die KI-Analyse für einen einzelnen Teilnehmer durch (aus der Dateneingabe)."""
     participant = db.get_or_404(Participant, participant_id)
-    final_prompt = request.form.get("ki_prompt", "")
-    ki_model = request.form.get("ki_model", "mistral")
+    prompt_payload, error = parse_form(
+        KiPromptForm,
+        {
+            "ki_prompt": request.form.get("ki_prompt", ""),
+            "ki_model": request.form.get("ki_model", "mistral"),
+        },
+    )
+    if error:
+        return jsonify({"status": "error", "message": format_validation_error(error)}), 400
+
+    final_prompt = prompt_payload.ki_prompt
+    ki_model = prompt_payload.ki_model
 
     full_name = participant.name
     first_name = full_name.split(" ")[0] if full_name else ""
@@ -745,6 +778,9 @@ def run_ki_analysis(participant_id):
 def run_single_analysis_api(participant_id):
     """API-Endpunkt, um die KI-Analyse für die Batch-Verarbeitung auszuführen."""
     data = request.get_json()
+    parsed, error = parse_json(BatchAnalysisPayload, data or {})
+    if error:
+        return jsonify({"status": "error", "message": format_validation_error(error)}), 400
     participant = db.session.get(Participant, participant_id)
     if not participant:
         return (
@@ -773,9 +809,9 @@ def run_single_analysis_api(participant_id):
         context_block += f"AUFGABENBESCHREIBUNGEN:{task_descriptions}\n\n"
     
     # Füge zusätzlichen Kontext am Ende an
-    context_block += f"ZUSÄTZLICHER KONTEXT:\n{data.get('additional_content', '')}"
+    context_block += f"ZUSÄTZLICHER KONTEXT:\n{parsed.additional_content}"
     
-    prompt_template = data.get("prompt_template", "")
+    prompt_template = parsed.prompt_template
     prompt = (
         prompt_template.replace("{{context}}", context_block)
         .replace("{{name}}", first_name)
@@ -784,7 +820,7 @@ def run_single_analysis_api(participant_id):
         .replace("{{ganzer_name}}", full_name)
         .replace("{{social_observations}}", obs.get("social", ""))
         .replace("{{verbal_observations}}", obs.get("verbal", ""))
-        .replace("{{additional_content}}", data.get("additional_content", ""))
+        .replace("{{additional_content}}", parsed.additional_content)
         .replace("{{participant_id}}", str(participant.id))
     )
 
@@ -797,9 +833,9 @@ def run_single_analysis_api(participant_id):
     ):
         prompt = f"{prompt}\n\n{context_block}"
 
-    response_str = generate_report_with_ai(prompt, data.get("ki_model"))
+    response_str = generate_report_with_ai(prompt, parsed.ki_model)
     participant.ki_raw_response = response_str
-    participant.ki_model = data.get("ki_model", "mistral")  # Track which KI model generated this report
+    participant.ki_model = parsed.ki_model  # Track which KI model generated this report
     
     # --- KI-GYM: Save raw response ---
     try:
@@ -808,7 +844,7 @@ def run_single_analysis_api(participant_id):
             response_text=response_str,
             response_type='report',
             context_id=participant_id,
-            ki_model=data.get("ki_model", "mistral"),
+            ki_model=parsed.ki_model,
             observation_area=None
         )
     except Exception as e:

@@ -26,6 +26,7 @@ class Config:
     # API Keys
     GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
     MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
+    BUGFENDER_APP_KEY = os.getenv("BUGFENDER_APP_KEY")
 
     # Upload-Ordner
     UPLOAD_FOLDER = "uploads"
@@ -41,6 +42,9 @@ class Config:
     REMEMBER_COOKIE_DURATION = 7 * 24 * 3600  # 7 Tage
     REMEMBER_COOKIE_HTTPONLY = True
     REMEMBER_COOKIE_SECURE = False  # In Production auf True
+
+    # Flask-Limiter
+    RATELIMIT_STORAGE_URI = os.getenv("RATELIMIT_STORAGE_URI", "memory://")
 
 
 class DevelopmentConfig(Config):
