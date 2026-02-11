@@ -10,8 +10,7 @@ import json
 import pytest
 from unittest.mock import MagicMock, patch
 
-import ki_services
-from ki_services import generate_report_with_ai
+from services.ai_client import generate_report_with_ai
 
 
 @pytest.mark.unit
@@ -24,7 +23,7 @@ class TestGenerateReportWithAI:
         parsed = json.loads(result)
         assert "error" in parsed
 
-    @patch("ki_services.MISTRAL_CLIENT")
+    @patch("services.ai_client.MISTRAL_CLIENT")
     def test_mistral_success(self, mock_client):
         """Test: Mistral-Call erfolgreich (mocked)"""
         mock_message = MagicMock()
@@ -39,14 +38,14 @@ class TestGenerateReportWithAI:
         assert result == "{\"ok\": true}"
         mock_client.chat.assert_called_once()
 
-    @patch("ki_services.MISTRAL_CLIENT", None)
+    @patch("services.ai_client.MISTRAL_CLIENT", None)
     def test_mistral_missing_client_returns_error(self):
         """Test: Mistral ohne Client liefert Error-JSON"""
         result = generate_report_with_ai("Prompt", "mistral")
         parsed = json.loads(result)
         assert "error" in parsed
 
-    @patch("ki_services.GenerativeModel")
+    @patch("services.ai_client.GenerativeModel")
     def test_gemini_success(self, mock_model_cls):
         """Test: Gemini-Call erfolgreich (mocked)"""
         mock_model = MagicMock()
@@ -59,14 +58,14 @@ class TestGenerateReportWithAI:
         assert result == "{\"ok\": true}"
         mock_model.generate_content.assert_called_once()
 
-    @patch("ki_services.GenerativeModel", None)
+    @patch("services.ai_client.GenerativeModel", None)
     def test_gemini_missing_library_returns_error(self):
         """Test: Gemini ohne Library liefert Error-JSON"""
         result = generate_report_with_ai("Prompt", "gemini")
         parsed = json.loads(result)
         assert "error" in parsed
 
-    @patch("ki_services.MISTRAL_CLIENT")
+    @patch("services.ai_client.MISTRAL_CLIENT")
     def test_mistral_exception_returns_error(self, mock_client):
         """Test: Mistral-Exception wird als Error-JSON zurückgegeben"""
         mock_client.chat.side_effect = Exception("Boom")

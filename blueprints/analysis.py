@@ -17,7 +17,7 @@ from flask import (Blueprint, Response, flash, jsonify, redirect,
 from flask_login import login_required, current_user
 
 from extensions import csrf, db
-from ki_services import generate_report_with_ai
+from services.ai_client import generate_report_with_ai
 from models import ExplanationBlock, Group, Participant, Prompt, SelfAssessment
 from utils import clean_json_response, get_file_content, sanitize_html, html_to_plaintext
 from decorators import admin_required, group_access_required, participant_access_required, filter_groups_by_access
@@ -331,7 +331,7 @@ def save_report(participant_id):
         if "ki_texts" in data:
             try:
                 from models import AIRawResponse, ContentEdit
-                from ki_services import compute_content_diff
+                from services.ai_client import compute_content_diff
                 
                 # Find the latest raw response for this participant
                 raw_response = db.session.scalars(
@@ -657,7 +657,7 @@ def run_ki_analysis(participant_id):
     
     # --- KI-GYM: Save raw response ---
     try:
-        from ki_services import save_ai_raw_response
+        from services.ai_client import save_ai_raw_response
         save_ai_raw_response(
             response_text=ki_response_str,
             response_type='report',
@@ -803,7 +803,7 @@ def run_single_analysis_api(participant_id):
     
     # --- KI-GYM: Save raw response ---
     try:
-        from ki_services import save_ai_raw_response
+        from services.ai_client import save_ai_raw_response
         save_ai_raw_response(
             response_text=response_str,
             response_type='report',

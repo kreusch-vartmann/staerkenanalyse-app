@@ -11,7 +11,8 @@ from flask import Blueprint, render_template, request, jsonify, flash, redirect,
 from flask_login import login_required, current_user
 
 from extensions import csrf, db
-from ki_services import generate_task, refine_task_content
+from services.task_generator import generate_task
+from services.task_refinement import refine_task_content
 from models import Task, TaskVersion, User
 from decorators import admin_required
 from services import get_target_group_options
@@ -375,7 +376,7 @@ def save_version(task_id):
             
             if raw_response_id:
                 from models import AIRawResponse, ContentEdit
-                from ki_services import compute_content_diff
+                from services.ai_client import compute_content_diff
                 
                 raw_response = db.session.get(AIRawResponse, raw_response_id)
                 if raw_response:

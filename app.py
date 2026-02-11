@@ -62,10 +62,6 @@ def load_user(user_id: str) -> models.User:
         return None
 
 
-# Blueprints importieren (nach Login-Manager Setup)
-from blueprints.auth import auth_bp
-from blueprints.admin import admin_bp
-
 # Blueprints registrieren
 app.register_blueprint(auth_bp)
 app.register_blueprint(admin_bp)

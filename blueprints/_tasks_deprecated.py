@@ -14,7 +14,8 @@ from extensions import csrf, db
 from models import Task, TaskVersion, User
 from decorators import admin_required, filter_groups_by_access
 from utils import sanitize_html
-from ki_services import generate_task as ki_generate_task, refine_task_content
+from services.task_generator import generate_task as ki_generate_task
+from services.task_refinement import refine_task_content
 
 tasks_bp = Blueprint("tasks", __name__)
 
