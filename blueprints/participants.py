@@ -146,7 +146,7 @@ def show_data_entry(participant_id):
     "/participant/<int:participant_id>/save_observations", methods=["POST"]
 )
 @login_required
-@group_access_required
+@participant_access_required
 @csrf.exempt
 def save_observations(participant_id):
     """Speichert die Beobachtungen für einen Teilnehmer."""

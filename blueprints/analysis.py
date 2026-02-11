@@ -23,6 +23,10 @@ from utils import clean_json_response, get_file_content, sanitize_html, html_to_
 from decorators import admin_required, group_access_required, participant_access_required, filter_groups_by_access
 
 # WeasyPrint wird lazy-loaded (unten in den Funktionen) um die App schneller zu starten
+try:
+    from weasyprint import HTML
+except Exception:
+    HTML = None
 
 analysis_bp = Blueprint("analysis", __name__)
 
@@ -399,9 +403,6 @@ def save_report(participant_id):
 @participant_access_required
 def bericht_pdf(participant_id):
     """Generiert eine PDF-Version des Berichts serverseitig."""
-    # Lazy-load WeasyPrint um App-Startup nicht zu blockieren
-    from weasyprint import HTML
-    
     participant = db.get_or_404(Participant, participant_id)
     group = participant.group
 

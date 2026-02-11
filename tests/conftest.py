@@ -23,6 +23,8 @@ from models import (
     SelfAssessment,
     ExplanationBlock,
     Prompt,
+    User,
+    Role,
     ReportTemplate,
     ReportConfiguration,
     CompanyLogo,
@@ -65,12 +67,16 @@ def app():
 
 
 @pytest.fixture(scope="function")
-def client(app):
+def client(app, admin_user):
     """
     Test-Client für HTTP-Requests.
     Jeder Test bekommt einen frischen Client.
     """
-    return app.test_client()
+    client = app.test_client()
+    with client.session_transaction() as session:
+        session["_user_id"] = str(admin_user.id)
+        session["_fresh"] = True
+    return client
 
 
 @pytest.fixture(scope="function")
@@ -88,6 +94,50 @@ def db(app):
         # Rollback after test
         _db.session.rollback()
         _db.session.remove()
+
+
+@pytest.fixture
+def admin_role(db):
+    """Erstellt eine Admin-Rolle."""
+    role = Role.query.filter_by(name="admin").first()
+    if role:
+        return role
+    role = Role(name="admin", description="Administrator")
+    db.session.add(role)
+    db.session.commit()
+    return role
+
+
+@pytest.fixture
+def observer_role(db):
+    """Erstellt eine Beobachter-Rolle."""
+    role = Role.query.filter_by(name="beobachter").first()
+    if role:
+        return role
+    role = Role(name="beobachter", description="Beobachter")
+    db.session.add(role)
+    db.session.commit()
+    return role
+
+
+@pytest.fixture
+def admin_user(db, admin_role):
+    """Erstellt einen Admin-User für Tests."""
+    user = User.query.filter_by(email="admin@test.de").first()
+    if user:
+        if user.role_id != admin_role.id:
+            user.role_id = admin_role.id
+            db.session.commit()
+        return user
+    user = User(
+        email="admin@test.de",
+        role_id=admin_role.id,
+        force_password_change=False,
+    )
+    user.set_password("testpassword123")
+    db.session.add(user)
+    db.session.commit()
+    return user
 
 
 @pytest.fixture
@@ -150,7 +200,7 @@ def sample_observations_payload():
 def sample_prompt(db):
     """Erstellt einen Test-Prompt."""
     prompt = Prompt(
-        name="Test-Analyse-Prompt",
+        name=f"Test-Analyse-Prompt-{uuid4().hex}",
         description="Prompt für Unit-Tests",
         content="Analysiere folgende Beobachtungen: {observations}"
     )

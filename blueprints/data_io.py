@@ -16,7 +16,7 @@ from extensions import db
 from models import Group, Participant
 from utils import validate_upload_file
 from version import EXPORT_SCHEMA_VERSION
-from decorators import admin_required, group_access_required, filter_groups_by_access
+from decorators import admin_required, group_access_required, participant_access_required, filter_groups_by_access
 
 data_io_bp = Blueprint("data_io", __name__)
 
@@ -210,7 +210,7 @@ def api_get_participants_by_group(group_id):
 
 @data_io_bp.route("/api/participant/<int:participant_id>/observations")
 @login_required
-@group_access_required
+@participant_access_required
 def api_get_observations(participant_id):
     """Liefert die Beobachtungen eines Teilnehmers als JSON."""
     participant = db.get_or_404(Participant, participant_id)
@@ -221,7 +221,7 @@ def api_get_observations(participant_id):
 
 @data_io_bp.route("/save_observations/<int:participant_id>", methods=["POST"])
 @login_required
-@group_access_required
+@participant_access_required
 def save_observations_api(participant_id):
     """Speichert die Beobachtungen für einen Teilnehmer (API-Endpunkt)."""
     participant = db.get_or_404(Participant, participant_id)

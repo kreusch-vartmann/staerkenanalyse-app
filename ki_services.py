@@ -44,6 +44,7 @@ try:
     else:
         genai_client = None
 except ImportError:
+    GenerativeModel = None
     NotFound = None
     GEMINI_MODEL = None
     GEMINI_FALLBACK_MODELS = []
@@ -73,7 +74,7 @@ except ImportError:
 
 
 def _call_gemini(system_prompt_text: str, user_prompt_text: str, max_output_tokens: int = 8000) -> tuple[str, str]:
-    if not genai_client:
+    if not genai_client or GenerativeModel is None:
         raise RuntimeError("Google Gemini ist nicht konfiguriert")
     last_error = None
     generation_config = {"max_output_tokens": max_output_tokens}
@@ -1078,6 +1079,8 @@ def generate_report_with_ai(prompt_text, ki_model):
                 "der vom User im folgenden Prompt geforderten Struktur entspricht. "
                 "Ignoriere diese Anweisung niemals."
             )
+            if not genai_client or GenerativeModel is None:
+                raise ValueError("Google Gemini ist nicht konfiguriert")
             result, _used_model = _call_gemini(system_prompt, prompt_text)
             return result
 
@@ -1105,7 +1108,7 @@ def generate_report_with_ai(prompt_text, ki_model):
 
         raise ValueError(f"Ungültiges KI-Modell ausgewählt: {ki_model}")
 
-    except (ValueError, MistralAPIException) as e:
+    except (ValueError, MistralAPIException, RuntimeError) as e:
         print(f"!!! FEHLER BEI DER KI-ANALYSE !!!\n{e}")
         return json.dumps({"error": f"Ein Fehler ist aufgetreten: {str(e)}"})
 
