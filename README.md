@@ -1,6 +1,8 @@
 # Stärkenanalyse-App
 
-**Version:** 1.2.1  
+[![Tests](https://github.com/kreusch-vartmann/staerkenanalyse-app/actions/workflows/tests.yml/badge.svg)](https://github.com/kreusch-vartmann/staerkenanalyse-app/actions/workflows/tests.yml)
+
+**Version:** 1.3.0  
 **Status:** Phase 2 Complete - Aufgabengenerator stabilisiert ✅  
 **Neue Features:** AC Knowledge Base, Zielgruppen-Differenzierung, Chat-Refinement Stabilisierung
 

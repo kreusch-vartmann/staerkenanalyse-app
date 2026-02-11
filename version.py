@@ -15,7 +15,8 @@
 # - 1.1.0 (2026-02-10): KI-Gym Learning System + Phase 2 Beobachtungsaufgaben + KI-Modell-Auswahl
 # - 1.2.0 (2026-02-10): AC Task Knowledge Base + Zielgruppen-Differenzierung
 # - 1.2.1 (2026-02-10): Chat-Refinement stabilisiert (Sektionen normalisiert, Auto-Save + Reload)
-APP_VERSION = "1.2.1"
+# - 1.3.0 (2026-02-11): Security-Fixes, CSRF-Härtung, AI-Service-Refactor
+APP_VERSION = "1.3.0"
 
 # Export-Schema-Version (unabhängig von App-Version)
 # Ändert sich nur bei Änderungen der CSV/Excel-Export-Struktur
