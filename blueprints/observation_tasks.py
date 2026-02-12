@@ -331,13 +331,27 @@ def versions(task_id):
     """Liste aller Versionen einer Aufgabe."""
     task = db.get_or_404(Task, task_id)
     versions = TaskVersion.query.filter_by(task_id=task_id).order_by(TaskVersion.version_number.desc()).all()
-    
-    return jsonify([{
-        "version": v.version_number,
-        "created_at": v.created_at.isoformat(),
-        "change_notes": v.change_notes,
-        "created_by": v.created_by.first_name + " " + v.created_by.last_name if v.created_by else "System"
-    } for v in versions])
+
+    payload = []
+    for v in versions:
+        if v.created_by:
+            name_parts = [v.created_by.first_name, v.created_by.last_name]
+            created_by = " ".join([part for part in name_parts if part])
+            if not created_by:
+                created_by = v.created_by.email
+        else:
+            created_by = "System"
+
+        payload.append(
+            {
+                "version": v.version_number,
+                "created_at": v.created_at.isoformat(),
+                "change_notes": v.change_notes,
+                "created_by": created_by,
+            }
+        )
+
+    return jsonify(payload)
 
 
 @observation_tasks_bp.route("/<int:task_id>/speichern", methods=["POST"])

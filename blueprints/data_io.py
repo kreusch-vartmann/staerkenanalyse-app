@@ -295,7 +295,10 @@ def import_names():
             flash("Die ausgewählte Datei enthält keine gültigen Namen.", "warning")
             return redirect(url_for("data_io.import_page"))
 
-        new_group = Group(name=group_name, date=datetime.now(timezone.utc).date())
+        new_group = Group(
+            name=group_name,
+            date_from=datetime.now(timezone.utc).date(),
+        )
         db.session.add(new_group)
         db.session.flush()
 

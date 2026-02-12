@@ -3,7 +3,7 @@
 **Branch:** `phase3-stabilization`  
 **Start Date:** 11.02.2026  
 **Target Completion:** ~End of February 2026  
-**Current Sprint:** 3.2 - Task Generation Tests
+**Current Sprint:** 3.4 - Security Tests
 
 ---
 
@@ -33,9 +33,9 @@
 | **2.2** | Bugfender Integration | ✅ COMPLETE | 3h KI + 1h Human | 100% |
 | **2.3** | Edge Case Handling | ✅ COMPLETE | 3h KI + 1.5h Human | 100% |
 | **3.1** | Auth + RBAC Tests | ✅ COMPLETE | 2.5h KI + 1h Human | 100% |
-| **3.2** | Task Generation Tests | 🟢 IN PROGRESS | 3h KI + 1.5h Human | 0% |
-| **3.3** | Integration Tests | ⬜ PENDING | 2.5h KI + 1h Human | 0% |
-| **3.4** | Security Tests | ⬜ PENDING | 2h KI + 0.5h Human | 0% |
+| **3.2** | Task Generation Tests | ✅ COMPLETE | 3h KI + 1.5h Human | 100% |
+| **3.3** | Integration Tests | ✅ COMPLETE | 2.5h KI + 1h Human | 100% |
+| **3.4** | Security Tests | 🟢 IN PROGRESS | 2h KI + 0.5h Human | 0% |
 | **4.1** | Prompt Documentation | ⬜ PENDING | 1.5h KI + 1h Human | 0% |
 | **4.2** | Security Audit Report | ⬜ PENDING | 1h KI + 1h Human | 0% |
 | **4.3** | Incident Runbooks | ⬜ PENDING | 1.5h KI + 1h Human | 0% |
@@ -112,6 +112,31 @@ None currently.
 
 **Blockers:** None
 
+### 2026-02-12
+
+**Progress:**
+- Sprint 3.2: Task-Generator Tests ergänzt (Create/Generate/Versioning/Chat/Delete/Discard/Examples)
+- Integration-Testfile hinzugefügt: `tests/integration/test_observation_tasks_blueprint.py`
+- Versions-Endpoint gegen fehlende Namen abgesichert
+- Pytest: `tests/integration/test_observation_tasks_blueprint.py` grün
+- Sprint 3.2 abgeschlossen
+- Sprint 3.3 gestartet
+- Sprint 3.3: Workflow-Integrationstests erweitert (Import/Export-Flow)
+- Bugfix: Import-Namen nutzt `date_from` statt nicht existierendem Feld
+- Pytest: `tests/integration/test_workflows.py` grün
+- Sprint 3.3: End-to-End Flow ergänzt (Import → Analyse → Report → PDF)
+- Mocked ReportGenerator für Preview/PDF in Workflow-Tests
+- Sprint 3.3: Task‑Zuordnung → Analyse → Report‑PDF Workflow ergänzt
+- Sprint 3.3 abgeschlossen
+- Sprint 3.4 gestartet
+
+**Next Steps:**
+- Integrationstests für Kern-Workflows definieren/ergänzen
+- End-to-End Pfade (Import → Analyse → Report) abdecken
+- Status/Completion in Sprint 3.3 aktualisieren
+
+**Blockers:** None
+
 ---
 
 ## Communication Protocol
@@ -168,4 +193,4 @@ None currently.
 
 ---
 
-**Last Updated:** 2026-02-11 (Sprint 3.1 abgeschlossen, Sprint 3.2 gestartet)
+**Last Updated:** 2026-02-12 (Sprint 3.3 abgeschlossen, Sprint 3.4 gestartet)
