@@ -22,7 +22,7 @@ from models import (ClientLogo, CompanyLogo, ExplanationBlock, Group,
                     Participant, ReportConfiguration, ReportTemplate,
                     SignatureImage)
 from services.report_generator import ReportGenerator
-from decorators import admin_required, group_access_required, participant_access_required
+from decorators import permission_required, group_access_required, participant_access_required
 
 bp = Blueprint("reports", __name__, url_prefix="/reports")
 
@@ -58,7 +58,8 @@ def _save_logo(file, filename_prefix: str) -> tuple[str, str]:
 
 @bp.route("/<int:group_id>/logo/upload/company", methods=["POST"])
 @login_required
-@admin_required
+@permission_required("analysis.edit_reports")
+@group_access_required
 def upload_company_logo(group_id):
     """
     Uploaded zentral ein Company-Logo (überschreibt das aktuelle).
@@ -103,7 +104,8 @@ def upload_company_logo(group_id):
 
 @bp.route("/<int:group_id>/logo/upload/client", methods=["POST"])
 @login_required
-@admin_required
+@permission_required("analysis.edit_reports")
+@group_access_required
 def upload_client_logo(group_id):
     """
     Uploaded Client/Auftraggeber-Logo für eine Gruppe.
@@ -160,7 +162,8 @@ def serve_upload(filename):
 
 @bp.route("/<int:group_id>/configure", methods=["GET", "POST"])
 @login_required
-@admin_required
+@permission_required("analysis.edit_reports")
+@group_access_required
 def configure_report(group_id):
     """
     GET: Zeige Report-Konfigurationsformular
@@ -337,6 +340,7 @@ def configure_report(group_id):
 
 @bp.route("/<int:group_id>/preview/<int:participant_id>")
 @login_required
+@permission_required("analysis.view_reports")
 @group_access_required
 def preview_report_html(group_id, participant_id):
     """
@@ -368,6 +372,7 @@ def preview_report_html(group_id, participant_id):
 
 @bp.route("/<int:group_id>/generate-pdf/<int:participant_id>", methods=["GET", "POST"])
 @login_required
+@permission_required("analysis.view_reports")
 @group_access_required
 def generate_pdf_report(group_id, participant_id):
     """
@@ -412,6 +417,7 @@ def generate_pdf_report(group_id, participant_id):
 
 @bp.route("/standalone/self-assessment/<int:participant_id>/pdf")
 @login_required
+@permission_required("analysis.view_reports")
 @participant_access_required
 def standalone_se_pdf(participant_id):
     """PDF nur mit Selbsteinschätzung (Sidebar voll, mit Metadaten)."""
@@ -440,13 +446,12 @@ def standalone_se_pdf(participant_id):
         import traceback
 
         traceback.print_exc()
-        return redirect(
-            url_for("participants.manage_self_assessments", group_id=group.id)
-        )
+        return redirect(url_for("analysis.manage_final_reports"))
 
 
 @bp.route("/standalone/foreign-assessment/<int:participant_id>/pdf")
 @login_required
+@permission_required("analysis.view_reports")
 @participant_access_required
 def standalone_fe_pdf(participant_id):
     """PDF nur mit Fremdeinschätzung (Sidebar voll, mit Metadaten)."""
@@ -475,13 +480,12 @@ def standalone_fe_pdf(participant_id):
         import traceback
 
         traceback.print_exc()
-        return redirect(
-            url_for("participants.manage_foreign_assessments", group_id=group.id)
-        )
+        return redirect(url_for("analysis.manage_final_reports"))
 
 
 @bp.route("/standalone/self-assessment/<int:participant_id>/preview")
 @login_required
+@permission_required("analysis.view_reports")
 @participant_access_required
 def standalone_se_preview(participant_id):
     """HTML-Vorschau nur Selbsteinschätzung."""
@@ -505,6 +509,7 @@ def standalone_se_preview(participant_id):
 
 @bp.route("/standalone/foreign-assessment/<int:participant_id>/preview")
 @login_required
+@permission_required("analysis.view_reports")
 @participant_access_required
 def standalone_fe_preview(participant_id):
     """HTML-Vorschau nur Fremdeinschätzung."""
@@ -533,7 +538,7 @@ def standalone_fe_preview(participant_id):
 
 @bp.route("/signatures/upload", methods=["POST"])
 @login_required
-@admin_required
+@permission_required("analysis.edit_reports")
 def upload_signature():
     """
     Uploaded ein Unterschrift-Bild (global, für Leitung FE oder SE).
@@ -584,7 +589,7 @@ def upload_signature():
 
 @bp.route("/signatures/delete/<int:sig_id>", methods=["POST"])
 @login_required
-@admin_required
+@permission_required("analysis.edit_reports")
 def delete_signature(sig_id):
     """Löscht eine Unterschrift."""
     sig = db.get_or_404(SignatureImage, sig_id)
@@ -604,7 +609,7 @@ def delete_signature(sig_id):
 
 @bp.route("/templates", methods=["GET"])
 @login_required
-@admin_required
+@permission_required("analysis.edit_reports")
 def list_templates():
     """Liste alle Report-Templates."""
     templates = ReportTemplate.query.all()
@@ -613,7 +618,7 @@ def list_templates():
 
 @bp.route("/templates/<int:template_id>", methods=["GET"])
 @login_required
-@admin_required
+@permission_required("analysis.edit_reports")
 def view_template(template_id):
     """Zeige Template-Details."""
     template = db.get_or_404(ReportTemplate, template_id)

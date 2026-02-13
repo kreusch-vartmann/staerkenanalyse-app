@@ -913,7 +913,14 @@ class ReportGenerator:
     def to_pdf(self, mode: str = "combined") -> bytes:
         """Konvertiert HTML zu PDF."""
         # Lazy-load WeasyPrint um App-Startup nicht zu blockieren
-        from weasyprint import HTML
+        try:
+            from weasyprint import HTML
+        except Exception as e:
+            raise RuntimeError(
+                f"WeasyPrint konnte nicht geladen werden. "
+                f"Bitte installieren Sie die erforderlichen System-Bibliotheken (Pango, Cairo). "
+                f"Details: {e}"
+            ) from e
         
         html_string = self.build_html(mode=mode)
         pdf_bytes = HTML(

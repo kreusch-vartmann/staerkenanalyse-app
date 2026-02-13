@@ -1,8 +1,8 @@
 # 📁 Vollständige Dateistruktur - Stärkenanalyse-App
 
 **Erstellt am**: 7. Februar 2026  
-**Aktualisiert am**: 11. Februar 2026  
-**Version**: 1.3.1  
+**Aktualisiert am**: 13. Februar 2026  
+**Version**: 1.4.0  
 **Beschreibung**: Vollständige Übersicht aller Projektdateien mit ihren Funktionen
 
 ---
@@ -33,7 +33,7 @@ Diese Dokumentation beschreibt **alle** Dateien des Stärkenanalyse-App Projekts
 
 - **utils.py**: Hilfsfunktionen für Dateiverarbeitung. Extrahiert Text aus PDF- und DOCX-Dateien für Import-Funktionalität.
 
-- **version.py**: Zentrale Versionsnummer der Anwendung (aktuell: 1.3.1). Wird für Version-Display im Dashboard und für Deployment verwendet.
+- **version.py**: Zentrale Versionsnummer der Anwendung (aktuell: 1.4.0). Wird für Version-Display im Dashboard und für Deployment verwendet.
 
 - **wsgi.py**: WSGI-Entry-Point für Production-Deployment. Lädt Anwendung für Gunicorn oder andere WSGI-Server.
 
@@ -90,6 +90,10 @@ Diese Dokumentation beschreibt **alle** Dateien des Stärkenanalyse-App Projekts
 - **PROJECT_OVERVIEW.md**: Detaillierte Projektbeschreibung. Erklärt Architektur, Datenmodelle, Blueprints und Workflow der Anwendung.
 
 - **CONTEXT.md**: Automatisch generierte Kontext-Dokumentation. Listet alle Routes, Modelle und Dependencies für KI-Assistenten.
+- **PROMPT_DOCUMENTATION.md**: Prompt-Dokumentation (Sprint 4.1). Quellen, Platzhalter, Schema-Checks und Pflege.
+- **SECURITY_AUDIT_REPORT.md**: Security Audit Report (Sprint 4.2). Schutzmaßnahmen, Tests, Findings und Empfehlungen.
+- **INCIDENT_RUNBOOKS.md**: Incident-Runbooks (Sprint 4.3) inkl. Mermaid-Flows.
+- **PROMPT_RECOVERY.md**: Dokumentation zur Prompt-Wiederherstellung (MistralSozVerb4).
 
 - **STARTUP.md**: Start-Anleitung für Entwickler. Step-by-Step-Guide für lokales Setup und ersten App-Start.
 
@@ -176,6 +180,8 @@ Alembic/Flask-Migrate Datenbank-Migrationen.
 - **a797fd071986_add_report_system_tables_reporttemplate_.py**: Report-System-Migration. Fügt ReportTemplate und GeneratedReport-Tabellen hinzu (v0.2.0).
 
 - **1bb5bd2a5c04_add_signatureimage_model.py**: SignatureImage-Modell-Migration. Fügt Tabelle für digitale Unterschriften in Reports hinzu.
+- **20260210_000001_add_prompt_default_flag.py**: Default-Prompt-Flag in `prompts` (is_default).
+- **bfb0ecb7f36d_merge_heads.py**: Merge-Revision für Alembic-Heads.
 
 ---
 
@@ -280,6 +286,7 @@ KI-Prompt-Templates für verschiedene Analyse-Typen.
 - **structured_report_json.txt**: JSON-Output-Prompt. Erzeugt maschinenlesbare strukturierte Outputs.
 
 - **structured_report_mistral.txt**: Mistral-optimierter Report-Prompt. Speziell für Mistral-API angepasst.
+- **mistralsozverb4.txt**: Rekonstruiertes Prompt-Template für soz./verb. Stärkenanalyse (JSON-Output).
 
 ---
 
@@ -389,10 +396,10 @@ Template-Prompts für GitHub-Actions.
 
 ## ✅ Status
 
-- **Version**: 1.3.1
-- **Letztes Update**: Commit `59c61de` (isort), `b26b005` (Black formatting), Tests & CI/CD
-- **Tests**: 170 Tests gesammelt ✅, Coverage: 46.90%
-- **Code-Qualität**: Black + isort angewendet, CI-Checks aktiv, Test-Suite implementiert
+- **Version**: 1.4.0
+- **Letztes Update**: Phase 3 abgeschlossen (Security Audit + Runbooks + Prompt-Doku)
+- **Tests**: 141 Tests ✅ (siehe `PHASE3_STATUS.md`)
+- **Code-Qualität**: CI-Checks aktiv, Test-Suite implementiert
 
 ---
 

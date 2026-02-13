@@ -7,7 +7,7 @@ from flask_login import login_required
 
 from extensions import csrf, db
 from models import Prompt
-from decorators import admin_required
+from decorators import permission_required
 
 # Ein Blueprint-Objekt für die Prompt-Verwaltung
 prompts_bp = Blueprint("prompts", __name__)
@@ -18,7 +18,7 @@ prompts_bp = Blueprint("prompts", __name__)
 
 @prompts_bp.route("/prompts")
 @login_required
-@admin_required
+@permission_required("prompts.manage")
 def manage_prompts():
     """Zeigt die Seite zur Verwaltung von Prompts an."""
     prompts = (
@@ -35,7 +35,7 @@ def manage_prompts():
 
 @prompts_bp.route("/prompt/add", methods=["GET", "POST"])
 @login_required
-@admin_required
+@permission_required("prompts.manage")
 def add_prompt():
     """Fügt einen neuen Prompt hinzu."""
     if request.method == "POST":
@@ -101,7 +101,7 @@ def add_prompt():
 
 @prompts_bp.route("/prompt/edit/<int:prompt_id>", methods=["GET", "POST"])
 @login_required
-@admin_required
+@permission_required("prompts.manage")
 def edit_prompt(prompt_id):
     """Bearbeitet einen bestehenden Prompt."""
     prompt = db.session.get(Prompt, prompt_id)
@@ -179,7 +179,7 @@ def edit_prompt(prompt_id):
 
 @prompts_bp.route("/prompt/delete/<int:prompt_id>", methods=["POST"])
 @login_required
-@admin_required
+@permission_required("prompts.manage")
 def delete_prompt(prompt_id):
     """Löscht einen Prompt."""
     prompt = db.session.get(Prompt, prompt_id)
@@ -197,7 +197,7 @@ def delete_prompt(prompt_id):
 
 @prompts_bp.route("/api/prompt/<int:prompt_id>")
 @login_required
-@admin_required
+@permission_required("prompts.manage")
 @csrf.exempt
 def get_prompt_content_api(prompt_id):
     """Gibt den Inhalt eines bestimmten Prompts zurück."""

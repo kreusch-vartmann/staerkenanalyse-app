@@ -1,6 +1,6 @@
 # Feature-Checkliste: Stärkenanalyse-App
 
-**Datum:** 11.02.2026 (v1.3.1)
+**Datum:** 13.02.2026 (v1.4.0)
 **Branch:** main
 **Modus:** Lokale Entwicklung (SQLite)
 

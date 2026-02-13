@@ -35,7 +35,7 @@
 
 <div class="mb-6">
     <div>
-        <h2 class="text-3xl font-bold text-gray-800">Abschlussberichtgestaltung</h2>
+        <h2 class="text-3xl font-bold text-gray-900">Abschlussberichtgestaltung</h2>
         <p class="text-gray-600 mt-2">Gruppe: <strong>{{ group.name }}</strong></p>
     </div>
 </div>
@@ -49,8 +49,8 @@
              onclick="toggleAccordion(1)">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
-                    <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                        <i class="fas fa-palette text-blue-600"></i>
+                    <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                        <i class="fas fa-palette text-indigo-600"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900">🎨 Design & Logos</h3>
                 </div>
@@ -64,7 +64,7 @@
                     <!-- Template Selection -->
                     <div>
                         <label for="template_id" class="block text-sm font-medium text-gray-900 mb-2">Report-Template</label>
-                        <select class="form-select w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" 
+                        <select class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500" 
                                 id="template_id" name="template_id" required>
                             <option value="">-- Bitte wählen --</option>
                             {% for tmpl in templates %}
@@ -88,7 +88,7 @@
                         {% else %}
                             <p class="text-sm text-yellow-700 bg-yellow-50 p-2 rounded mb-2">⚠️ Noch kein Logo hochgeladen</p>
                         {% endif %}
-                        <input type="file" class="w-full px-3 py-2 border border-gray-300 rounded-lg" 
+                           <input type="file" class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm" 
                                id="company_logo" name="company_logo" accept="image/*">
                     </div>
                 </div>
@@ -105,7 +105,7 @@
                     {% else %}
                         <p class="text-sm text-yellow-700 bg-yellow-50 p-2 rounded mb-2">⚠️ Noch kein Logo hochgeladen</p>
                     {% endif %}
-                    <input type="file" class="w-full px-3 py-2 border border-gray-300 rounded-lg" 
+                          <input type="file" class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm" 
                            id="client_logo" name="client_logo" accept="image/*">
                 </div>
             </div>
@@ -118,8 +118,8 @@
              onclick="toggleAccordion(2)">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
-                    <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                        <i class="fas fa-file text-blue-600"></i>
+                    <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                        <i class="fas fa-file text-indigo-600"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900">📄 Deckblatt</h3>
                 </div>
@@ -130,39 +130,39 @@
         <div id="accordion-content-2" class="hidden border-t border-gray-200">
             <div class="p-6">
                 <label class="flex items-center gap-2 mb-4">
-                    <input type="checkbox" class="w-4 h-4" name="cover_page_enabled" 
+                          <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" name="cover_page_enabled" 
                            {% if modules_config.get('cover_page', {}).get('enabled') %}checked{% endif %}>
                     <span class="font-medium text-gray-900">Deckblatt aktivieren</span>
                 </label>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <label class="flex items-center gap-2">
-                        <input type="checkbox" class="w-4 h-4" name="cover_page_show_title" 
+                           <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" name="cover_page_show_title" 
                                {% if modules_config.get('cover_page', {}).get('show_title') %}checked{% endif %}>
                         <span class="text-gray-700">Titel anzeigen</span>
                     </label>
                     <label class="flex items-center gap-2">
-                        <input type="checkbox" class="w-4 h-4" name="cover_page_show_participant_name" 
+                           <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" name="cover_page_show_participant_name" 
                                {% if modules_config.get('cover_page', {}).get('show_participant_name') %}checked{% endif %}>
                         <span class="text-gray-700">Teilnehmername</span>
                     </label>
                     <label class="flex items-center gap-2">
-                        <input type="checkbox" class="w-4 h-4" name="cover_page_show_group_name" 
+                           <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" name="cover_page_show_group_name" 
                                {% if modules_config.get('cover_page', {}).get('show_group_name') %}checked{% endif %}>
                         <span class="text-gray-700">Gruppennamen</span>
                     </label>
                     <label class="flex items-center gap-2">
-                        <input type="checkbox" class="w-4 h-4" name="cover_page_show_date" 
+                           <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" name="cover_page_show_date" 
                                {% if modules_config.get('cover_page', {}).get('show_date') %}checked{% endif %}>
                         <span class="text-gray-700">Datum</span>
                     </label>
                     <label class="flex items-center gap-2">
-                        <input type="checkbox" class="w-4 h-4" name="cover_page_show_company_logo" 
+                           <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" name="cover_page_show_company_logo" 
                                {% if modules_config.get('cover_page', {}).get('show_company_logo') %}checked{% endif %}>
                         <span class="text-gray-700">Unternehmenslogo</span>
                     </label>
                     <label class="flex items-center gap-2">
-                        <input type="checkbox" class="w-4 h-4" name="cover_page_show_client_logo" 
+                           <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" name="cover_page_show_client_logo" 
                                {% if modules_config.get('cover_page', {}).get('show_client_logo') %}checked{% endif %}>
                         <span class="text-gray-700">Auftraggeber-Logo</span>
                     </label>
@@ -173,13 +173,13 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label for="cover_page_title" class="block text-sm font-medium text-gray-900 mb-1">Titel:</label>
-                        <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg" 
+                           <input type="text" class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500" 
                                id="cover_page_title" name="cover_page_title" 
                                value="{{ modules_config.get('cover_page', {}).get('title', 'Stärkenanalyse') }}">
                     </div>
                     <div>
                         <label for="cover_page_subtitle" class="block text-sm font-medium text-gray-900 mb-1">Untertitel:</label>
-                        <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg" 
+                           <input type="text" class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500" 
                                id="cover_page_subtitle" name="cover_page_subtitle" 
                                value="{{ modules_config.get('cover_page', {}).get('subtitle', 'Entwicklungsprofil') }}">
                     </div>
@@ -194,8 +194,8 @@
              onclick="toggleAccordion(3)">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
-                    <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                        <i class="fas fa-user text-blue-600"></i>
+                    <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                        <i class="fas fa-user text-indigo-600"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900">🤔 Selbsteinschätzung</h3>
                 </div>
@@ -206,7 +206,7 @@
         <div id="accordion-content-3" class="hidden border-t border-gray-200">
             <div class="p-6">
                 <label class="flex items-center gap-2">
-                    <input type="checkbox" class="w-4 h-4" name="self_assessment_enabled" 
+                          <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" name="self_assessment_enabled" 
                            {% if modules_config.get('self_assessment', {}).get('enabled') %}checked{% endif %}>
                     <span class="font-medium text-gray-900">Selbsteinschätzung im Bericht anzeigen</span>
                 </label>
@@ -221,8 +221,8 @@
              onclick="toggleAccordion(4)">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
-                    <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                        <i class="fas fa-eye text-blue-600"></i>
+                    <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                        <i class="fas fa-eye text-indigo-600"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900">👁️ Fremdeinschätzung</h3>
                 </div>
@@ -233,7 +233,7 @@
         <div id="accordion-content-4" class="hidden border-t border-gray-200">
             <div class="p-6">
                 <label class="flex items-center gap-2">
-                    <input type="checkbox" class="w-4 h-4" name="external_assessment_enabled" 
+                          <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" name="external_assessment_enabled" 
                            {% if modules_config.get('external_assessment', {}).get('enabled') %}checked{% endif %}>
                     <span class="font-medium text-gray-900">Fremdeinschätzung im Bericht anzeigen</span>
                 </label>
@@ -248,8 +248,8 @@
              onclick="toggleAccordion(5)">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
-                    <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                        <i class="fas fa-pen text-blue-600"></i>
+                    <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                        <i class="fas fa-pen text-indigo-600"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900">✍️ Abschlussblatt</h3>
                 </div>
@@ -260,13 +260,13 @@
         <div id="accordion-content-5" class="hidden border-t border-gray-200">
             <div class="p-6">
                 <label class="flex items-center gap-2 mb-4">
-                    <input type="checkbox" class="w-4 h-4" name="closing_page_enabled" 
+                          <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" name="closing_page_enabled" 
                            {% if modules_config.get('closing_page', {}).get('enabled') %}checked{% endif %}>
                     <span class="font-medium text-gray-900">Abschlussblatt aktivieren</span>
                 </label>
 
                 <label class="flex items-center gap-2 mb-4">
-                    <input type="checkbox" class="w-4 h-4" name="closing_page_show_signature_fields" 
+                          <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" name="closing_page_show_signature_fields" 
                            {% if modules_config.get('closing_page', {}).get('show_signature_fields') %}checked{% endif %}>
                     <span class="text-gray-700">Unterschriftsfelder</span>
                 </label>
@@ -275,7 +275,7 @@
                     <label for="closing_page_signature_lines_count" class="block text-sm font-medium text-gray-900 mb-2">
                         Anzahl Unterschriftszeilen:
                     </label>
-                    <input type="number" class="w-32 px-3 py-2 border border-gray-300 rounded-lg" 
+                          <input type="number" class="w-32 rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500" 
                            id="closing_page_signature_lines_count" name="closing_page_signature_lines_count" 
                            value="{{ modules_config.get('closing_page', {}).get('signature_lines_count', 3) }}" 
                            min="1" max="10">
@@ -283,7 +283,7 @@
 
                 <div class="mb-6">
                     <label for="closing_page_additional_text" class="block text-sm font-medium text-gray-900 mb-2">Zusatztext:</label>
-                    <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg" 
+                    <textarea class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500" 
                               id="closing_page_additional_text" name="closing_page_additional_text" 
                               rows="4">{{ modules_config.get('closing_page', {}).get('additional_text', '') }}</textarea>
                 </div>
@@ -301,7 +301,7 @@
                             <div class="mb-3 flex items-center gap-3">
                                 <img src="{{ url_for('reports.serve_upload', filename=signature_fe.image_path|replace('uploads/', '')) }}" 
                                      alt="Unterschrift FE" class="max-w-xs h-16 border border-gray-300 rounded p-1">
-                                <button type="button" onclick="deleteSignatureFE()" class="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200">
+                                <button type="button" onclick="deleteSignatureFE()" class="px-3 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200">
                                     <i class="fas fa-trash"></i>
                                 </button>
                                 <form id="del-fe-form" method="POST" action="{{ url_for('reports.delete_signature', sig_id=signature_fe.id) }}" class="hidden"></form>
@@ -319,7 +319,7 @@
                             <div class="mb-3 flex items-center gap-3">
                                 <img src="{{ url_for('reports.serve_upload', filename=signature_se.image_path|replace('uploads/', '')) }}" 
                                      alt="Unterschrift SE" class="max-w-xs h-16 border border-gray-300 rounded p-1">
-                                <button type="button" onclick="deleteSignatureSE()" class="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200">
+                                <button type="button" onclick="deleteSignatureSE()" class="px-3 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200">
                                     <i class="fas fa-trash"></i>
                                 </button>
                                 <form id="del-se-form" method="POST" action="{{ url_for('reports.delete_signature', sig_id=signature_se.id) }}" class="hidden"></form>
@@ -338,9 +338,9 @@
                         <form method="POST" action="{{ url_for('reports.upload_signature') }}" enctype="multipart/form-data" class="flex flex-col gap-2">
                             <input type="hidden" name="role" value="leitung_fe">
                             <div class="flex gap-2">
-                                <input type="file" class="flex-1 px-3 py-2 border border-gray-300 rounded text-sm" 
+                                <input type="file" class="flex-1 rounded border border-gray-300 bg-white px-3 py-2 text-sm" 
                                        name="file" accept="image/*" required>
-                                <button type="submit" class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 whitespace-nowrap text-sm">
+                                <button type="submit" class="px-3 py-2 rounded bg-indigo-600 text-sm text-white hover:bg-indigo-700 whitespace-nowrap">
                                     Upload FE
                                 </button>
                             </div>
@@ -348,9 +348,9 @@
                         <form method="POST" action="{{ url_for('reports.upload_signature') }}" enctype="multipart/form-data" class="flex flex-col gap-2">
                             <input type="hidden" name="role" value="leitung_se">
                             <div class="flex gap-2">
-                                <input type="file" class="flex-1 px-3 py-2 border border-gray-300 rounded text-sm"
+                                <input type="file" class="flex-1 rounded border border-gray-300 bg-white px-3 py-2 text-sm"
                                        name="file" accept="image/*" required>
-                                <button type="submit" class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 whitespace-nowrap text-sm">
+                                <button type="submit" class="px-3 py-2 rounded bg-indigo-600 text-sm text-white hover:bg-indigo-700 whitespace-nowrap">
                                     Upload SE
                                 </button>
                             </div>
@@ -367,8 +367,8 @@
              onclick="toggleAccordion(6)">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
-                    <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                        <i class="fas fa-info-circle text-blue-600"></i>
+                    <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                        <i class="fas fa-info-circle text-indigo-600"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900">ℹ️ Hinweisblatt & Inhaltsverzeichnis</h3>
                 </div>
@@ -383,7 +383,7 @@
                     <h4 class="text-lg font-semibold text-gray-900 mb-3">ℹ️ Hinweisblatt (Erklärungstexte)</h4>
                     
                     <label class="flex items-center gap-2 mb-4">
-                        <input type="checkbox" class="w-4 h-4" name="info_page_enabled" 
+                           <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" name="info_page_enabled" 
                                {% if modules_config.get('info_page', {}).get('enabled') %}checked{% endif %}>
                         <span class="font-medium text-gray-900">Hinweisblatt aktivieren</span>
                     </label>
@@ -392,8 +392,8 @@
                         <p class="text-gray-600 text-sm mb-3 ml-6">Wähle die Erklärungstexte, die auf dem Hinweisblatt erscheinen sollen:</p>
                         <div class="ml-6 space-y-2">
                             {% for block in explanation_blocks %}
-                            <label class="flex items-start gap-3 p-2 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer">
-                                <input type="checkbox" class="w-4 h-4 mt-1" name="explanation_block_ids" value="{{ block.id }}"
+                            <label class="flex items-start gap-3 rounded border border-gray-200 p-2 hover:bg-gray-50 cursor-pointer">
+                                <input type="checkbox" class="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" name="explanation_block_ids" value="{{ block.id }}"
                                        {% if block.id in modules_config.get('info_page', {}).get('selected_block_ids', []) %}checked{% endif %}>
                                 <div>
                                     <div class="font-medium text-gray-900">{{ block.title }}</div>
@@ -404,7 +404,7 @@
                         </div>
                     {% else %}
                         <p class="text-yellow-700 bg-yellow-50 p-3 rounded ml-6">⚠️ Noch keine Erklärungstexte vorhanden.</p>
-                        <a href="{{ url_for('explanation_blocks.manage_explanation_blocks') }}" class="ml-6 inline-block mt-2 px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                        <a href="{{ url_for('explanation_blocks.manage_explanation_blocks') }}" class="ml-6 inline-block mt-2 rounded border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">
                             Jetzt erstellen
                         </a>
                     {% endif %}
@@ -417,7 +417,7 @@
                     <h4 class="text-lg font-semibold text-gray-900 mb-3">📑 Inhaltsverzeichnis</h4>
                     
                     <label class="flex items-center gap-2">
-                        <input type="checkbox" class="w-4 h-4" name="toc_enabled" 
+                           <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" name="toc_enabled" 
                                {% if modules_config.get('toc_enabled') %}checked{% endif %}>
                         <span class="font-medium text-gray-900">Inhaltsverzeichnis aktivieren</span>
                     </label>
@@ -428,11 +428,11 @@
     </div>
 
     <!-- Action Buttons -->
-    <div class="flex gap-4 mt-8">
-        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+    <div class="flex flex-wrap gap-4 mt-8">
+        <button type="submit" class="rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors">
             💾 Konfiguration speichern
         </button>
-        <a href="{{ url_for('groups.show_group_participants', group_id=group.id) }}" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center">
+        <a href="{{ url_for('groups.show_group_participants', group_id=group.id) }}" class="flex items-center rounded-lg bg-gray-600 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-700 transition-colors">
             ← Zurück zur Gruppe
         </a>
     </div>

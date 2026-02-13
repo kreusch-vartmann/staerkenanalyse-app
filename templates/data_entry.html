@@ -6,10 +6,10 @@
 <div class="container mx-auto px-4 py-6">
     <nav class="mb-6">
         <ol class="flex items-center space-x-2 text-sm text-gray-600">
-            <li><a href="{{ url_for('dashboard') }}" class="hover:text-blue-600">Dashboard</a><span class="mx-2">/</span></li>
-            <li><a href="{{ url_for('groups.manage_groups') }}" class="hover:text-blue-600">Gruppen</a><span class="mx-2">/</span></li>
-            <li><a href="{{ url_for('groups.show_group_participants', group_id=group.id) }}" class="hover:text-blue-600">{{ group.name }}</a><span class="mx-2">/</span></li>
-            <li class="text-blue-600 font-medium">{{ participant.name }}</li>
+            <li><a href="{{ url_for('dashboard') }}" class="hover:text-indigo-600">Dashboard</a><span class="mx-2">/</span></li>
+            <li><a href="{{ url_for('groups.manage_groups') }}" class="hover:text-indigo-600">Gruppen</a><span class="mx-2">/</span></li>
+            <li><a href="{{ url_for('groups.show_group_participants', group_id=group.id) }}" class="hover:text-indigo-600">{{ group.name }}</a><span class="mx-2">/</span></li>
+            <li class="text-indigo-600 font-medium">{{ participant.name }}</li>
         </ol>
     </nav>
 
@@ -18,7 +18,7 @@
             <h2 class="text-3xl font-bold text-gray-800">Beobachtungsdaten</h2>
             <p class="text-lg text-gray-600">für {{ participant.name }}</p>
         </div>
-        <a href="{{ url_for('groups.show_group_participants', group_id=group.id) }}" class="text-blue-600 hover:text-blue-800 font-semibold flex items-center">
+        <a href="{{ url_for('groups.show_group_participants', group_id=group.id) }}" class="text-indigo-600 hover:text-indigo-800 font-semibold flex items-center">
             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             Zurück zur Teilnehmerliste
         </a>
@@ -39,7 +39,7 @@
                     <textarea id="verbal" name="verbal" rows="5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">{{ participant.observations.verbal or '' }}</textarea>
                 </div>
                 <div class="flex justify-end gap-3 pt-2">
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
                         Beobachtungen speichern
                     </button>
                     <a href="{{ url_for('analysis.ai_analysis_select_participants', group_id=participant.group_id) }}?preselect={{ participant.id }}" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors inline-flex items-center">

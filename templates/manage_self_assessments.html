@@ -4,16 +4,17 @@
 
 {% block content %}
 <div class="mb-6">
-    <h2 class="text-3xl font-bold text-gray-800">Selbsteinschätzung</h2>
-    <p class="text-gray-600 mt-2">Übersicht aller Teilnehmer mit Selbsteinschätzungsstatus</p>
+    <h2 class="text-3xl font-bold text-gray-900">Selbsteinschätzung</h2>
+    <p class="text-sm text-gray-700 mt-2">Übersicht aller Teilnehmer mit Selbsteinschätzungsstatus</p>
 </div>
 
 <!-- Suchfeld mit Autocomplete -->
 <div class="mb-6">
     <div class="relative">
-        <input type="text" id="participant-search"
-               class="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-               placeholder="Teilnehmer oder Gruppe suchen..." autocomplete="off">
+                 <input type="text" id="participant-search"
+                         aria-label="Teilnehmer oder Gruppe suchen"
+                         class="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md bg-white text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+                             placeholder="Teilnehmer oder Gruppe suchen..." autocomplete="off">
         <i class="fas fa-search absolute left-3 top-4 text-gray-400"></i>
         <button id="clear-search" class="absolute right-3 top-4 hidden text-gray-400 hover:text-gray-600">
             <i class="fas fa-times"></i>
@@ -45,8 +46,8 @@
              onclick="toggleAccordion({{ group.id }})">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4 flex-1">
-                    <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                        <i class="fas fa-users text-blue-600"></i>
+                    <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                        <i class="fas fa-users text-indigo-600"></i>
                     </div>
                     <div>
                         <h3 class="text-lg font-semibold text-gray-900">{{ group.name }}</h3>
@@ -76,13 +77,13 @@
         <!-- Accordion Content -->
         <div id="accordion-content-{{ group.id }}"
              class="accordion-content hidden border-t border-gray-200">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+            <div class="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
+                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-500">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aktion</th>
+                            <th class="px-6 py-3 text-left">Name</th>
+                            <th class="px-6 py-3 text-left">Status</th>
+                            <th class="px-6 py-3 text-left">Aktion</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -95,19 +96,19 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {% if participant.self_assessment and participant.self_assessment.content %}
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">
                                         ✅ Abgeschlossen
                                     </span>
                                 {% else %}
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                    <span class="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-semibold text-yellow-700">
                                         ⏳ Offen
                                     </span>
                                 {% endif %}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <div class="flex items-center gap-3">
+                                <div class="flex flex-wrap items-center gap-2">
                                     <a href="{{ url_for('participants.show_self_assessment', participant_id=participant.id) }}"
-                                       class="text-blue-600 hover:text-blue-900">
+                                       class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
                                         {% if participant.self_assessment and participant.self_assessment.content %}
                                             <i class="fas fa-edit me-1"></i>Bearbeiten
                                         {% else %}
@@ -116,7 +117,8 @@
                                     </a>
                                     {% if participant.self_assessment and participant.self_assessment.content %}
                                     <a href="{{ url_for('reports.standalone_se_pdf', participant_id=participant.id) }}"
-                                       class="text-green-600 hover:text-green-900" title="SE als PDF drucken">
+                                       class="inline-flex items-center rounded-md border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-100"
+                                       title="SE als PDF drucken">
                                         <i class="fas fa-file-pdf me-1"></i>PDF
                                     </a>
                                     {% endif %}
@@ -218,7 +220,7 @@ document.addEventListener('DOMContentLoaded', function() {
             div.className = 'px-4 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0';
             const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const regex = new RegExp(`(${escapedTerm})`, 'gi');
-            const highlighted = match.name.replace(regex, '<strong class="text-blue-600">$1</strong>');
+            const highlighted = match.name.replace(regex, '<strong class="text-indigo-600">$1</strong>');
             div.innerHTML = `
                 <div class="font-medium">${highlighted}</div>
                 <div class="text-xs text-gray-500 mt-1">Gruppe: ${getGroupName(match.groupId)}</div>

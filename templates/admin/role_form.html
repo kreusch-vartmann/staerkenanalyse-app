@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}{{ "Rolle bearbeiten" if role else "Neue Rolle" }} - Stärkenanalyse{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-4xl px-4 py-6">
+    <h2 class="text-3xl font-bold text-gray-900 flex items-center gap-2 mb-6">
+        <i class="fas fa-shield-alt text-indigo-600"></i>
+        {{ "Rolle bearbeiten: " + role.name if role else "Neue Rolle erstellen" }}
+    </h2>
+
+    <form method="POST" class="space-y-6">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+        <div class="rounded-lg border border-gray-200 bg-white shadow-sm">
+            <div class="border-b border-gray-200 px-6 py-4">
+                <h5 class="text-sm font-semibold text-gray-900">Grunddaten</h5>
+            </div>
+            <div class="px-6 py-5 space-y-4">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700">Rollenname</label>
+                    <input type="text" id="name" name="name" value="{{ role.name if role else '' }}" required
+                           class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label for="description" class="block text-sm font-medium text-gray-700">Beschreibung</label>
+                    <input type="text" id="description" name="description" value="{{ role.description if role else '' }}"
+                           class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500">
+                </div>
+            </div>
+        </div>
+
+        <div class="rounded-lg border border-gray-200 bg-white shadow-sm">
+            <div class="border-b border-gray-200 px-6 py-4">
+                <h5 class="text-sm font-semibold text-gray-900">Berechtigungen</h5>
+            </div>
+            <div class="px-6 py-5">
+                {% for category, perms in perm_groups.items() %}
+                <div class="mb-6 last:mb-0">
+                    <h6 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{{ category }}</h6>
+                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        {% for perm in perms %}
+                        <label class="flex items-start gap-3 rounded-md border border-gray-200 p-3 hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" name="permissions" value="{{ perm.id }}"
+                                   class="mt-0.5 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                   {% if role_perm_ids is defined and perm.id in role_perm_ids %}checked{% endif %}>
+                            <div>
+                                <span class="block text-sm font-medium text-gray-900">{{ perm.description }}</span>
+                                <span class="block text-xs text-gray-500 font-mono">{{ perm.codename }}</span>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="flex gap-3">
+            <button type="submit" class="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
+                <i class="fas fa-save"></i> {{ "Aktualisieren" if role else "Erstellen" }}
+            </button>
+            <a href="{{ url_for('admin.manage_roles') }}" class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                Abbrechen
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

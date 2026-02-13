@@ -4,16 +4,17 @@
 
 {% block content %}
 <div class="mb-6">
-    <h2 class="text-3xl font-bold text-gray-800">Teilnehmer</h2>
-    <p class="text-gray-600 mt-2">Alle Teilnehmer im Überblick - Selbsteinschätzung, Beobachtungsdaten, KI-Analyse und Berichte</p>
+    <h2 class="text-3xl font-bold text-gray-900">Teilnehmer</h2>
+    <p class="text-sm text-gray-700 mt-2">Alle Teilnehmer im Überblick - Selbsteinschätzung, Beobachtungsdaten, KI-Analyse und Berichte</p>
 </div>
 
 <!-- Suchfeld mit Autocomplete -->
 <div class="mb-6">
     <div class="relative">
-        <input type="text" id="participant-search"
-               class="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-               placeholder="Teilnehmer oder Gruppe suchen..." autocomplete="off">
+                 <input type="text" id="participant-search"
+                         aria-label="Teilnehmer oder Gruppe suchen"
+                         class="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md bg-white text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+                             placeholder="Teilnehmer oder Gruppe suchen..." autocomplete="off">
         <i class="fas fa-search absolute left-3 top-4 text-gray-400"></i>
         <button id="clear-search" class="absolute right-3 top-4 hidden text-gray-400 hover:text-gray-600">
             <i class="fas fa-times"></i>
@@ -37,8 +38,8 @@
              onclick="toggleAccordion({{ group.id }})">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4 flex-1">
-                    <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                        <i class="fas fa-users text-blue-600"></i>
+                    <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                        <i class="fas fa-users text-indigo-600"></i>
                     </div>
                     <div>
                         <h3 class="text-lg font-semibold text-gray-900">{{ group.name }}</h3>
@@ -70,41 +71,41 @@
                             <!-- Status-Indikatoren -->
                             <div class="flex items-center space-x-2">
                                 {% if participant.self_assessment and participant.self_assessment.content %}
-                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700" title="Selbsteinschätzung vorhanden">
+                                <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700" title="Selbsteinschätzung vorhanden">
                                     <i class="fas fa-clipboard-list me-1"></i>SE
                                 </span>
                                 {% else %}
-                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-400" title="Selbsteinschätzung fehlt">
+                                <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-400" title="Selbsteinschätzung fehlt">
                                     <i class="fas fa-clipboard-list me-1"></i>SE
                                 </span>
                                 {% endif %}
 
                                 {% if participant.observations and participant.observations != '{}' %}
-                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700" title="Beobachtungsdaten vorhanden">
+                                <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700" title="Beobachtungsdaten vorhanden">
                                     <i class="fas fa-pen me-1"></i>BD
                                 </span>
                                 {% else %}
-                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-400" title="Beobachtungsdaten fehlen">
+                                <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-400" title="Beobachtungsdaten fehlen">
                                     <i class="fas fa-pen me-1"></i>BD
                                 </span>
                                 {% endif %}
 
                                 {% if participant.ki_texts and participant.ki_texts != '{}' %}
-                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700" title="KI-Analyse vorhanden">
+                                <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700" title="KI-Analyse vorhanden">
                                     <i class="fas fa-brain me-1"></i>KI
                                 </span>
                                 {% else %}
-                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-400" title="KI-Analyse fehlt">
+                                <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-400" title="KI-Analyse fehlt">
                                     <i class="fas fa-brain me-1"></i>KI
                                 </span>
                                 {% endif %}
 
                                 {% if participant.ki_texts and participant.ki_texts != '{}' and participant.self_assessment and participant.self_assessment.content %}
-                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700" title="Abschlussbericht möglich">
+                                <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700" title="Abschlussbericht möglich">
                                     <i class="fas fa-book me-1"></i>AB
                                 </span>
                                 {% else %}
-                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-400" title="Abschlussbericht nicht möglich">
+                                <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-400" title="Abschlussbericht nicht möglich">
                                     <i class="fas fa-book me-1"></i>AB
                                 </span>
                                 {% endif %}
@@ -115,67 +116,77 @@
                     <!-- Aktionsbuttons -->
                     <div class="flex flex-wrap gap-2">
                         <!-- Selbsteinschätzung -->
+                        {% if current_user.has_permission('participants.edit') %}
                         <a href="{{ url_for('participants.show_self_assessment', participant_id=participant.id) }}"
-                           class="flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
+                           class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
                            title="Selbsteinschätzung">
                             <i class="fas fa-clipboard-list me-1"></i>Selbsteinschätzung
                         </a>
+                        {% endif %}
 
                         <!-- Beobachtungsdaten -->
+                        {% if current_user.has_permission('data_entry.view') %}
                         <a href="{{ url_for('participants.show_data_entry', participant_id=participant.id) }}"
-                           class="flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
+                           class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
                            title="Beobachtungsdaten">
                             <i class="fas fa-pen me-1"></i>Beobachtungsdaten
                         </a>
+                        {% endif %}
 
                         <!-- KI-Analyse -->
+                        {% if current_user.has_permission('analysis.run') %}
                         <a href="{{ url_for('analysis.ai_analysis_select_participants', group_id=group.id) }}?preselect={{ participant.id }}"
-                           class="flex items-center px-3 py-1.5 border border-purple-300 shadow-sm text-sm font-medium rounded text-purple-700 bg-purple-50 hover:bg-purple-100"
+                           class="inline-flex items-center rounded-md border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-100"
                            title="KI-Analyse starten">
                             <i class="fas fa-brain me-1"></i>KI-Analyse
                         </a>
+                        {% endif %}
 
                         <!-- Fremdeinschätzung (nur wenn vorhanden) -->
-                        {% if participant.ki_texts and participant.ki_texts != '{}' %}
+                        {% if current_user.has_permission('analysis.view_reports') and participant.ki_texts and participant.ki_texts != '{}' %}
                         <a href="{{ url_for('analysis.edit_report', participant_id=participant.id) }}"
-                           class="flex items-center px-3 py-1.5 border border-blue-300 shadow-sm text-sm font-medium rounded text-blue-700 bg-blue-50 hover:bg-blue-100"
+                           class="inline-flex items-center rounded-md border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-100"
                            title="Fremdeinschätzung ansehen/bearbeiten">
                             <i class="fas fa-file-alt me-1"></i>Fremdeinschätzung
                         </a>
                         {% endif %}
 
                         <!-- Abschlussbericht -->
-                        {% if participant.ki_texts and participant.ki_texts != '{}' and participant.self_assessment and participant.self_assessment.content %}
-                        <a href="{{ url_for('analysis.final_report', participant_id=participant.id) }}"
-                           class="flex items-center px-3 py-1.5 border border-indigo-300 shadow-sm text-sm font-medium rounded text-indigo-700 bg-indigo-50 hover:bg-indigo-100"
-                           title="Abschlussbericht">
+                                                {% if current_user.has_permission('analysis.view_reports') and participant.ki_texts and participant.ki_texts != '{}' and participant.self_assessment and participant.self_assessment.content %}
+                                                <a href="{{ url_for('analysis.final_report', participant_id=participant.id) }}"
+                                                     class="inline-flex items-center rounded-md border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-100"
+                                                     title="Abschlussbericht">
                             <i class="fas fa-book me-1"></i>Abschlussbericht
                         </a>
-                        {% else %}
-                        <span class="flex items-center px-3 py-1.5 border border-gray-200 shadow-sm text-sm font-medium rounded text-gray-400 bg-gray-50 cursor-not-allowed"
+                                                {% elif current_user.has_permission('analysis.view_reports') %}
+                        <span class="inline-flex items-center rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm font-semibold text-gray-400 cursor-not-allowed"
                               title="Abschlussbericht nicht verfügbar (Fremdeinschätzung und Selbsteinschätzung erforderlich)">
                             <i class="fas fa-book me-1"></i>Abschlussbericht
                         </span>
                         {% endif %}
 
                         <!-- Bearbeiten -->
+                        {% if current_user.has_permission('participants.edit') %}
                         <button onclick="openEditParticipantModal({{ participant.id }}, '{{ participant.name|e }}')"
-                                class="flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
+                            class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
                                 title="Teilnehmer umbenennen">
                             <i class="fas fa-edit me-1"></i>Bearbeiten
                         </button>
+                        {% endif %}
 
                         <!-- Löschen -->
+                        {% if current_user.has_permission('participants.delete') %}
                         <form method="POST" action="{{ url_for('participants.delete_participant', participant_id=participant.id) }}"
                               onsubmit="return confirm('Sind Sie sicher, dass Sie &quot;{{ participant.name|e }}&quot; löschen möchten?')" class="inline">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                             <input type="hidden" name="redirect_url" value="{{ request.url }}">
-                            <button type="submit"
-                                    class="flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded shadow-sm text-white bg-red-600 hover:bg-red-700"
+                                <button type="submit"
+                                    class="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700"
                                     title="Teilnehmer löschen">
                                 <i class="fas fa-trash me-1"></i>Löschen
                             </button>
                         </form>
+                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}
@@ -197,6 +208,7 @@
 {% endif %}
 
 <!-- Teilnehmer bearbeiten Modal -->
+{% if current_user.has_permission('participants.edit') %}
 <div id="editParticipantModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
     <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
         <div class="mt-3 text-center">
@@ -205,17 +217,18 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="text-left">
                     <label for="participant_name" class="block text-sm font-medium text-gray-700 mb-1">Name des Teilnehmers *</label>
-                    <input type="text" id="participant_name" name="participant_name" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <input type="text" id="participant_name" name="participant_name" required class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500">
                     <input type="hidden" name="redirect_url" value="{{ request.url }}">
                 </div>
                 <div class="flex justify-end space-x-3 pt-4">
-                    <button type="button" onclick="closeEditParticipantModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">Abbrechen</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Speichern</button>
+                    <button type="button" onclick="closeEditParticipantModal()" class="inline-flex items-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200">Abbrechen</button>
+                    <button type="submit" class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">Speichern</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+{% endif %}
 
 {% endblock %}
 
@@ -308,7 +321,7 @@ document.addEventListener('DOMContentLoaded', function() {
             div.className = 'px-4 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0';
             const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const regex = new RegExp(`(${escapedTerm})`, 'gi');
-            const highlighted = match.name.replace(regex, '<strong class="text-blue-600">$1</strong>');
+            const highlighted = match.name.replace(regex, '<strong class="text-indigo-600">$1</strong>');
             div.innerHTML = `
                 <div class="font-medium">${highlighted}</div>
                 <div class="text-xs text-gray-500 mt-1">Gruppe: ${getGroupName(match.groupId)}</div>

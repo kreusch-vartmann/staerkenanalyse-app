@@ -9,7 +9,7 @@ from flask_login import login_required, current_user
 
 from extensions import csrf, db
 from models import Group, Participant, SelfAssessment
-from utils import sanitize_html
+from utils import sanitize_html, log_activity
 from validation import (
     ParticipantNameForm,
     ParticipantNamesForm,
@@ -19,13 +19,14 @@ from validation import (
     parse_json,
     parse_observations,
 )
-from decorators import admin_required, group_access_required, participant_access_required, filter_groups_by_access
+from decorators import permission_required, group_access_required, participant_access_required, filter_groups_by_access
 
 participants_bp = Blueprint("participants", __name__)
 
 
 @participants_bp.route("/participants")
 @login_required
+@permission_required("participants.view")
 def manage_participants():
     """Zeigt die Seite zur Verwaltung aller Teilnehmer an, gruppiert nach Gruppen."""
     query = filter_groups_by_access(current_user)
@@ -44,7 +45,7 @@ def manage_participants():
 
 @participants_bp.route("/group/<int:group_id>/participant/add", methods=["POST"])
 @login_required
-@admin_required
+@permission_required("participants.edit")
 def add_participant(group_id):
     """Fügt einen oder mehrere Teilnehmer zu einer Gruppe hinzu."""
     group = db.get_or_404(Group, group_id)
@@ -58,10 +59,25 @@ def add_participant(group_id):
     valid_names = [name.strip() for name in names_input.splitlines() if name.strip()]
 
     if valid_names:
+        created_participants = []
         for name in valid_names:
             # Erstelle für jeden Namen einen neuen Teilnehmer
             new_participant = Participant(name=name, group=group)
             db.session.add(new_participant)
+            created_participants.append(new_participant)
+
+        db.session.flush()
+
+        for new_participant in created_participants:
+            log_activity(
+                user_id=current_user.id,
+                action="participant_added",
+                action_label="Teilnehmer hinzugefügt",
+                entity_type="participant",
+                entity_id=new_participant.id,
+                entity_label=new_participant.name,
+                target_url=url_for("participants.show_data_entry", participant_id=new_participant.id),
+            )
 
         db.session.commit()
         flash(
@@ -76,7 +92,7 @@ def add_participant(group_id):
 
 @participants_bp.route("/participant/edit/<int:participant_id>", methods=["POST"])
 @login_required
-@admin_required
+@permission_required("participants.edit")
 def edit_participant(participant_id):
     """Aktualisiert den Namen eines Teilnehmers."""
     participant = db.get_or_404(Participant, participant_id)
@@ -103,7 +119,7 @@ def edit_participant(participant_id):
 
 @participants_bp.route("/participant/delete/<int:participant_id>", methods=["POST"])
 @login_required
-@admin_required
+@permission_required("participants.delete")
 def delete_participant(participant_id):
     """Löscht einen Teilnehmer."""
     participant = db.get_or_404(Participant, participant_id)
@@ -128,6 +144,7 @@ def delete_participant(participant_id):
 
 @participants_bp.route("/participant/<int:participant_id>/data_entry")
 @login_required
+@permission_required("data_entry.view")
 @participant_access_required
 def show_data_entry(participant_id):
     """Zeigt die Dateneingabeseite für einen Teilnehmer an."""
@@ -168,6 +185,7 @@ def show_data_entry(participant_id):
     "/participant/<int:participant_id>/save_observations", methods=["POST"]
 )
 @login_required
+@permission_required("data_entry.edit")
 @participant_access_required
 def save_observations(participant_id):
     """Speichert die Beobachtungen für einen Teilnehmer."""
@@ -187,6 +205,7 @@ def save_observations(participant_id):
 
 @participants_bp.route("/self-assessments")
 @login_required
+@permission_required("participants.view")
 def manage_self_assessments():
     """Zeigt die Übersicht aller Teilnehmer mit Selbsteinschätzungsstatus an."""
     query = filter_groups_by_access(current_user)
@@ -204,6 +223,7 @@ def manage_self_assessments():
 
 @participants_bp.route("/participant/<int:participant_id>/self_assessment")
 @login_required
+@permission_required("participants.edit")
 @participant_access_required
 def show_self_assessment(participant_id):
     """Zeigt die Selbsteinschätzungs-Eingabeseite für einen Teilnehmer an."""
@@ -240,6 +260,7 @@ def show_self_assessment(participant_id):
 
 @participants_bp.route("/save_self_assessment/<int:participant_id>", methods=["POST"])
 @login_required
+@permission_required("participants.edit")
 @participant_access_required
 def save_self_assessment(participant_id):
     """Speichert die Selbsteinschätzung für einen Teilnehmer (API-Endpunkt)."""

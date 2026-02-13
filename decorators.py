@@ -28,6 +28,29 @@ def admin_required(f):
     return decorated_function
 
 
+def permission_required(codename):
+    """
+    Decorator: Erfordert eine bestimmte Berechtigung.
+    Admin (is_system-Rolle) hat automatisch alle Berechtigungen.
+
+    Verwendung: @login_required @permission_required("groups.edit")
+    """
+
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not current_user or not current_user.is_authenticated:
+                return redirect(url_for("auth.login"))
+            if not current_user.has_permission(codename):
+                flash("Sie haben keine Berechtigung für diese Aktion.", "error")
+                return redirect(url_for("dashboard"))
+            return f(*args, **kwargs)
+
+        return decorated_function
+
+    return decorator
+
+
 def group_access_required(f):
     """
     Decorator: Prüft ob der User Zugriff auf die Gruppe hat (über group_id Parameter).

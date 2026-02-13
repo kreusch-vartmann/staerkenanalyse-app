@@ -5,20 +5,23 @@
 {% block content %}
 <div class="flex justify-between items-center mb-6">
     <div>
-        <h2 class="text-3xl font-bold text-gray-800">Gruppen verwalten</h2>
-        <p class="text-gray-600 mt-2">Gruppen erstellen, bearbeiten und Teilnehmer zuordnen</p>
+        <h2 class="text-3xl font-bold text-gray-900">Gruppen verwalten</h2>
+        <p class="text-sm text-gray-700 mt-2">Gruppen erstellen, bearbeiten und Teilnehmer zuordnen</p>
     </div>
-    <button onclick="openAddGroupModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+    {% if current_user.has_permission('groups.edit') %}
+    <button onclick="openAddGroupModal()" class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
         <i class="fas fa-plus me-2"></i>Neue Gruppe
     </button>
+    {% endif %}
 </div>
 
 <!-- Suchfeld -->
 <div class="mb-6">
     <div class="relative">
-        <input type="text" id="group-search"
-               class="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-               placeholder="Gruppe suchen (Name, Ort, Leitung)..." autocomplete="off">
+                 <input type="text" id="group-search"
+                         aria-label="Gruppe suchen"
+                         class="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md bg-white text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+                             placeholder="Gruppe suchen (Name, Ort, Leitung)..." autocomplete="off">
         <i class="fas fa-search absolute left-3 top-4 text-gray-400"></i>
         <button id="clear-search" class="absolute right-3 top-4 hidden text-gray-400 hover:text-gray-600">
             <i class="fas fa-times"></i>
@@ -44,8 +47,8 @@
              onclick="toggleAccordion({{ group.id }})">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4 flex-1">
-                    <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                        <i class="fas fa-users text-blue-600"></i>
+                    <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                        <i class="fas fa-users text-indigo-600"></i>
                     </div>
                     <div>
                         <h3 class="text-lg font-semibold text-gray-900">{{ group.name }}</h3>
@@ -124,21 +127,23 @@
                 </div>
 
                 <!-- Teilnehmer hinzufügen -->
+                {% if current_user.has_permission('participants.edit') %}
                 <div class="mb-6">
                     <h4 class="text-sm font-semibold text-gray-700 mb-3">
                         <i class="fas fa-user-plus me-1"></i>Teilnehmer hinzufügen
                     </h4>
                     <form method="POST" action="{{ url_for('participants.add_participant', group_id=group.id) }}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        <textarea name="participant_names" rows="3"
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                                <textarea name="participant_names" rows="3"
+                                                                    class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 text-sm"
                                   placeholder="Namen eingeben (einer pro Zeile)&#10;Max Mustermann&#10;Erika Mustermann"></textarea>
                         <button type="submit"
-                                class="mt-2 flex items-center px-3 py-2 border border-green-300 shadow-sm text-sm font-medium rounded text-green-700 bg-green-50 hover:bg-green-100">
+                                                                class="mt-2 inline-flex items-center rounded-md border border-indigo-300 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100">
                             <i class="fas fa-user-plus me-1"></i>Hinzufügen
                         </button>
                     </form>
                 </div>
+                {% endif %}
 
                 <!-- Beobachtungsaufgaben verwalten -->
                 <div class="mb-6 pb-6 border-b border-gray-200">
@@ -151,12 +156,23 @@
                                 {% for task in group.tasks %}
                                     <div class="bg-white p-3 rounded border border-gray-200 flex items-center justify-between hover:shadow-md transition">
                                         <div class="flex-1">
-                                            <p class="text-sm font-medium text-gray-900">{{ task.title }}</p>
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <p class="text-sm font-medium text-gray-900">{{ task.title }}</p>
+                                                {% if task.observation_area == 'Soziale Kompetenzen' %}
+                                                    <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">Sozial</span>
+                                                {% elif task.observation_area == 'Verbale Kompetenzen' %}
+                                                    <span class="inline-flex items-center rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-700">Verbal</span>
+                                                {% else %}
+                                                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">{{ task.observation_area }}</span>
+                                                {% endif %}
+                                            </div>
                                             <p class="text-xs text-gray-500">
-                                                {{ task.observation_area }} • {{ task.participant_count or '?' }} TN • {{ task.duration_minutes or '?' }} Min
+                                                {{ task.participant_count or '?' }} TN • {{ task.duration_minutes or '?' }} Min
                                             </p>
                                         </div>
+                                        {% if current_user.has_permission('groups.edit') %}
                                         <button type="button" onclick="removeTaskFromGroup({{ group.id }}, {{ task.id }})" class="ml-4 text-red-500 hover:text-red-700 font-bold" title="Aufgabe entfernen">✕</button>
+                                        {% endif %}
                                     </div>
                                 {% endfor %}
                             </div>
@@ -164,25 +180,35 @@
                             <p class="text-sm text-gray-500 italic">Noch keine Aufgaben zugeordnet</p>
                         {% endif %}
                     </div>
-                    <button type="button" onclick="openTaskSelectionModal({{ group.id }})" class="mt-3 flex items-center px-3 py-2 border border-blue-300 shadow-sm text-sm font-medium rounded text-blue-700 bg-blue-50 hover:bg-blue-100">
+                    {% if current_user.has_permission('groups.edit') %}
+                    <button type="button" onclick="openTaskSelectionModal({{ group.id }})" class="mt-3 inline-flex items-center rounded-md border border-indigo-300 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100">
                         <i class="fas fa-plus me-1"></i>Aufgabe hinzufügen
                     </button>
+                    {% endif %}
                 </div>
 
                 <!-- Aktionsbuttons -->
                 <div class="flex flex-wrap gap-2">
+                    {% if current_user.has_permission('groups.edit') %}
                     <button onclick="openEditGroupModal({{ group.id }}, '{{ group.name|e }}', '{{ group.date_from.strftime('%Y-%m-%d') if group.date_from else '' }}', '{{ group.date_to.strftime('%Y-%m-%d') if group.date_to else '' }}', '{{ group.location|e if group.location else '' }}', '{{ group.leitung_fremdeinschatzung|e if group.leitung_fremdeinschatzung else '' }}', '{{ group.leitung_selbsteinschatzung|e if group.leitung_selbsteinschatzung else '' }}', '{{ group.beobachter1|e if group.beobachter1 else '' }}', '{{ group.beobachter2|e if group.beobachter2 else '' }}')"
-                            class="flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
+                            class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
                         <i class="fas fa-edit me-1"></i>Bearbeiten
                     </button>
-                    <form method="POST" action="{{ url_for('groups.delete_group', group_id=group.id) }}"
+                    {% endif %}
+                    <a href="{{ url_for('groups.show_group_participants', group_id=group.id) }}"
+                       class="inline-flex items-center rounded-md border border-indigo-300 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100">
+                        <i class="fas fa-users me-1"></i>Teilnehmer
+                    </a>
+                                        {% if current_user.has_permission('groups.delete') %}
+                                        <form method="POST" action="{{ url_for('groups.delete_group', group_id=group.id) }}"
                           onsubmit="return confirm('Sind Sie sicher, dass Sie die Gruppe &quot;{{ group.name|e }}&quot; und alle zugehörigen Teilnehmer löschen möchten?')"
                           class="inline">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        <button type="submit" class="flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded shadow-sm text-white bg-red-600 hover:bg-red-700">
+                        <button type="submit" class="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700">
                             <i class="fas fa-trash me-1"></i>Löschen
                         </button>
                     </form>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -199,14 +225,17 @@
         <i class="fas fa-users text-gray-400 text-4xl mb-4"></i>
         <h3 class="mt-2 text-sm font-medium text-gray-900">Keine Gruppen</h3>
         <p class="mt-1 text-sm text-gray-500">Erstellen Sie Ihre erste Gruppe, um zu beginnen.</p>
+        {% if current_user.has_permission('groups.edit') %}
         <div class="mt-6">
-            <button onclick="openAddGroupModal()" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+            <button onclick="openAddGroupModal()" class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
                 <i class="fas fa-plus me-2"></i>Neue Gruppe
             </button>
         </div>
+        {% endif %}
     </div>
 {% endif %}
 
+{% if current_user.has_permission('groups.edit') %}
 <!-- Neue Gruppe Modal -->
 <div id="addGroupModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
     <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
@@ -214,53 +243,53 @@
             <h3 class="text-lg font-medium text-gray-900 mb-4">Neue Gruppe erstellen</h3>
             <form method="POST" action="{{ url_for('groups.add_group') }}" class="space-y-4">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                <div class="text-left">
-                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Gruppenname *</label>
-                    <input type="text" id="name" name="name" required
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                </div>
-                <div class="text-left">
-                    <label for="date_from" class="block text-sm font-medium text-gray-700 mb-1">Datum von</label>
-                    <input type="date" id="date_from" name="date_from"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                </div>
-                <div class="text-left">
-                    <label for="date_to" class="block text-sm font-medium text-gray-700 mb-1">Datum bis</label>
-                    <input type="date" id="date_to" name="date_to"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                </div>
-                <div class="text-left">
-                    <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Ort</label>
-                    <input type="text" id="location" name="location"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                </div>
-                <div class="text-left">
-                    <label for="leitung_fremdeinschatzung" class="block text-sm font-medium text-gray-700 mb-1">Leitung (Fremdeinschätzung)</label>
-                    <input type="text" id="leitung_fremdeinschatzung" name="leitung_fremdeinschatzung"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                </div>
-                <div class="text-left">
-                    <label for="leitung_selbsteinschatzung" class="block text-sm font-medium text-gray-700 mb-1">Leitung (Selbsteinschätzung)</label>
-                    <input type="text" id="leitung_selbsteinschatzung" name="leitung_selbsteinschatzung"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                </div>
-                <div class="text-left">
-                    <label for="beobachter1" class="block text-sm font-medium text-gray-700 mb-1">1. Beobachter</label>
-                    <input type="text" id="beobachter1" name="beobachter1"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                </div>
-                <div class="text-left">
-                    <label for="beobachter2" class="block text-sm font-medium text-gray-700 mb-1">2. Beobachter</label>
-                    <input type="text" id="beobachter2" name="beobachter2"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                </div>
+                    <div class="text-left">
+                        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Gruppenname *</label>
+                           <input type="text" id="name" name="name" required
+                               class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500">
+                    </div>
+                    <div class="text-left">
+                        <label for="date_from" class="block text-sm font-medium text-gray-700 mb-1">Datum von</label>
+                           <input type="date" id="date_from" name="date_from"
+                               class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500">
+                    </div>
+                    <div class="text-left">
+                        <label for="date_to" class="block text-sm font-medium text-gray-700 mb-1">Datum bis</label>
+                           <input type="date" id="date_to" name="date_to"
+                               class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500">
+                    </div>
+                    <div class="text-left">
+                        <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Ort</label>
+                           <input type="text" id="location" name="location"
+                               class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500">
+                    </div>
+                    <div class="text-left">
+                        <label for="leitung_fremdeinschatzung" class="block text-sm font-medium text-gray-700 mb-1">Leitung (Fremdeinschätzung)</label>
+                           <input type="text" id="leitung_fremdeinschatzung" name="leitung_fremdeinschatzung"
+                               class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500">
+                    </div>
+                    <div class="text-left">
+                        <label for="leitung_selbsteinschatzung" class="block text-sm font-medium text-gray-700 mb-1">Leitung (Selbsteinschätzung)</label>
+                           <input type="text" id="leitung_selbsteinschatzung" name="leitung_selbsteinschatzung"
+                               class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500">
+                    </div>
+                    <div class="text-left">
+                        <label for="beobachter1" class="block text-sm font-medium text-gray-700 mb-1">1. Beobachter</label>
+                           <input type="text" id="beobachter1" name="beobachter1"
+                               class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500">
+                    </div>
+                    <div class="text-left">
+                        <label for="beobachter2" class="block text-sm font-medium text-gray-700 mb-1">2. Beobachter</label>
+                           <input type="text" id="beobachter2" name="beobachter2"
+                               class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500">
+                    </div>
                 <div class="flex justify-end space-x-3 pt-4">
                     <button type="button" onclick="closeAddGroupModal()"
-                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                            class="inline-flex items-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200">
                         Abbrechen
                     </button>
                     <button type="submit"
-                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                            class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
                         Erstellen
                     </button>
                 </div>
@@ -268,7 +297,9 @@
         </div>
     </div>
 </div>
+{% endif %}
 
+{% if current_user.has_permission('groups.edit') %}
 <!-- Task-Auswahl Modal -->
 <div id="taskSelectionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
     <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
@@ -278,14 +309,16 @@
                 <p class="text-gray-500 italic">Lädt verfügbare Aufgaben...</p>
             </div>
             <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                <button type="button" onclick="closeTaskSelectionModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                <button type="button" onclick="closeTaskSelectionModal()" class="inline-flex items-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200">
                     Abbrechen
                 </button>
             </div>
         </div>
     </div>
 </div>
+{% endif %}
 
+{% if current_user.has_permission('groups.edit') %}
 <!-- Gruppe bearbeiten Modal -->
 <div id="editGroupModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
     <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
@@ -295,51 +328,51 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="text-left">
                     <label for="group_name" class="block text-sm font-medium text-gray-700 mb-1">Gruppenname *</label>
-                    <input type="text" id="group_name" name="group_name" required
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                       <input type="text" id="group_name" name="group_name" required
+                           class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500">
                 </div>
                 <div class="text-left">
                     <label for="group_date_from" class="block text-sm font-medium text-gray-700 mb-1">Datum von</label>
-                    <input type="date" id="group_date_from" name="group_date_from"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                       <input type="date" id="group_date_from" name="group_date_from"
+                           class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500">
                 </div>
                 <div class="text-left">
                     <label for="group_date_to" class="block text-sm font-medium text-gray-700 mb-1">Datum bis</label>
-                    <input type="date" id="group_date_to" name="group_date_to"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                       <input type="date" id="group_date_to" name="group_date_to"
+                           class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500">
                 </div>
                 <div class="text-left">
                     <label for="group_location" class="block text-sm font-medium text-gray-700 mb-1">Ort</label>
-                    <input type="text" id="group_location" name="group_location"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                       <input type="text" id="group_location" name="group_location"
+                           class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500">
                 </div>
                 <div class="text-left">
                     <label for="edit_leitung_fremdeinschatzung" class="block text-sm font-medium text-gray-700 mb-1">Leitung (Fremdeinschätzung)</label>
-                    <input type="text" id="edit_leitung_fremdeinschatzung" name="leitung_fremdeinschatzung"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                       <input type="text" id="edit_leitung_fremdeinschatzung" name="leitung_fremdeinschatzung"
+                           class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500">
                 </div>
                 <div class="text-left">
                     <label for="edit_leitung_selbsteinschatzung" class="block text-sm font-medium text-gray-700 mb-1">Leitung (Selbsteinschätzung)</label>
-                    <input type="text" id="edit_leitung_selbsteinschatzung" name="leitung_selbsteinschatzung"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                       <input type="text" id="edit_leitung_selbsteinschatzung" name="leitung_selbsteinschatzung"
+                           class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500">
                 </div>
                 <div class="text-left">
                     <label for="edit_beobachter1" class="block text-sm font-medium text-gray-700 mb-1">1. Beobachter</label>
-                    <input type="text" id="edit_beobachter1" name="beobachter1"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                       <input type="text" id="edit_beobachter1" name="beobachter1"
+                           class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500">
                 </div>
                 <div class="text-left">
                     <label for="edit_beobachter2" class="block text-sm font-medium text-gray-700 mb-1">2. Beobachter</label>
-                    <input type="text" id="edit_beobachter2" name="beobachter2"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                       <input type="text" id="edit_beobachter2" name="beobachter2"
+                           class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500">
                 </div>
                 <div class="flex justify-end space-x-3 pt-4">
                     <button type="button" onclick="closeEditGroupModal()"
-                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                            class="inline-flex items-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200">
                         Abbrechen
                     </button>
                     <button type="submit"
-                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                            class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
                         Speichern
                     </button>
                 </div>
@@ -347,6 +380,7 @@
         </div>
     </div>
 </div>
+{% endif %}
 
 {% endblock %}
 
@@ -638,7 +672,7 @@ document.addEventListener('DOMContentLoaded', function() {
             div.className = 'px-4 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0';
             const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const regex = new RegExp(`(${escapedTerm})`, 'gi');
-            const highlighted = match.displayName.replace(regex, '<strong class="text-blue-600">$1</strong>');
+            const highlighted = match.displayName.replace(regex, '<strong class="text-indigo-600">$1</strong>');
             div.innerHTML = `<div class="font-medium">${highlighted}</div>`;
             div.addEventListener('click', function() {
                 searchInput.value = match.displayName;
@@ -652,8 +686,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 setTimeout(() => {
                     match.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    match.element.classList.add('ring-2', 'ring-blue-400');
-                    setTimeout(() => match.element.classList.remove('ring-2', 'ring-blue-400'), 2000);
+                    match.element.classList.add('ring-2', 'ring-indigo-400');
+                    setTimeout(() => match.element.classList.remove('ring-2', 'ring-indigo-400'), 2000);
                 }, 300);
             });
             autocompleteResults.appendChild(div);

@@ -13,10 +13,10 @@
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     
     <!-- Neue Gruppe aus Namensliste -->
-    <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
         <div class="mb-4 pb-4 border-b border-gray-200">
             <h3 class="text-lg font-semibold text-gray-900">
-                <i class="fas fa-plus-circle me-2 text-blue-600"></i>Neue Gruppe erstellen
+                <i class="fas fa-plus-circle mr-2 text-indigo-600"></i>Neue Gruppe erstellen
             </h3>
             <p class="text-sm text-gray-600 mt-2">
                 Laden Sie eine einfache Text- oder CSV-Datei mit einem Namen pro Zeile hoch. Es wird automatisch eine neue Gruppe mit diesen Teilnehmern erstellt.
@@ -26,33 +26,33 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="mb-4">
                 <label for="group_name" class="block text-sm font-semibold text-gray-700 mb-2">
-                    <i class="fas fa-folder me-1"></i>Gruppenname
+                    <i class="fas fa-folder mr-1"></i>Gruppenname
                 </label>
                 <input type="text" name="group_name" id="group_name" required 
                        placeholder="z.B. Trainingsgruppe Frühjahr 2025"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition">
             </div>
             <div class="mb-6">
                 <label for="name_file" class="block text-sm font-semibold text-gray-700 mb-2">
-                    <i class="fas fa-file-csv me-1"></i>Namensliste (.txt oder .csv)
+                    <i class="fas fa-file-csv mr-1"></i>Namensliste (.txt oder .csv)
                 </label>
                 <div class="relative">
                     <input type="file" name="name_file" id="name_file" required accept=".txt,.csv" 
-                           class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100 cursor-pointer border border-gray-300 rounded-lg p-2">
+                           class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100 cursor-pointer border border-gray-300 rounded-lg p-2">
                 </div>
                 <p class="text-xs text-gray-500 mt-2">Format: Ein Name pro Zeile (z.B. Max Mustermann)</p>
             </div>
-            <button type="submit" class="w-full py-3 px-4 rounded-lg text-white bg-blue-600 hover:bg-blue-700 font-semibold transition-colors duration-200 flex items-center justify-center">
-                <i class="fas fa-upload me-2"></i>Gruppe erstellen
+            <button type="submit" class="w-full py-3 px-4 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 font-semibold transition-colors duration-200 flex items-center justify-center">
+                <i class="fas fa-upload mr-2"></i>Gruppe erstellen
             </button>
         </form>
     </div>
 
     <!-- Vollständigen Export wiederherstellen -->
-    <div class="bg-white p-6 rounded-lg shadow-md border border-green-200">
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-green-200">
         <div class="mb-4 pb-4 border-b border-gray-200">
             <h3 class="text-lg font-semibold text-gray-900">
-                <i class="fas fa-undo me-2 text-green-600"></i>Backup wiederherstellen
+                <i class="fas fa-undo mr-2 text-green-600"></i>Backup wiederherstellen
             </h3>
             <p class="text-sm text-gray-600 mt-2">
                 Laden Sie eine zuvor exportierte XLSX- oder CSV-Datei hoch, um alle Gruppen, Teilnehmer und deren Daten vollständig wiederherzustellen.
@@ -62,7 +62,7 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="mb-6">
                 <label for="full_export_file" class="block text-sm font-semibold text-gray-700 mb-2">
-                    <i class="fas fa-file-excel me-1"></i>Export-Datei (.xlsx oder .csv)
+                    <i class="fas fa-file-excel mr-1"></i>Export-Datei (.xlsx oder .csv)
                 </label>
                 <div class="relative">
                     <input type="file" name="full_export_file" id="full_export_file" required accept=".xlsx,.csv" 
@@ -71,7 +71,7 @@
                 <p class="text-xs text-gray-500 mt-2">Datei die zuvor mit "Daten exportieren" erstellt wurde</p>
             </div>
             <button type="submit" class="w-full py-3 px-4 rounded-lg text-white bg-green-600 hover:bg-green-700 font-semibold transition-colors duration-200 flex items-center justify-center">
-                <i class="fas fa-download me-2"></i>Daten wiederherstellen
+                <i class="fas fa-download mr-2"></i>Daten wiederherstellen
             </button>
         </form>
     </div>
@@ -79,11 +79,11 @@
 </div>
 
 <!-- Info-Box -->
-<div class="mt-8 p-6 bg-blue-50 border border-blue-200 rounded-lg">
+<div class="mt-8 p-6 bg-indigo-50 border border-indigo-200 rounded-lg">
     <h4 class="text-sm font-semibold text-blue-900 mb-2">
-        <i class="fas fa-info-circle me-2"></i>Hilfe
+        <i class="fas fa-info-circle mr-2"></i>Hilfe
     </h4>
-    <ul class="text-sm text-blue-800 space-y-1">
+    <ul class="text-sm text-indigo-800 space-y-1">
         <li>• <strong>Neue Gruppe:</strong> Perfekt für Import von Teilnehmerlisten (z.B. aus Excel)</li>
         <li>• <strong>Wiederherstellen:</strong> Stellt alle Daten inklusive Bewertungen und Analysen wieder her</li>
         <li>• <strong>CSV-Format:</strong> Muss mit Komma oder Semikolon getrennt sein</li>
@@ -91,8 +91,8 @@
 </div>
 
 <div class="mt-6 pt-6 border-t border-gray-200">
-    <a href="{{ url_for('dashboard') }}" class="inline-flex items-center text-gray-600 hover:text-blue-600 transition-colors">
-        <i class="fas fa-arrow-left me-2"></i>Zurück zum Dashboard
+    <a href="{{ url_for('dashboard') }}" class="inline-flex items-center text-gray-600 hover:text-indigo-600 transition-colors">
+        <i class="fas fa-arrow-left mr-2"></i>Zurück zum Dashboard
     </a>
 </div>
 {% endblock %}

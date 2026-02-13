@@ -3,124 +3,133 @@
 {% block title %}Benutzerverwaltung - Stärkenanalyse{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>
-            <i class="fas fa-users"></i> Benutzerverwaltung
+<div class="mx-auto max-w-6xl px-4 py-6">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <h2 class="text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <i class="fas fa-users text-indigo-600"></i> Benutzerverwaltung
         </h2>
-        <a href="{{ url_for('admin.add_user') }}" class="btn btn-success">
+        <a href="{{ url_for('admin.add_user') }}" class="inline-flex items-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700">
             <i class="fas fa-user-plus"></i> Neuer Benutzer
         </a>
     </div>
 
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% for category, message in messages %}
-            <div class="alert alert-{% if category == 'error' %}danger{% else %}{{ category }}{% endif %} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        {% endfor %}
-    {% endwith %}
-
     {% if session.get('_temp_password') %}
-        <div class="alert alert-warning" role="alert">
-            Initiales Passwort (einmalige Anzeige):
-            <code>{{ session.pop('_temp_password') }}</code>
+        <div class="mb-6 rounded-lg border-2 border-amber-400 bg-amber-50 px-6 py-5 shadow-md" role="alert" id="temp-password-banner">
+            <div class="flex items-start gap-3">
+                <i class="fas fa-exclamation-triangle text-amber-600 text-xl mt-0.5"></i>
+                <div class="flex-1">
+                    <h3 class="text-base font-bold text-amber-900 mb-1">Initiales Passwort — Einmalige Anzeige!</h3>
+                    <p class="text-sm text-amber-800 mb-3">Bitte notieren Sie dieses Passwort und teilen Sie es dem Benutzer mit. Es wird nach Verlassen dieser Seite nicht mehr angezeigt.</p>
+                    <div class="flex items-center gap-3">
+                        <code id="temp-password-value" class="rounded-md bg-white px-4 py-2 text-lg font-bold text-gray-900 border border-amber-300 select-all">{{ session.pop('_temp_password') }}</code>
+                        <button type="button" onclick="copyTempPassword()" class="inline-flex items-center gap-1.5 rounded-md bg-amber-600 px-3 py-2 text-sm font-semibold text-white hover:bg-amber-700 transition-colors" title="In Zwischenablage kopieren">
+                            <i class="fas fa-copy" id="copy-icon"></i>
+                            <span id="copy-text">Kopieren</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
+        <script nonce="{{ csp_nonce }}">
+        document.getElementById('temp-password-banner').scrollIntoView({behavior: 'smooth', block: 'start'});
+        function copyTempPassword() {
+            var pw = document.getElementById('temp-password-value').textContent;
+            navigator.clipboard.writeText(pw).then(function() {
+                document.getElementById('copy-icon').className = 'fas fa-check';
+                document.getElementById('copy-text').textContent = 'Kopiert!';
+                setTimeout(function() {
+                    document.getElementById('copy-icon').className = 'fas fa-copy';
+                    document.getElementById('copy-text').textContent = 'Kopieren';
+                }, 2000);
+            });
+        }
+        </script>
     {% endif %}
 
     <!-- Tabelle -->
     {% if users %}
-    <div class="table-responsive">
-        <table class="table table-hover table-striped">
-            <thead class="table-light">
+    <div class="rounded-lg border border-gray-200 bg-white shadow-sm">
+        <table class="min-w-full divide-y divide-gray-200 text-sm">
+            <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-500">
                 <tr>
-                    <th>E-Mail</th>
-                    <th>Name</th>
-                    <th>Rolle</th>
-                    <th>Gruppen</th>
-                    <th>Status</th>
-                    <th>Letzter Login</th>
-                    <th>Aktionen</th>
+                    <th class="px-4 py-3 text-left">E-Mail</th>
+                    <th class="px-4 py-3 text-left">Name</th>
+                    <th class="px-4 py-3 text-left">Rolle</th>
+                    <th class="px-4 py-3 text-left">Gruppen</th>
+                    <th class="px-4 py-3 text-left">Status</th>
+                    <th class="px-4 py-3 text-left">Letzter Login</th>
+                    <th class="px-4 py-3 text-left">Aktionen</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="divide-y divide-gray-200">
                 {% for user in users %}
-                <tr>
-                    <td>
-                        <code style="font-size: 0.9em;">{{ user.email }}</code>
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3">
+                        <code class="rounded bg-gray-100 px-2 py-1 text-xs text-gray-700">{{ user.email }}</code>
                     </td>
-                    <td>{{ user.full_name }}</td>
-                    <td>
-                        <span class="badge {% if user.is_admin %}bg-danger{% else %}bg-info{% endif %}">
+                    <td class="px-4 py-3 text-gray-900">{{ user.full_name }}</td>
+                    <td class="px-4 py-3">
+                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold {% if user.is_admin %}bg-red-100 text-red-700{% else %}bg-blue-100 text-blue-700{% endif %}">
                             {{ user.role.name | upper }}
                         </span>
                     </td>
-                    <td>
+                    <td class="px-4 py-3">
                         {% if user.groups.count() > 0 %}
-                            <small>{{ user.groups.count() }} Grupp{{ "e" if user.groups.count() == 1 else "en" }}</small>
+                            <span class="text-gray-700">{{ user.groups.count() }} Grupp{{ "e" if user.groups.count() == 1 else "en" }}</span>
                         {% else %}
-                            <small class="text-muted">—</small>
+                            <span class="text-gray-400">—</span>
                         {% endif %}
                     </td>
-                    <td>
+                    <td class="px-4 py-3">
                         {% if user.is_active %}
-                            <span class="badge bg-success">Aktiv</span>
+                            <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">Aktiv</span>
                         {% else %}
-                            <span class="badge bg-secondary">Inaktiv</span>
+                            <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">Inaktiv</span>
                         {% endif %}
                     </td>
-                    <td>
+                    <td class="px-4 py-3 text-gray-700">
                         {% if user.last_login %}
-                            <small>{{ user.last_login | datetimeformat("%d.%m.%Y %H:%M") }}</small>
+                            <span>{{ user.last_login | datetimeformat("%d.%m.%Y %H:%M") }}</span>
                         {% else %}
-                            <small class="text-muted">Nie</small>
+                            <span class="text-gray-400">Nie</span>
                         {% endif %}
                     </td>
-                    <td>
-                        <div class="btn-group btn-group-sm" role="group">
-                            <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" class="btn btn-outline-primary">
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-2">
+                            <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" class="inline-flex items-center rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            
-                            <!-- Dropdown Menu for Actions -->
-                            <div class="btn-group btn-group-sm" role="group">
-                                <button id="btnGroupDrop{{ user.id }}" type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+
+                            <div class="relative">
+                                <button type="button" class="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50" onclick="toggleUserMenu({{ user.id }})">
                                     <i class="fas fa-cogs"></i>
                                 </button>
-                                <ul class="dropdown-menu" aria-labelledby="btnGroupDrop{{ user.id }}">
-                                    <li>
-                                        <form method="POST" action="{{ url_for('admin.reset_password', user_id=user.id) }}" style="display: inline;">
-                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                            <button type="submit" class="dropdown-item" onclick="return confirm('Passwort zurücksetzen?')">
-                                                <i class="fas fa-redo"></i> Passwort zurücksetzen
-                                            </button>
-                                        </form>
-                                    </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                        <form method="POST" action="{{ url_for('admin.toggle_active', user_id=user.id) }}" style="display: inline;">
-                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                            <button type="submit" class="dropdown-item">
-                                                {% if user.is_active %}
-                                                    <i class="fas fa-lock"></i> Deaktivieren
-                                                {% else %}
-                                                    <i class="fas fa-unlock"></i> Aktivieren
-                                                {% endif %}
-                                            </button>
-                                        </form>
-                                    </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                        <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" style="display: inline;">
-                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                            <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Benutzer wirklicherweise löschen?')">
-                                                <i class="fas fa-trash"></i> Löschen
-                                            </button>
-                                        </form>
-                                    </li>
-                                </ul>
+                                <div id="userMenu-{{ user.id }}" class="absolute right-0 mt-2 w-56 rounded-md bg-white shadow-lg ring-1 ring-black/5 hidden z-10">
+                                    <form method="POST" action="{{ url_for('admin.reset_password', user_id=user.id) }}" class="block" onsubmit="return confirm('Passwort zurücksetzen?')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50">
+                                            <i class="fas fa-redo"></i> Passwort zurücksetzen
+                                        </button>
+                                    </form>
+                                    <div class="border-t border-gray-100"></div>
+                                    <form method="POST" action="{{ url_for('admin.toggle_active', user_id=user.id) }}" class="block">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50">
+                                            {% if user.is_active %}
+                                                <i class="fas fa-lock"></i> Deaktivieren
+                                            {% else %}
+                                                <i class="fas fa-unlock"></i> Aktivieren
+                                            {% endif %}
+                                        </button>
+                                    </form>
+                                    <div class="border-t border-gray-100"></div>
+                                    <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" class="block" onsubmit="return confirm('Benutzer wirklicherweise löschen?')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50">
+                                            <i class="fas fa-trash"></i> Löschen
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </td>
@@ -130,13 +139,25 @@
         </table>
     </div>
     {% else %}
-    <div class="alert alert-info">
-        <i class="fas fa-info-circle"></i> Noch keine Benutzer vorhanden.
+    <div class="rounded-md border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-700">
+        <i class="fas fa-info-circle mr-2"></i> Noch keine Benutzer vorhanden.
     </div>
     {% endif %}
 </div>
 
-<!-- Bootstrap JS for Dropdowns -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script nonce="{{ csp_nonce }}">
+function toggleUserMenu(userId) {
+    const menu = document.getElementById(`userMenu-${userId}`);
+    if (!menu) return;
+    menu.classList.toggle('hidden');
+}
 
+document.addEventListener('click', function(e) {
+    document.querySelectorAll('[id^="userMenu-"]').forEach(menu => {
+        if (!menu.contains(e.target) && !menu.previousElementSibling?.contains(e.target)) {
+            menu.classList.add('hidden');
+        }
+    });
+});
+</script>
 {% endblock %}

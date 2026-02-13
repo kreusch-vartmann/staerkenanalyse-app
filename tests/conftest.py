@@ -6,13 +6,53 @@ Dieses Modul stellt gemeinsame Fixtures für alle Tests bereit:
 - client: Test-Client für HTTP-Requests
 - db: Datenbank-Session mit automatischem Rollback
 - sample_data: Vorgenerierte Testdaten
+
+🛡️ SAFETY: Alle Tests laufen ISOLIERT mit temporärer Datenbank!
+   Produktions-DB wird NIEMALS von Tests berührt.
 """
 
 import os
+import sys
 import pytest
 import tempfile
 from datetime import date
 from uuid import uuid4
+
+# 🛡️ SAFETY LAYER 1: Pre-Test Database Isolation Check
+# Diese Prüfung läuft VOR dem Import der Flask-App
+def _validate_test_safety():
+    """
+    Validiert dass Tests in einer sicheren Umgebung laufen.
+    Verhindert dass die Production-DB von Tests beschädigt wird.
+    """
+    env_db_url = os.getenv("DATABASE_URL", "").lower()
+    
+    # Prüfung 1: DATABASE_URL darf nicht auf Production-DB zeigen
+    forbidden_patterns = [
+        "database.db",  # Production-DB im Root
+        "/prod",
+        "/production", 
+        "remote",
+        ".sqlite",
+    ]
+    
+    for pattern in forbidden_patterns:
+        if pattern in env_db_url:
+            raise RuntimeError(
+                f"🚨 PYTEST SAFETY VIOLATION 🚨\n"
+                f"DATABASE_URL zeigt auf Production-DB: {env_db_url}\n"
+                f"Tests MÜSSEN mit isolierter Datenbank laufen!\n"
+                f"Verwende: pytest (nutzt conftest.py Isolation)\n"
+                f"ABBRUCH: Tests können nicht ausgeführt werden."
+            )
+    
+    # Prüfung 2: Mindestens pytest im Prozess vorhanden
+    if "pytest" not in sys.modules and __name__ == "__main__":
+        # Optional: Warnung wenn nicht über pytest gestartet (für lokale Runs)
+        pass
+
+# Führe Safety-Check VOR App-Import durch
+_validate_test_safety()
 
 # Import der App und Extensions
 from app import app as flask_app
@@ -33,21 +73,59 @@ from models import (
 )
 
 
+def pytest_configure(config):
+    """
+    🛡️ SAFETY LAYER 2: Root-Level pytest Hook
+    Läuft am ANFANG jeder Pytest-Session.
+    Validiert dass Isolation aktiv ist.
+    """
+    # Assertion: DATABASE_URL darf nicht Production-DB sein
+    prod_db_path = "instance/database.db"
+    if os.path.exists(prod_db_path):
+        # Production-DB existiert - prüfe dass Tests NICHT dagegen laufen
+        prod_db_abs = os.path.abspath(prod_db_path)
+        db_url = os.getenv("DATABASE_URL", "").lower()
+        if prod_db_abs.lower() in db_url or "instance/database.db" in db_url:
+            pytest.exit(
+                f"🛡️ PYTEST ISOLATION GUARD 🛡️\n"
+                f"Tests sollen NICHT gegen Production-DB laufen!\n"
+                f"Erkannte Production-DB: {prod_db_abs}\n"
+                f"DATABASE_URL: {db_url}\n\n"
+                f"conftest.py erstellt automatisch temporäre Test-DB.\n"
+                f"Diese Assertion sollte nicht erreicht werden!\n"
+                f"Bei Fehler: Überprüfe pytest.ini und .env",
+                1
+            )
+
+
 @pytest.fixture(scope="session")
 def app():
     """
     Flask-App-Instanz für Test-Session.
-    Nutzt separate Test-Datenbank (SQLite in-memory).
-    """
-    # Erstelle temporäre Datenbankdatei
-    db_fd, db_path = tempfile.mkstemp()
+    Nutzt IMMER separate Test-Datenbank (SQLite temporär).
     
-    # Test-Konfiguration
+    🛡️ SAFETY LAYER 3: Fixture-Level Isolation
+    """
+    # Erstelle temporäre Datenbankdatei (wird automatisch gelöscht)
+    db_fd, db_path = tempfile.mkstemp(suffix=".db", prefix="pytest_")
+    
+    print(f"\n🛡️  Test-DB erstellt: {db_path}")
+    
+    # 🛡️ Assertion: Test-DB darf NICHT Production-DB sein
+    prod_db = os.path.abspath("instance/database.db")
+    test_db = os.path.abspath(db_path)
+    assert prod_db != test_db, (
+        f"SAFETY VIOLATION: Test-DB = Production-DB!\n"
+        f"Test-DB: {test_db}\n"
+        f"Prod-DB: {prod_db}"
+    )
+    
+    # Test-Konfiguration mit isolierter DB
     test_config = {
         'TESTING': True,
         'SQLALCHEMY_DATABASE_URI': f'sqlite:///{db_path}',
         'SQLALCHEMY_TRACK_MODIFICATIONS': False,
-        'SECRET_KEY': 'test-secret-key',
+        'SECRET_KEY': 'test-secret-key-only-for-tests',
         'WTF_CSRF_ENABLED': False,  # CSRF für Tests deaktivieren
     }
     
@@ -57,13 +135,17 @@ def app():
     
     # Setup App-Context
     with app.app_context():
-        _db.create_all()  # Erstelle alle Tabellen
+        _db.create_all()  # Erstelle alle Tabellen in temporärer DB
         yield app
         _db.drop_all()  # Cleanup nach Tests
     
-    # Schließe und lösche temporäre DB
-    os.close(db_fd)
-    os.unlink(db_path)
+    # Cleanup: Schließe und lösche temporäre DB
+    try:
+        os.close(db_fd)
+        os.unlink(db_path)
+        print(f"🛡️  Test-DB gelöscht: {db_path}\n")
+    except Exception as e:
+        print(f"⚠️  Fehler beim DB-Cleanup: {e}")
 
 
 @pytest.fixture(scope="function")

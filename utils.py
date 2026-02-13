@@ -255,3 +255,46 @@ def generate_secure_password(length: int = 16) -> str:
     password = "".join(secrets.choice(chars) for _ in range(length))
     
     return password
+
+
+def log_activity(
+    user_id,
+    action,
+    action_label,
+    entity_type,
+    entity_id,
+    entity_label,
+    target_url=None,
+    max_entries=500,
+):
+    """Erstellt einen ActivityLog-Eintrag. Fail-safe: Fehler werden geloggt aber nicht geworfen."""
+    try:
+        from models import ActivityLog
+        from extensions import db
+
+        # Soft-Retention: alte Einträge entfernen (älteste zuerst)
+        existing_count = db.session.scalar(db.select(db.func.count(ActivityLog.id))) or 0
+        overflow = existing_count - (max_entries - 1)
+
+        if overflow > 0:
+            oldest_entries = db.session.scalars(
+                db.select(ActivityLog)
+                .order_by(ActivityLog.created_at.asc(), ActivityLog.id.asc())
+                .limit(overflow)
+            ).all()
+            for old_entry in oldest_entries:
+                db.session.delete(old_entry)
+
+        entry = ActivityLog(
+            user_id=user_id,
+            action=action,
+            action_label=action_label,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            entity_label=entity_label,
+            target_url=target_url,
+        )
+        db.session.add(entry)
+        # Nicht committen — das macht der aufrufende Code
+    except Exception as e:
+        print(f"⚠️ ActivityLog fehlgeschlagen: {e}")

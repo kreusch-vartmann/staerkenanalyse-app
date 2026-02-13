@@ -7,14 +7,14 @@ from flask_login import login_required
 
 from extensions import db
 from models import ExplanationBlock
-from decorators import admin_required
+from decorators import permission_required
 
 explanation_blocks_bp = Blueprint("explanation_blocks", __name__)
 
 
 @explanation_blocks_bp.route("/explanation-blocks")
 @login_required
-@admin_required
+@permission_required("explanation_blocks.manage")
 def manage_explanation_blocks():
     """Zeigt die Seite zur Verwaltung von Textblöcken an."""
     blocks = (
@@ -39,7 +39,7 @@ def manage_explanation_blocks():
 
 @explanation_blocks_bp.route("/explanation-block/add", methods=["GET", "POST"])
 @login_required
-@admin_required
+@permission_required("explanation_blocks.manage")
 def add_explanation_block():
     """Fügt einen neuen Textblock hinzu."""
     if request.method == "POST":
@@ -77,7 +77,7 @@ def add_explanation_block():
     "/explanation-block/edit/<int:block_id>", methods=["GET", "POST"]
 )
 @login_required
-@admin_required
+@permission_required("explanation_blocks.manage")
 def edit_explanation_block(block_id):
     """Bearbeitet einen bestehenden Textblock."""
     block = db.get_or_404(ExplanationBlock, block_id)
@@ -120,7 +120,7 @@ def edit_explanation_block(block_id):
     "/explanation-block/delete/<int:block_id>", methods=["POST"]
 )
 @login_required
-@admin_required
+@permission_required("explanation_blocks.manage")
 def delete_explanation_block(block_id):
     """Löscht einen Textblock."""
     block = db.get_or_404(ExplanationBlock, block_id)

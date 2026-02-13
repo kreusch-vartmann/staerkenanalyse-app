@@ -6,6 +6,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# === CRITICAL: Database Validation BEFORE any DB imports ===
+# Prüft ob die Datenbank intakt ist und stellt sie bei Bedarf wieder her
+# MUSS vor allen anderen Imports stehen!
+import database_validator  # noqa: F401
+
 import os
 import secrets
 from datetime import datetime, timezone
@@ -176,10 +181,10 @@ def dashboard():
         )
     )
 
-    recently_updated = db.session.scalars(
-        db.select(models.Participant)
-        .order_by(models.Participant.updated_at.desc())
-        .limit(5)
+    recent_activities = db.session.scalars(
+        db.select(models.ActivityLog)
+        .order_by(models.ActivityLog.created_at.desc())
+        .limit(10)
     ).all()
 
     stats = {
@@ -218,7 +223,7 @@ def dashboard():
         breadcrumbs=breadcrumbs,
         stats=stats,
         ai_gym_stats=ai_gym_stats,
-        recently_updated_participants=recently_updated,
+        recent_activities=recent_activities,
     )
 
 

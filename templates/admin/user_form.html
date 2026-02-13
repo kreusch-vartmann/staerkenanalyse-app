@@ -3,69 +3,59 @@
 {% block title %}{{ "Benutzer bearbeiten" if user else "Neuer Benutzer" }} - Stärkenanalyse{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-8">
-            <h2>
-                <i class="fas fa-user"></i>
+<div class="mx-auto max-w-6xl px-4 py-6">
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div class="lg:col-span-2">
+            <h2 class="text-3xl font-bold text-gray-900 flex items-center gap-2">
+                <i class="fas fa-user text-indigo-600"></i>
                 {{ "Benutzer bearbeiten" if user else "Neuen Benutzer erstellen" }}
             </h2>
 
-            <!-- Flash Messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{% if category == 'error' %}danger{% else %}{{ category }}{% endif %} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            {% endwith %}
-
             <!-- Form -->
-            <form method="POST" action="{% if user %}{{ url_for('admin.edit_user', user_id=user.id) }}{% else %}{{ url_for('admin.add_user') }}{% endif %}">
+            <form method="POST" action="{% if user %}{{ url_for('admin.edit_user', user_id=user.id) }}{% else %}{{ url_for('admin.add_user') }}{% endif %}" class="mt-6 space-y-6">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 
-                <div class="card mb-3">
-                    <div class="card-header">
-                        <h5 class="mb-0">Persönliche Daten</h5>
+                <div class="rounded-lg border border-gray-200 bg-white shadow-sm">
+                    <div class="border-b border-gray-200 px-6 py-4">
+                        <h5 class="text-sm font-semibold text-gray-900">Persönliche Daten</h5>
                     </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label for="email" class="form-label">E-Mail</label>
-                            <input 
-                                type="email" 
-                                class="form-control" 
-                                id="email" 
-                                name="email" 
+                    <div class="px-6 py-5 space-y-4">
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700">E-Mail</label>
+                            <input
+                                type="email"
+                                id="email"
+                                name="email"
                                 value="{{ user.email if user else '' }}"
                                 {% if user %}readonly{% else %}required{% endif %}
+                                class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
                             >
                             {% if user %}
-                                <small class="form-text text-muted">E-Mail kann nicht geändert werden</small>
+                                <p class="mt-1 text-xs text-gray-500">E-Mail kann nicht geändert werden</p>
                             {% endif %}
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="first_name" class="form-label">Vorname</label>
-                                <input 
-                                    type="text" 
-                                    class="form-control" 
-                                    id="first_name" 
-                                    name="first_name" 
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <label for="first_name" class="block text-sm font-medium text-gray-700">Vorname</label>
+                                <input
+                                    type="text"
+                                    id="first_name"
+                                    name="first_name"
                                     value="{{ user.first_name if user else '' }}"
                                     required
+                                    class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
                                 >
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="last_name" class="form-label">Nachname</label>
-                                <input 
-                                    type="text" 
-                                    class="form-control" 
-                                    id="last_name" 
-                                    name="last_name" 
+                            <div>
+                                <label for="last_name" class="block text-sm font-medium text-gray-700">Nachname</label>
+                                <input
+                                    type="text"
+                                    id="last_name"
+                                    name="last_name"
                                     value="{{ user.last_name if user else '' }}"
                                     required
+                                    class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
                                 >
                             </div>
                         </div>
@@ -73,105 +63,96 @@
                 </div>
 
                 <!-- Rolle -->
-                <div class="card mb-3">
-                    <div class="card-header">
-                        <h5 class="mb-0">Berechtigung</h5>
+                <div class="rounded-lg border border-gray-200 bg-white shadow-sm">
+                    <div class="border-b border-gray-200 px-6 py-4">
+                        <h5 class="text-sm font-semibold text-gray-900">Berechtigung</h5>
                     </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label for="role" class="form-label">Rolle</label>
-                            <select class="form-select" id="role" name="role" required onchange="toggleGroupSelection()">
-                                <option value="">— Bitte wählen —</option>
-                                {% for role in roles %}
-                                    <option 
-                                        value="{{ role.name }}"
-                                        {% if user and user.role.name == role.name %}selected{% elif not user and role.name == 'beobachter' %}selected{% endif %}
-                                    >
-                                        {{ role.name | upper }} - {{ role.description | default("") }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
+                    <div class="px-6 py-5">
+                        <label for="role" class="block text-sm font-medium text-gray-700">Rolle</label>
+                        <select class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500" id="role" name="role" required onchange="toggleGroupSelection()">
+                            <option value="">— Bitte wählen —</option>
+                            {% for role in roles %}
+                                <option
+                                    value="{{ role.name }}"
+                                    data-is-system="{{ 'true' if role.is_system else 'false' }}"
+                                    {% if user and user.role.name == role.name %}selected{% elif not user and role.name == 'beobachter' %}selected{% endif %}
+                                >
+                                    {{ role.name | upper }} - {{ role.description | default("") }}
+                                </option>
+                            {% endfor %}
+                        </select>
                     </div>
                 </div>
 
-                <!-- Gruppen (nur für Beobachter) -->
-                <div class="card mb-3" id="groups-section" style="display: none;">
-                    <div class="card-header">
-                        <h5 class="mb-0">Zugeordnete Gruppen</h5>
+                <!-- Gruppen (für alle nicht-System-Rollen) -->
+                <div class="rounded-lg border border-gray-200 bg-white shadow-sm" id="groups-section" style="display: none;">
+                    <div class="border-b border-gray-200 px-6 py-4">
+                        <h5 class="text-sm font-semibold text-gray-900">Zugeordnete Gruppen</h5>
                     </div>
-                    <div class="card-body">
+                    <div class="px-6 py-5">
                         {% if groups %}
-                            <div class="row">
+                            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 {% for group in groups %}
-                                <div class="col-md-6 mb-2">
-                                    <div class="form-check">
-                                        <input 
-                                            class="form-check-input" 
-                                            type="checkbox" 
-                                            id="group_{{ group.id }}" 
-                                            name="groups" 
-                                            value="{{ group.id }}"
-                                            {% if user and group.id in user_group_ids %}checked{% endif %}
-                                        >
-                                        <label class="form-check-label" for="group_{{ group.id }}">
-                                            <strong>{{ group.name }}</strong>
-                                            <br>
-                                            <small class="text-muted">
-                                                {{ group.date_from | datetimeformat if group.date_from else '' }}
-                                                {% if group.date_from and group.date_to %} bis {% endif %}
-                                                {{ group.date_to | datetimeformat if group.date_to else '' }}
-                                            </small>
-                                        </label>
-                                    </div>
-                                </div>
+                                <label class="flex items-start gap-3 rounded-md border border-gray-200 p-3 hover:bg-gray-50">
+                                    <input
+                                        class="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                        type="checkbox"
+                                        id="group_{{ group.id }}"
+                                        name="groups"
+                                        value="{{ group.id }}"
+                                        {% if user and group.id in user_group_ids %}checked{% endif %}
+                                    >
+                                    <span>
+                                        <span class="block text-sm font-semibold text-gray-900">{{ group.name }}</span>
+                                        <span class="block text-xs text-gray-500">
+                                            {{ group.date_from | datetimeformat if group.date_from else '' }}
+                                            {% if group.date_from and group.date_to %} bis {% endif %}
+                                            {{ group.date_to | datetimeformat if group.date_to else '' }}
+                                        </span>
+                                    </span>
+                                </label>
                                 {% endfor %}
                             </div>
                         {% else %}
-                            <p class="text-muted">Noch keine Gruppen verfügbar.</p>
+                            <p class="text-sm text-gray-500">Noch keine Gruppen verfügbar.</p>
                         {% endif %}
                     </div>
                 </div>
 
                 <!-- Passwort -->
                 {% if not user %}
-                    <!-- Nur bei Neuanlage: automatisches PW wird generiert -->
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i>
+                    <div class="rounded-md border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-700">
+                        <i class="fas fa-info-circle mr-2"></i>
                         Das Passwort wird automatisch generiert und angezeigt. Der Benutzer kann es beim ersten Login ändern.
                     </div>
                 {% else %}
-                    <!-- Beim Bearbeiten: optionales neues PW -->
-                    <div class="card mb-3">
-                        <div class="card-header">
-                            <h5 class="mb-0">Passwort ändern (optional)</h5>
+                    <div class="rounded-lg border border-gray-200 bg-white shadow-sm">
+                        <div class="border-b border-gray-200 px-6 py-4">
+                            <h5 class="text-sm font-semibold text-gray-900">Passwort ändern (optional)</h5>
                         </div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <label for="new_password" class="form-label">Neues Passwort</label>
-                                <input 
-                                    type="password" 
-                                    class="form-control" 
-                                    id="new_password" 
-                                    name="new_password" 
-                                    minlength="8"
-                                    placeholder="Leer = keine Änderung"
-                                >
-                                <small class="form-text text-muted">
-                                    Lassen Sie das Feld leer, um das Passwort nicht zu ändern.
-                                    Mindestlänge: 8 Zeichen.
-                                </small>
-                            </div>
+                        <div class="px-6 py-5">
+                            <label for="new_password" class="block text-sm font-medium text-gray-700">Neues Passwort</label>
+                            <input
+                                type="password"
+                                id="new_password"
+                                name="new_password"
+                                minlength="8"
+                                placeholder="Leer = keine Änderung"
+                                class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+                            >
+                            <p class="mt-1 text-xs text-gray-500">
+                                Lassen Sie das Feld leer, um das Passwort nicht zu ändern. Mindestlänge: 8 Zeichen.
+                            </p>
                         </div>
                     </div>
                 {% endif %}
 
                 <!-- Buttons -->
-                <div class="mb-3">
-                    <button type="submit" class="btn btn-primary">
+                <div class="flex flex-wrap gap-3">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
                         <i class="fas fa-save"></i> {{ "Speichern" if user else "Erstellen" }}
                     </button>
-                    <a href="{{ url_for('admin.manage_users') }}" class="btn btn-secondary">
+                    <a href="{{ url_for('admin.manage_users') }}" class="inline-flex items-center gap-2 rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200">
                         <i class="fas fa-times"></i> Abbrechen
                     </a>
                 </div>
@@ -179,29 +160,36 @@
         </div>
 
         <!-- Info Sidebar -->
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Hinweise</h5>
+        <div>
+            <div class="rounded-lg border border-gray-200 bg-white shadow-sm">
+                <div class="border-b border-gray-200 px-6 py-4">
+                    <h5 class="text-sm font-semibold text-gray-900">Hinweise</h5>
                 </div>
-                <div class="card-body">
-                    <h6>Rollen:</h6>
-                    <dl>
-                        <dt><span class="badge bg-danger">ADMIN</span></dt>
-                        <dd>Zugriff auf alle Funktionen, Benutzerverwaltung</dd>
-                        
-                        <dt><span class="badge bg-info">BEOBACHTER</span></dt>
-                        <dd>Zugriff nur auf zugeordnete Gruppen, kann Beobachtungsdaten und Selbsteinschätzungen eingeben</dd>
-                    </dl>
+                <div class="px-6 py-5 text-sm text-gray-700 space-y-4">
+                    <div>
+                        <h6 class="text-xs font-semibold uppercase text-gray-500">Rollen</h6>
+                        <dl class="mt-2 space-y-3">
+                            <div>
+                                <dt><span class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">ADMIN</span></dt>
+                                <dd class="mt-1 text-xs text-gray-600">Zugriff auf alle Funktionen, Benutzerverwaltung</dd>
+                            </div>
+                            <div>
+                                <dt><span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">BEOBACHTER</span></dt>
+                                <dd class="mt-1 text-xs text-gray-600">Zugriff nur auf zugeordnete Gruppen, kann Beobachtungsdaten und Selbsteinschätzungen eingeben</dd>
+                            </div>
+                        </dl>
+                    </div>
 
-                    <h6 class="mt-4">Passwort:</h6>
-                    <p class="small">
-                        {% if not user %}
-                            Ein sicheres Zufallspasswort (16 Zeichen) wird nach Erstellung angezeigt.
-                        {% else %}
-                            Nach Passwort-Reset wird der Benutzer beim nächsten Login zur Änderung aufgefordert.
-                        {% endif %}
-                    </p>
+                    <div>
+                        <h6 class="text-xs font-semibold uppercase text-gray-500">Passwort</h6>
+                        <p class="mt-2 text-xs text-gray-600">
+                            {% if not user %}
+                                Ein sicheres Zufallspasswort (16 Zeichen) wird nach Erstellung angezeigt.
+                            {% else %}
+                                Nach Passwort-Reset wird der Benutzer beim nächsten Login zur Änderung aufgefordert.
+                            {% endif %}
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -210,14 +198,16 @@
 
 <script nonce="{{ csp_nonce }}">
 function toggleGroupSelection() {
-    const role = document.getElementById('role').value;
+    const roleSelect = document.getElementById('role');
+    const selectedOption = roleSelect.options[roleSelect.selectedIndex];
+    const isSystemRole = selectedOption?.dataset?.isSystem === 'true';
     const groupsSection = document.getElementById('groups-section');
-    
-    if (role === 'beobachter') {
+
+    if (selectedOption && selectedOption.value && !isSystemRole) {
         groupsSection.style.display = 'block';
     } else {
         groupsSection.style.display = 'none';
-        // Deselect all groups for non-observer roles
+        // Deselect all groups for system roles
         document.querySelectorAll('input[name="groups"]').forEach(cb => cb.checked = false);
     }
 }

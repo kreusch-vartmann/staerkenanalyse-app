@@ -1,45 +1,40 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container-fluid mt-4">
-    <div class="row mb-3">
-        <div class="col-md-12">
-            <h2>Report-Vorschau</h2>
-            <p class="text-muted">Teilnehmer: <strong>{{ participant.name }}</strong> | Gruppe: <strong>{{ group.name }}</strong></p>
-            
-            <div class="btn-group mb-3" role="group">
-                <a href="{{ url_for('reports.generate_pdf_report', group_id=group.id, participant_id=participant.id) }}" 
-                   class="btn btn-primary">
-                    📥 Als PDF herunterladen
-                </a>
-                <a href="{{ url_for('reports.configure_report', group_id=group.id) }}" 
-                   class="btn btn-secondary">
-                    ⚙️ Zurück zur Konfiguration
-                </a>
-            </div>
+<div class="mx-auto max-w-6xl px-4 py-6">
+    <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+            <h2 class="text-3xl font-bold text-gray-900">Report-Vorschau</h2>
+            <p class="text-sm text-gray-600">Teilnehmer: <strong>{{ participant.name }}</strong> | Gruppe: <strong>{{ group.name }}</strong></p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ url_for('reports.generate_pdf_report', group_id=group.id, participant_id=participant.id) }}" 
+               class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
+                📥 Als PDF herunterladen
+            </a>
+            <a href="{{ url_for('reports.configure_report', group_id=group.id) }}" 
+               class="inline-flex items-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200">
+                ⚙️ Zurück zur Konfiguration
+            </a>
         </div>
     </div>
 
     {# IFRAME isoliert das Report-HTML komplett von Bootstrap/Tailwind aus base.html.
        Dadurch greifen die Report-eigenen Fonts und CSS korrekt,
        ohne die Systemschrift der App zu verändern. #}
-    <div class="row">
-        <div class="col-md-12">
-            <iframe id="report-preview-frame"
-                    srcdoc="{{ html_content|e }}"
-                    style="width: 100%; border: 1px solid #ccc; border-radius: 4px; background: #e0e0e0;"
-                    sandbox="allow-same-origin"
-                    title="Report-Vorschau"></iframe>
-        </div>
+    <div>
+        <iframe id="report-preview-frame"
+                srcdoc="{{ html_content|e }}"
+                class="w-full rounded-md border border-gray-300 bg-gray-100"
+                sandbox="allow-same-origin"
+                title="Report-Vorschau"></iframe>
     </div>
 
-    <div class="row mt-4">
-        <div class="col-md-12">
-            <a href="{{ url_for('reports.generate_pdf_report', group_id=group.id, participant_id=participant.id) }}" 
-               class="btn btn-primary btn-lg">
-                📥 PDF herunterladen
-            </a>
-        </div>
+    <div class="mt-4">
+        <a href="{{ url_for('reports.generate_pdf_report', group_id=group.id, participant_id=participant.id) }}" 
+           class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
+            📥 PDF herunterladen
+        </a>
     </div>
 </div>
 

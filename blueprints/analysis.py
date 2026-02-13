@@ -19,8 +19,8 @@ from flask_login import login_required, current_user
 from extensions import csrf, db
 from services.ai_client import generate_report_with_ai
 from models import ExplanationBlock, Group, Participant, Prompt, SelfAssessment
-from utils import clean_json_response, get_file_content, sanitize_html, html_to_plaintext
-from decorators import admin_required, group_access_required, participant_access_required, filter_groups_by_access
+from utils import clean_json_response, get_file_content, sanitize_html, html_to_plaintext, log_activity
+from decorators import permission_required, group_access_required, participant_access_required, filter_groups_by_access
 from validation import (
     BatchAnalysisPayload,
     KiPromptForm,
@@ -33,8 +33,10 @@ from validation import (
 # WeasyPrint wird lazy-loaded (unten in den Funktionen) um die App schneller zu starten
 try:
     from weasyprint import HTML
-except Exception:
+    WEASYPRINT_ERROR = None
+except Exception as e:
     HTML = None
+    WEASYPRINT_ERROR = str(e)
 
 analysis_bp = Blueprint("analysis", __name__)
 
@@ -217,6 +219,7 @@ def _normalize_ki_data(ki_data):
 
 @analysis_bp.route("/edit_report/<int:participant_id>")
 @login_required
+@permission_required("analysis.view_reports")
 @participant_access_required
 def edit_report(participant_id):
     """Zeigt die bearbeitbare Version des Berichts an."""
@@ -328,6 +331,7 @@ def edit_report(participant_id):
 
 @analysis_bp.route("/save_report/<int:participant_id>", methods=["POST"])
 @login_required
+@permission_required("analysis.edit_reports")
 @participant_access_required
 def save_report(participant_id):
     """Speichert bearbeitete Berichtsdaten (KI-Analyse)."""
@@ -398,6 +402,18 @@ def save_report(participant_id):
             participant.footer_data = json.dumps(data["footer_data"])
 
         db.session.commit()
+
+        log_activity(
+            user_id=current_user.id,
+            action="report_edited",
+            action_label="Bericht bearbeitet",
+            entity_type="participant",
+            entity_id=participant.id,
+            entity_label=participant.name,
+            target_url=url_for("analysis.edit_report", participant_id=participant.id),
+        )
+        db.session.commit()
+
         return jsonify(
             {"status": "success", "message": "Bericht erfolgreich gespeichert!"}
         )
@@ -407,9 +423,30 @@ def save_report(participant_id):
 
 @analysis_bp.route("/bericht/<int:participant_id>/pdf")
 @login_required
+@permission_required("analysis.view_reports")
 @participant_access_required
 def bericht_pdf(participant_id):
-    """Generiert eine PDF-Version des Berichts serverseitig."""
+    """
+    DEPRECATED: Alte PDF-Generierung (vor Report-System).
+    Generiert eine PDF-Version des Berichts serverseitig.
+    
+    **Stattdessen verwenden:**
+    - reports.standalone_fe_pdf - Nur Fremdeinschätzung
+    - reports.standalone_se_pdf - Nur Selbsteinschätzung  
+    - reports.generate_pdf_report - Vollständiger Abschlussbericht
+    """
+    
+    # Prüfe ob WeasyPrint verfügbar ist
+    if HTML is None:
+        flash(
+            "❌ PDF-Generierung nicht verfügbar: WeasyPrint-Abhängigkeiten fehlen. "
+            "Bitte installieren Sie die erforderlichen System-Bibliotheken (Pango, Cairo). "
+            "Siehe Terminal-Output für Details.",
+            "error"
+        )
+        # Redirect zum HTML-Report
+        return redirect(url_for("analysis.final_report", participant_id=participant_id))
+    
     participant = db.get_or_404(Participant, participant_id)
     group = participant.group
 
@@ -474,7 +511,7 @@ def bericht_pdf(participant_id):
 
 @analysis_bp.route("/ai_analysis/select_group")
 @login_required
-@admin_required
+@permission_required("analysis.run")
 def ai_analysis_select_group():
     """Zeigt die Seite zur Auswahl der Gruppe für die KI-Analyse an."""
     groups = db.session.execute(db.select(Group).order_by(Group.name)).scalars().all()
@@ -489,7 +526,7 @@ def ai_analysis_select_group():
 
 @analysis_bp.route("/ai_analysis/group/<int:group_id>")
 @login_required
-@admin_required
+@permission_required("analysis.run")
 def ai_analysis_select_participants(group_id):
     """Zeigt die Seite zur Auswahl der Teilnehmer für die KI-Analyse an."""
     group = db.get_or_404(Group, group_id)
@@ -509,7 +546,7 @@ def ai_analysis_select_participants(group_id):
 
 @analysis_bp.route("/ai_analysis/configure", methods=["POST"])
 @login_required
-@admin_required
+@permission_required("analysis.run")
 def configure_batch_ai_analysis():
     """Zeigt die Seite zur Konfiguration der KI-Analyse für ausgewählte Teilnehmer."""
     participant_ids = parse_id_list(request.form.getlist("participant_ids"))
@@ -552,7 +589,7 @@ def configure_batch_ai_analysis():
 
 @analysis_bp.route("/ai_analysis/execute", methods=["POST"])
 @login_required
-@admin_required
+@permission_required("analysis.run")
 def execute_batch_ai_analysis():
     """Zeigt den Status der KI-Analyse für ausgewählte Teilnehmer an."""
     participant_ids = parse_id_list(request.form.getlist("participant_ids"))
@@ -598,6 +635,18 @@ def execute_batch_ai_analysis():
         {"text": "Analyse-Status"},
     ]
 
+    for p in participants:
+        log_activity(
+            user_id=current_user.id,
+            action="ki_analysis_started",
+            action_label="KI-Analyse gestartet",
+            entity_type="participant",
+            entity_id=p.id,
+            entity_label=p.name,
+            target_url=url_for("analysis.edit_report", participant_id=p.id),
+        )
+    db.session.commit()
+
     return render_template(
         "ai_analysis_status.html",
         participants=participants,
@@ -612,7 +661,7 @@ def execute_batch_ai_analysis():
 
 @analysis_bp.route("/run_ki_analysis/<int:participant_id>", methods=["POST"])
 @login_required
-@admin_required
+@permission_required("analysis.run")
 def run_ki_analysis(participant_id):
     """Führt die KI-Analyse für einen einzelnen Teilnehmer durch (aus der Dateneingabe)."""
     participant = db.get_or_404(Participant, participant_id)
@@ -774,7 +823,7 @@ def run_ki_analysis(participant_id):
 
 @analysis_bp.route("/api/run_single_analysis/<int:participant_id>", methods=["POST"])
 @login_required
-@admin_required
+@permission_required("analysis.run")
 def run_single_analysis_api(participant_id):
     """API-Endpunkt, um die KI-Analyse für die Batch-Verarbeitung auszuführen."""
     data = request.get_json()
@@ -919,6 +968,7 @@ def run_single_analysis_api(participant_id):
 
 @analysis_bp.route("/foreign-assessments")
 @login_required
+@permission_required("analysis.view_reports")
 def manage_foreign_assessments():
     """Zeigt die Übersicht aller Teilnehmer gruppiert nach Gruppen mit Fremdeinschätzungs-Status an."""
     query = filter_groups_by_access(current_user)
@@ -974,6 +1024,7 @@ def manage_foreign_assessments():
 
 @analysis_bp.route("/final-reports")
 @login_required
+@permission_required("analysis.view_reports")
 def manage_final_reports():
     """Zeigt die Übersicht aller Teilnehmer gruppiert nach Gruppen mit Abschlussberichts-Status an."""
     query = filter_groups_by_access(current_user)
@@ -1045,6 +1096,7 @@ def manage_final_reports():
 
 @analysis_bp.route("/final_report/<int:participant_id>")
 @login_required
+@permission_required("analysis.view_reports")
 @participant_access_required
 def final_report(participant_id):
     """Zeigt den Abschlussbericht für einen Teilnehmer an."""
@@ -1060,6 +1112,7 @@ def final_report(participant_id):
 
 @analysis_bp.route("/final_report/<int:participant_id>/pdf", methods=["POST"])
 @login_required
+@permission_required("analysis.view_reports")
 @participant_access_required
 def final_report_pdf(participant_id):
     """Generiert eine PDF-Version des Abschlussberichts."""

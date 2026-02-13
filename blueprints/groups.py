@@ -8,13 +8,15 @@ from flask_login import current_user, login_required
 
 from extensions import db
 from models import Group, Participant, Task
-from decorators import admin_required, filter_groups_by_access
+from utils import log_activity
+from decorators import permission_required, filter_groups_by_access
 
 groups_bp = Blueprint("groups", __name__)
 
 
 @groups_bp.route("/groups")
 @login_required
+@permission_required("groups.view")
 def manage_groups():
     """Zeigt die Seite zur Verwaltung von Gruppen an."""
     # Filter based on user role: Beobachter only sees assigned groups
@@ -34,12 +36,13 @@ def manage_groups():
 
 @groups_bp.route("/group/<int:group_id>/participants")
 @login_required
+@permission_required("groups.view")
 def show_group_participants(group_id):
     """Zeigt die Teilnehmer einer bestimmten Gruppe an."""
     group = db.get_or_404(Group, group_id)
     
     # Check permission: Admin always allowed, Beobachter only for assigned groups
-    if not current_user.is_admin:
+    if not current_user.role.is_system:
         if not current_user.groups.filter_by(id=group_id).first():
             flash("Sie haben keinen Zugriff auf diese Gruppe.", "error")
             return redirect(url_for("dashboard"))
@@ -61,7 +64,7 @@ def show_group_participants(group_id):
 
 @groups_bp.route("/group/add", methods=["POST"])
 @login_required
-@admin_required
+@permission_required("groups.edit")
 def add_group():
     """Verarbeitet das Hinzufügen einer neuen Gruppe aus dem Formular auf der Hauptseite."""
     date_from_str = request.form.get("date_from")
@@ -87,13 +90,24 @@ def add_group():
     db.session.add(new_group)
     db.session.commit()
 
+    log_activity(
+        user_id=current_user.id,
+        action="group_created",
+        action_label="Gruppe erstellt",
+        entity_type="group",
+        entity_id=new_group.id,
+        entity_label=new_group.name,
+        target_url=url_for("groups.show_group_participants", group_id=new_group.id),
+    )
+    db.session.commit()
+
     flash(f'Gruppe "{new_group.name}" wurde erfolgreich hinzugefügt.', "success")
     return redirect(url_for("groups.manage_groups"))
 
 
 @groups_bp.route("/group/edit/<int:group_id>", methods=["POST"])
 @login_required
-@admin_required
+@permission_required("groups.edit")
 def edit_group(group_id):
     """Verarbeitet die Aktualisierung einer bestehenden Gruppe aus dem Modal."""
     group_to_edit = db.get_or_404(Group, group_id)
@@ -128,7 +142,7 @@ def edit_group(group_id):
 
 @groups_bp.route("/group/delete/<int:group_id>", methods=["POST"])
 @login_required
-@admin_required
+@permission_required("groups.delete")
 def delete_group(group_id):
     """Entfernt eine Gruppe und alle zugehörigen Teilnehmer."""
     group_to_delete = db.get_or_404(Group, group_id)
@@ -146,6 +160,7 @@ def delete_group(group_id):
 
 @groups_bp.route("/api/tasks/available")
 @login_required
+@permission_required("groups.view")
 def get_available_tasks():
     """Gibt alle verfügbaren Aufgaben als JSON zurück (für Drag & Drop UI)."""
     tasks = db.session.scalars(db.select(Task).filter_by(is_active=True).order_by(Task.observation_area, Task.title)).all()
@@ -166,7 +181,7 @@ def get_available_tasks():
 
 @groups_bp.route("/api/groups/<int:group_id>/tasks", methods=["POST"])
 @login_required
-@admin_required
+@permission_required("groups.edit")
 def assign_task_to_group(group_id):
     """Ordnet eine Aufgabe einer Gruppe zu. Max. 1 pro Beobachtungsbereich."""
     group = db.get_or_404(Group, group_id)
@@ -207,7 +222,7 @@ def assign_task_to_group(group_id):
 
 @groups_bp.route("/api/groups/<int:group_id>/tasks/<int:task_id>", methods=["DELETE"])
 @login_required
-@admin_required
+@permission_required("groups.edit")
 def unassign_task_from_group(group_id, task_id):
     """Entfernt die Zuordnung einer Aufgabe von einer Gruppe."""
     group = db.get_or_404(Group, group_id)
@@ -224,6 +239,7 @@ def unassign_task_from_group(group_id, task_id):
 
 @groups_bp.route("/api/groups/<int:group_id>/tasks")
 @login_required
+@permission_required("groups.view")
 def get_group_tasks(group_id):
     """Gibt alle Aufgaben einer Gruppe als JSON zurück."""
     group = db.get_or_404(Group, group_id)

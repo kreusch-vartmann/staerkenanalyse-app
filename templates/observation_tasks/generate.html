@@ -3,86 +3,74 @@
 {% block title %}Aufgabe generieren{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="card-title mb-0">⚡ KI generiert Aufgabenvorschlag...</h4>
-                </div>
+<div class="mx-auto max-w-4xl px-4 py-8">
+    <div class="rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div class="rounded-t-lg bg-indigo-600 px-6 py-4 text-white">
+            <h4 class="text-lg font-semibold">⚡ KI generiert Aufgabenvorschlag...</h4>
+        </div>
+        
+        <div class="px-6 py-8">
+            <!-- KI-Auswahl -->
+            <div id="selectSection">
+                <h5 class="mb-4 text-base font-semibold text-gray-900">Starten Sie die Generierung</h5>
                 
-                <div class="card-body p-5">
-                    <!-- KI-Auswahl -->
-                    <div id="selectSection">
-                        <h5 class="mb-4">Starten Sie die Generierung</h5>
-                        
-                        <form id="generateForm" method="POST" class="mb-4">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <input type="hidden" name="ki_model" id="ki_model_input" value="mistral">
-                        </form>
-                        
-                        <button type="button" class="btn btn-primary btn-lg" onclick="openGenerationModal()">
-                            Generierung starten
-                        </button>
-                    </div>
-                    
-                    <!-- Loading Animation (versteckt bis Generierung startet) -->
-                    <div id="loadingSection" style="display: none; text-center;">
-                        <div class="spinner-border text-primary mb-4" role="status" style="width: 4rem; height: 4rem;">
-                            <span class="visually-hidden">Wird geladen...</span>
-                        </div>
-                        
-                        <h5 class="mb-3">KI-Generierung läuft...</h5>
-                        <p class="text-muted mb-4">
-                            <span id="kiModelDisplay"></span> erstellt einen professionellen Aufgabenvorschlag basierend auf:
-                        </p>
-                        
-                        <div class="row text-start mt-4">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <h6 class="fw-bold">📊 Metadaten</h6>
-                                    <small class="text-muted">
-                                        <div>Bereich: <strong>{{ task.observation_area }}</strong></div>
-                                        <div>Teilnehmer: <strong>{{ task.participant_count }}</strong></div>
-                                        <div>Dauer: <strong>{{ task.duration_minutes }} Min</strong></div>
-                                    </small>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <h6 class="fw-bold">🧠 KI-Kontext</h6>
-                                    <small class="text-muted">
-                                        <div>✓ Best-Practice Knowledge</div>
-                                        <div>✓ Referenz-Aufgaben</div>
-                                        <div>✓ Stärken-Assessment fokussiert</div>
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="mt-4">
-                            <small class="text-muted d-block">
-                                Dies kann 30-60 Sekunden dauern...
-                            </small>
-                        </div>
-                    </div>
-                </div>
+                <form id="generateForm" method="POST" class="mb-4">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="ki_model" id="ki_model_input" value="mistral">
+                </form>
+                
+                <button type="button" class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700" onclick="openGenerationModal()">
+                    Generierung starten
+                </button>
             </div>
             
-            <!-- Tipps -->
-            <div class="card shadow-sm mt-4 border-info">
-                <div class="card-header bg-light">
-                    <h6 class="card-title mb-0">💡 Nächste Schritte</h6>
+            <!-- Loading Animation (versteckt bis Generierung startet) -->
+            <div id="loadingSection" class="text-center" style="display: none;">
+                <div class="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" role="status" aria-label="Wird geladen"></div>
+                
+                <h5 class="mb-3 text-base font-semibold text-gray-900">KI-Generierung läuft...</h5>
+                <p class="text-sm text-gray-600 mb-4">
+                    <span id="kiModelDisplay"></span> erstellt einen professionellen Aufgabenvorschlag basierend auf:
+                </p>
+                
+                <div class="grid grid-cols-1 gap-4 text-left md:grid-cols-2">
+                    <div>
+                        <h6 class="text-sm font-semibold text-gray-900">📊 Metadaten</h6>
+                        <div class="mt-2 text-sm text-gray-600 space-y-1">
+                            <div>Bereich: <strong>{{ task.observation_area }}</strong></div>
+                            <div>Teilnehmer: <strong>{{ task.participant_count }}</strong></div>
+                            <div>Dauer: <strong>{{ task.duration_minutes }} Min</strong></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h6 class="text-sm font-semibold text-gray-900">🧠 KI-Kontext</h6>
+                        <div class="mt-2 text-sm text-gray-600 space-y-1">
+                            <div>✓ Best-Practice Knowledge</div>
+                            <div>✓ Referenz-Aufgaben</div>
+                            <div>✓ Stärken-Assessment fokussiert</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body small">
-                    <ol class="mb-0">
-                        <li>KI-Vorschlag wird angezeigt</li>
-                        <li>Im Editor anpassen und verfeinern</li>
-                        <li>Im Chat-Panel mit KI iterieren (optional)</li>
-                        <li>Speichern und Aufgabe ist einsatzbereit</li>
-                    </ol>
+                
+                <div class="mt-4 text-xs text-gray-500">
+                    Dies kann 30-60 Sekunden dauern...
                 </div>
             </div>
+        </div>
+    </div>
+    
+    <!-- Tipps -->
+    <div class="mt-6 rounded-lg border border-indigo-200 bg-indigo-50">
+        <div class="border-b border-indigo-200 px-4 py-3">
+            <h6 class="text-sm font-semibold text-indigo-700">💡 Nächste Schritte</h6>
+        </div>
+        <div class="px-4 py-4 text-sm text-indigo-900">
+            <ol class="list-decimal pl-5 space-y-1">
+                <li>KI-Vorschlag wird angezeigt</li>
+                <li>Im Editor anpassen und verfeinern</li>
+                <li>Im Chat-Panel mit KI iterieren (optional)</li>
+                <li>Speichern und Aufgabe ist einsatzbereit</li>
+            </ol>
         </div>
     </div>
 </div>
@@ -117,9 +105,4 @@ function startGenerationWithModel(kiModel) {
 }
 </script>
 
-<style>
-.spinner-border {
-    color: #0d6efd !important;
-}
-</style>
 {% endblock %}

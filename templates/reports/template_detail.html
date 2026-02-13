@@ -1,23 +1,23 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container-fluid mt-4">
-    <div class="row mb-3">
-        <div class="col-md-12">
-            <h2>Template: {{ template.name }}</h2>
-            <p class="text-muted">{{ template.description or 'Keine Beschreibung' }}</p>
-        </div>
+<div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+    <div class="mb-6">
+        <h2 class="text-3xl font-bold text-gray-900">Template: {{ template.name }}</h2>
+        <p class="text-sm text-gray-600">{{ template.description or 'Keine Beschreibung' }}</p>
     </div>
 
-    <div class="row">
-        <div class="col-md-6">
-            <h5>Design-Konfiguration</h5>
-            <table class="table table-sm table-bordered">
-                <tbody>
+    <div class="rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div class="border-b border-gray-200 px-6 py-4">
+            <h5 class="text-sm font-semibold text-gray-900">Design-Konfiguration</h5>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+                <tbody class="divide-y divide-gray-200">
                     {% for key, value in design_config.items() %}
                     <tr>
-                        <th>{{ key }}</th>
-                        <td>{{ value }}</td>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">{{ key }}</th>
+                        <td class="px-6 py-3 text-gray-700">{{ value }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -25,7 +25,7 @@
         </div>
     </div>
 
-    <a href="{{ url_for('reports.list_templates') }}" class="btn btn-secondary">
+    <a href="{{ url_for('reports.list_templates') }}" class="mt-4 inline-flex items-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200">
         ← Zurück zur Liste
     </a>
 </div>

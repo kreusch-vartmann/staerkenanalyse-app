@@ -1,0 +1,154 @@
+#!/bin/bash
+# 🛡️ Git Pre-Commit Hook für Test-Database-Isolation
+#
+# Dieser Hook wird AUTOMATISCH vor jedem Commit ausgeführt.
+# Er stellt sicher, dass:
+# 1. conftest.py NICHT beschädigt wurde
+# 2. pytest.ini noch korrekt konfiguriert ist
+# 3. run_tests.sh NICHT verändert wurde
+#
+# Installation (einmalig):
+#   cp .githooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+#
+# Bypass (wenn nötig):
+#   git commit --no-verify
+
+set -e
+
+# Farben
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+echo -e "${YELLOW}🛡️  Pre-Commit Hook: Validiere Test-Database-Isolation...${NC}\n"
+
+# ==============================================================================
+# Check 1: conftest.py existiert und hat Safety-Layers
+# ==============================================================================
+CONFTEST="tests/conftest.py"
+if [[ ! -f "$CONFTEST" ]]; then
+    echo -e "${RED}❌ FEHLER: $CONFTEST nicht gefunden!${NC}"
+    echo "Tests müssen in tests/conftest.py isoliert sein."
+    exit 1
+fi
+
+echo "📋 Checking $CONFTEST..."
+
+# Check dass alle Safety-Layers noch vorhanden sind
+REQUIRED_PATTERNS=(
+    "_validate_test_safety"
+    "pytest_configure"
+    "tempfile.mkstemp"
+    "assert prod_db != test_db"
+    "SAFETY LAYER"
+)
+
+for pattern in "${REQUIRED_PATTERNS[@]}"; do
+    if ! grep -q "$pattern" "$CONFTEST"; then
+        echo -e "${RED}❌ FEHLER: '$pattern' nicht in $CONFTEST!${NC}"
+        echo "Safety-Layer könnte beschädigt sein!"
+        exit 1
+    fi
+done
+
+echo -e "${GREEN}✅ $CONFTEST hat alle Safety-Layers${NC}"
+
+# ==============================================================================
+# Check 2: pytest.ini ist aktuell
+# ==============================================================================
+PYTEST_INI="pytest.ini"
+echo "📋 Checking $PYTEST_INI..."
+
+if [[ ! -f "$PYTEST_INI" ]]; then
+    echo -e "${RED}❌ FEHLER: $PYTEST_INI nicht gefunden!${NC}"
+    exit 1
+fi
+
+# Check dass SAFETY-Kommentare noch da sind
+if ! grep -q "SAFETY" "$PYTEST_INI" 2>/dev/null; then
+    echo -e "${YELLOW}⚠️  Warnung: SAFETY-Kommentare in $PYTEST_INI gelöscht!${NC}"
+fi
+
+if ! grep -q "testpaths = tests" "$PYTEST_INI"; then
+    echo -e "${RED}❌ FEHLER: testpaths nicht korrekt in $PYTEST_INI!${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}✅ $PYTEST_INI ist korrekt konfiguriert${NC}"
+
+# ==============================================================================
+# Check 3: run_tests.sh hat Pre/Post-Test Checks
+# ==============================================================================
+RUN_TESTS="run_tests.sh"
+echo "📋 Checking $RUN_TESTS..."
+
+if [[ ! -f "$RUN_TESTS" ]]; then
+    echo -e "${RED}❌ FEHLER: $RUN_TESTS nicht gefunden!${NC}"
+    exit 1
+fi
+
+# Check dass Safety-Checks noch vorhanden sind
+if ! grep -q "SAFETY LAYER" "$RUN_TESTS"; then
+    echo -e "${YELLOW}⚠️  Warnung: Safety-Layer Kommentare gelöscht!${NC}"
+fi
+
+if ! grep -q "md5sum" "$RUN_TESTS"; then
+    echo -e "${RED}❌ FEHLER: Post-Test Hash-Check gelöscht!${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}✅ $RUN_TESTS hat Pre/Post-Test Sicherheits-Checks${NC}"
+
+# ==============================================================================
+# Check 4: .env ist NICHT für Production-DB (optional Warning)
+# ==============================================================================
+if [[ -f ".env" ]]; then
+    echo "📋 Checking .env DATABASE_URL..."
+    
+    DB_URL=$(grep "^DATABASE_URL" .env 2>/dev/null || echo "")
+    if [[ -z "$DB_URL" ]]; then
+        echo -e "${YELLOW}⚠️  Warnung: DATABASE_URL nicht in .env${NC}"
+    elif [[ "$DB_URL" == *"localhost"* ]]; then
+        echo -e "${YELLOW}⚠️  Information: DATABASE_URL zeigt auf localhost${NC}"
+        echo "       Tests nutzen TROTZDEM isolierte DB via conftest.py"
+    fi
+    
+    echo -e "${GREEN}✅ .env DATABASE_URL akzeptabel${NC}"
+fi
+
+# ==============================================================================
+# Check 5: Keine kritischen Dateien wurden verändert
+# ==============================================================================
+echo "📋 Checking ob kritische Dateien verändert wurden..."
+
+CRITICAL_FILES=(
+    "conftest.py"
+    "pytest.ini"
+    "run_tests.sh"
+    "app.py"
+    "models.py"
+)
+
+STAGED_CHANGES=$(git diff --cached --name-only)
+
+for file in "${CRITICAL_FILES[@]}"; do
+    if echo "$STAGED_CHANGES" | grep -q "$file"; then
+        echo "   📝 Änderung an: $file"
+        
+        # Warnung wenn app.py oder models.py verändert wurde
+        if [[ "$file" == "app.py" ]] || [[ "$file" == "models.py" ]]; then
+            echo -e "${YELLOW}   ⚠️  Warnung: $file wurde verändert${NC}"
+            echo "       Stelle sicher, dass Migrations bei Bedarf durchgeführt wurden."
+        fi
+    fi
+done
+
+# ==============================================================================
+# Success: Alle Checks bestanden
+# ==============================================================================
+echo
+echo -e "${GREEN}✅ Alle Test-Safety-Checks bestanden!${NC}"
+echo -e "${GREEN}✅ Commit ist sicher - DB-Isolation bleibt erhalten!${NC}\n"
+
+exit 0

@@ -34,6 +34,13 @@ user_groups = db.Table(
     db.Column("group_id", db.Integer, db.ForeignKey("groups.id"), primary_key=True),
 )
 
+# Role ↔ Permission
+role_permissions = db.Table(
+    "role_permissions",
+    db.Column("role_id", db.Integer, db.ForeignKey("roles.id"), primary_key=True),
+    db.Column("permission_id", db.Integer, db.ForeignKey("permissions.id"), primary_key=True),
+)
+
 # Group ↔ Task (Aufgaben einer Gruppe)
 group_tasks = db.Table(
     "group_tasks",
@@ -50,12 +57,35 @@ class Role(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False, unique=True)
     description = db.Column(db.Text, nullable=True)
+    is_system = db.Column(db.Boolean, default=False)
 
     # Relationship
     users = db.relationship("User", back_populates="role")
+    permissions = db.relationship("Permission", secondary=role_permissions, back_populates="roles")
+
+    def has_permission(self, codename):
+        """Prüft ob die Rolle eine bestimmte Berechtigung hat."""
+        if self.is_system:
+            return True
+        return any(p.codename == codename for p in self.permissions)
 
     def __repr__(self):
         return f"<Role {self.name}>"
+
+
+class Permission(db.Model):
+    """Einzelne Berechtigung für RBAC."""
+
+    __tablename__ = "permissions"
+    id = db.Column(db.Integer, primary_key=True)
+    codename = db.Column(db.String(100), nullable=False, unique=True)
+    description = db.Column(db.String(200), nullable=True)
+    category = db.Column(db.String(50), nullable=True)
+
+    roles = db.relationship("Role", secondary=role_permissions, back_populates="permissions")
+
+    def __repr__(self):
+        return f"<Permission {self.codename}>"
 
 
 class User(UserMixin, db.Model):
@@ -102,7 +132,13 @@ class User(UserMixin, db.Model):
     @property
     def is_admin(self) -> bool:
         """Prüft ob der Benutzer Admin ist."""
+        if self.role and self.role.is_system:
+            return True
         return self.role.name.lower() == "admin"
+
+    def has_permission(self, codename):
+        """Prüft ob der User die angegebene Berechtigung hat."""
+        return self.role.has_permission(codename)
 
     @property
     def full_name(self) -> str:
@@ -568,3 +604,22 @@ class LearnedPromptRule(db.Model):
     
     def __repr__(self):
         return f"<LearnedPromptRule {self.type}/{self.rule_type} (confidence: {self.confidence:.2f})>"
+
+
+class ActivityLog(db.Model):
+    """Protokolliert Benutzeraktionen für das Dashboard-Aktivitätsfeed."""
+    __tablename__ = "activity_log"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    action = db.Column(db.String(100), nullable=False)  # z.B. "fremdeinschätzung_bearbeitet"
+    action_label = db.Column(db.String(200), nullable=False)  # Anzeige, z.B. "Fremdeinschätzung bearbeitet"
+    entity_type = db.Column(db.String(50), nullable=False)  # "participant", "group", "task" etc.
+    entity_id = db.Column(db.Integer, nullable=True)
+    entity_label = db.Column(db.String(200), nullable=False)  # z.B. "Hans Wurst"
+    target_url = db.Column(db.String(500), nullable=True)  # Link zum Arbeitskontext
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc), index=True)
+
+    user = db.relationship("User", backref="activity_logs")
+
+    def __repr__(self):
+        return f"<ActivityLog {self.action} by user {self.user_id}>"

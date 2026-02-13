@@ -5,13 +5,23 @@ from app import app, db
 import models
 
 with app.app_context():
-    # Check if admin role exists
-    admin_role = db.session.scalar(db.select(models.Role).where(models.Role.name == "Admin"))
-    if not admin_role:
-        admin_role = models.Role(name="Admin", description="Administrator mit vollen Rechten")
-        db.session.add(admin_role)
-        db.session.commit()
-        print("✅ Admin-Rolle erstellt")
+    # Ensure default roles exist
+    default_roles = [
+        ("admin", "Vollzugriff auf alle Funktionen"),
+        ("beobachter", "Zugriff auf zugewiesene Gruppen"),
+    ]
+    for role_name, role_desc in default_roles:
+        existing = db.session.scalar(
+            db.select(models.Role).where(db.func.lower(models.Role.name) == role_name.lower())
+        )
+        if not existing:
+            db.session.add(models.Role(name=role_name, description=role_desc))
+            print(f"✅ Rolle '{role_name}' erstellt")
+    db.session.commit()
+
+    admin_role = db.session.scalar(
+        db.select(models.Role).where(db.func.lower(models.Role.name) == "admin")
+    )
     
     # Check if admin user exists
     admin_email = "admin@testlocal.de"

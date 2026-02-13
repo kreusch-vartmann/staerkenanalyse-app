@@ -14,7 +14,7 @@ from extensions import csrf, db
 from services.task_generator import generate_task
 from services.task_refinement import refine_task_content
 from models import Task, TaskVersion, User
-from decorators import admin_required
+from decorators import permission_required
 from services import get_target_group_options
 from validation import (
     TaskChatPayload,
@@ -99,7 +99,7 @@ EXAMPLE_TASKS = {
 
 @observation_tasks_bp.route("/")
 @login_required
-@admin_required
+@permission_required("observation_tasks.view")
 def task_library():
     """Übersicht aller Beobachtungsaufgaben (mit Beispielen)."""
     page = request.args.get("page", 1, type=int)
@@ -118,7 +118,7 @@ def task_library():
 
 @observation_tasks_bp.route("/neu", methods=["GET", "POST"])
 @login_required
-@admin_required
+@permission_required("observation_tasks.manage")
 def create_task():
     """
     Schritt 1: Formular für neue Aufgabe
@@ -186,7 +186,7 @@ def create_task():
 
 @observation_tasks_bp.route("/<int:task_id>/generieren", methods=["POST"])
 @login_required  
-@admin_required
+@permission_required("observation_tasks.manage")
 def generate(task_id):
     """
     Schritt 2: KI generiert Aufgabenvorschlag basierend auf Metadaten
@@ -268,7 +268,7 @@ def generate(task_id):
 
 @observation_tasks_bp.route("/<int:task_id>/bearbeiten", methods=["GET", "POST"])
 @login_required
-@admin_required
+@permission_required("observation_tasks.manage")
 def edit(task_id):
     """
     Schritt 3: Editor + Chat-Integration
@@ -285,7 +285,7 @@ def edit(task_id):
 
 @observation_tasks_bp.route("/<int:task_id>/verwerfen", methods=["POST"])
 @login_required
-@admin_required
+@permission_required("observation_tasks.manage")
 def discard_task(task_id):
     """Verwirft die aktuelle Aufgabe (Erstellung abbrechen) und führt zur Übersicht zurück."""
     task = db.get_or_404(Task, task_id)
@@ -303,7 +303,7 @@ def discard_task(task_id):
 
 @observation_tasks_bp.route("/<int:task_id>/löschen", methods=["POST"])
 @login_required
-@admin_required
+@permission_required("observation_tasks.manage")
 def delete_task(task_id):
     """Lösche eine Aufgabe."""
     task = db.get_or_404(Task, task_id)
@@ -326,7 +326,7 @@ def delete_task(task_id):
 
 @observation_tasks_bp.route("/<int:task_id>/versions", methods=["GET"])
 @login_required
-@admin_required
+@permission_required("observation_tasks.view")
 def versions(task_id):
     """Liste aller Versionen einer Aufgabe."""
     task = db.get_or_404(Task, task_id)
@@ -356,7 +356,7 @@ def versions(task_id):
 
 @observation_tasks_bp.route("/<int:task_id>/speichern", methods=["POST"])
 @login_required
-@admin_required
+@permission_required("observation_tasks.manage")
 def save_version(task_id):
     """Speichere aktuelle Editor-Version als neue Taskversion."""
     task = db.get_or_404(Task, task_id)
@@ -442,7 +442,7 @@ def save_version(task_id):
 
 @observation_tasks_bp.route("/<int:task_id>/chat", methods=["POST"])
 @login_required
-@admin_required
+@permission_required("observation_tasks.manage")
 def chat_message(task_id):
     """Chat-Iteration: Nutzer schreibt Anfrage, KI verfeinert Aufgabe."""
     task = db.get_or_404(Task, task_id)
@@ -474,7 +474,7 @@ def chat_message(task_id):
 
 @observation_tasks_bp.route("/<int:task_id>/beispiel/<example_key>", methods=["GET"])
 @login_required
-@admin_required
+@permission_required("observation_tasks.view")
 def view_example(task_id, example_key):
     """Zeige Beispiel-Aufgabe an."""
     if example_key not in EXAMPLE_TASKS:

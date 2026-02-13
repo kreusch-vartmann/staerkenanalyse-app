@@ -14,7 +14,7 @@ from flask_login import login_required, current_user
 from blueprints.data_import import import_participants_from_export
 from extensions import db
 from models import Group, Participant
-from utils import validate_upload_file
+from utils import validate_upload_file, log_activity
 from validation import (
     DataEntrySearchQuery,
     ExportDataForm,
@@ -24,7 +24,7 @@ from validation import (
     parse_observations,
 )
 from version import EXPORT_SCHEMA_VERSION
-from decorators import admin_required, group_access_required, participant_access_required, filter_groups_by_access
+from decorators import permission_required, group_access_required, participant_access_required, filter_groups_by_access
 
 data_io_bp = Blueprint("data_io", __name__)
 
@@ -155,6 +155,7 @@ def generate_csv_export(participants):
 
 @data_io_bp.route("/data-entry/rework")
 @login_required
+@permission_required("data_entry.view")
 def data_entry_rework():
     """Zeigt die kombinierte Auswahl- und Eingabeseite für Beobachtungen."""
     query = filter_groups_by_access(current_user)
@@ -170,6 +171,7 @@ def data_entry_rework():
 
 @data_io_bp.route("/data-entry/search", methods=["GET"])
 @login_required
+@permission_required("data_entry.view")
 def data_entry_search():
     """Zeigt eine Suchseite für Teilnehmer an und verarbeitet die Suche."""
     raw_query = request.args.get("query")
@@ -214,6 +216,7 @@ def data_entry_search():
 
 @data_io_bp.route("/api/group/<int:group_id>/participants")
 @login_required
+@permission_required("data_entry.view")
 @group_access_required
 def api_get_participants_by_group(group_id):
     """Liefert Teilnehmer einer Gruppe als JSON."""
@@ -224,6 +227,7 @@ def api_get_participants_by_group(group_id):
 
 @data_io_bp.route("/api/participant/<int:participant_id>/observations")
 @login_required
+@permission_required("data_entry.view")
 @participant_access_required
 def api_get_observations(participant_id):
     """Liefert die Beobachtungen eines Teilnehmers als JSON."""
@@ -235,6 +239,7 @@ def api_get_observations(participant_id):
 
 @data_io_bp.route("/save_observations/<int:participant_id>", methods=["POST"])
 @login_required
+@permission_required("data_entry.edit")
 @participant_access_required
 def save_observations_api(participant_id):
     """Speichert die Beobachtungen für einen Teilnehmer (API-Endpunkt)."""
@@ -246,6 +251,18 @@ def save_observations_api(participant_id):
 
     participant.observations = json.dumps(observations)
     db.session.commit()
+
+    log_activity(
+        user_id=current_user.id,
+        action="data_entry_saved",
+        action_label="Beobachtungsdaten erfasst",
+        entity_type="participant",
+        entity_id=participant.id,
+        entity_label=participant.name,
+        target_url=url_for("participants.show_data_entry", participant_id=participant.id),
+    )
+    db.session.commit()
+
     return jsonify({"status": "success", "message": "Beobachtungen gespeichert!"})
 
 
@@ -254,7 +271,7 @@ def save_observations_api(participant_id):
 
 @data_io_bp.route("/import")
 @login_required
-@admin_required
+@permission_required("import.run")
 def import_page():
     """Zeigt die Import-Seite an."""
     breadcrumbs = [
@@ -266,7 +283,7 @@ def import_page():
 
 @data_io_bp.route("/import/names", methods=["POST"])
 @login_required
-@admin_required
+@permission_required("import.run")
 def import_names():
     """Importiert Namen aus einer Datei in eine neue Gruppe."""
     form_data = {"group_name": request.form.get("group_name", "")}
@@ -320,7 +337,7 @@ def import_names():
 
 @data_io_bp.route("/import/full", methods=["POST"])
 @login_required
-@admin_required
+@permission_required("import.run")
 def import_full():
     """Importiert einen vollständigen Export (mit Schema-Versions-Check)."""
     file = request.files.get("full_export_file")
@@ -351,7 +368,7 @@ def import_full():
 
 @data_io_bp.route("/export_selection")
 @login_required
-@admin_required
+@permission_required("export.run")
 def export_selection():
     """Zeigt die Seite zur Auswahl der zu exportierenden Teilnehmer an."""
     query = filter_groups_by_access(current_user)
@@ -368,7 +385,7 @@ def export_selection():
 
 @data_io_bp.route("/export_data", methods=["POST"])
 @login_required
-@admin_required
+@permission_required("export.run")
 def export_data():
     """Exportiert die ausgewählten Teilnehmerdaten als Excel oder CSV."""
     form_data = {

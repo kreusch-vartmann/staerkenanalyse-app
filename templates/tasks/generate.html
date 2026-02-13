@@ -21,12 +21,12 @@
         border-radius: 4px;
     }
     .message.user {
-        background: #e3f2fd;
+            background: #eef2ff;
         text-align: right;
         margin-left: 20%;
     }
     .message.ai {
-        background: #f5f5f5;
+            background: #f3f4f6;
         margin-right: 20%;
     }
     .ql-toolbar {
@@ -42,20 +42,21 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
+<div class="mx-auto max-w-6xl px-4 py-6">
     {# Breadcrumbs #}
     {% if breadcrumbs %}
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
+    <nav class="mb-4" aria-label="Breadcrumb">
+        <ol class="flex items-center gap-2 text-sm text-gray-500">
             {% for crumb in breadcrumbs %}
-                {% if crumb.link %}
-                    <li class="breadcrumb-item">
-                        <a href="{{ crumb.link }}">{{ crumb.text }}</a>
-                    </li>
-                {% else %}
-                    <li class="breadcrumb-item active" aria-current="page">
-                        {{ crumb.text }}
-                    </li>
+                <li>
+                    {% if crumb.link %}
+                        <a class="hover:text-indigo-600" href="{{ crumb.link }}">{{ crumb.text }}</a>
+                    {% else %}
+                        <span class="text-gray-700 font-medium">{{ crumb.text }}</span>
+                    {% endif %}
+                </li>
+                {% if not loop.last %}
+                    <li class="text-gray-300">/</li>
                 {% endif %}
             {% endfor %}
         </ol>
@@ -63,21 +64,21 @@
     {% endif %}
 
     {# Header #}
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>{% if task %}Edit: {{ task.title }}{% else %}Create New Task{% endif %}</h1>
-        <a href="{{ url_for('tasks.task_library') }}" class="btn btn-secondary">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">{% if task %}Edit: {{ task.title }}{% else %}Create New Task{% endif %}</h1>
+        <a href="{{ url_for('tasks.task_library') }}" class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
             &times; Close
         </a>
     </div>
 
-    <div class="row">
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {# Left Column: Chat Interface #}
-        <div class="col-lg-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">AI Assistant</h5>
+        <div class="lg:col-span-1">
+            <div class="rounded-lg border border-gray-200 bg-white shadow-sm h-full">
+                <div class="border-b border-gray-200 bg-indigo-600 px-4 py-3 text-white">
+                    <h5 class="text-sm font-semibold">AI Assistant</h5>
                 </div>
-                <div class="card-body d-flex flex-column" style="max-height: calc(100vh - 250px);">
+                <div class="flex flex-col p-4" style="max-height: calc(100vh - 250px);">
                     {# Chat Messages #}
                     <div id="chatContainer" class="flex-grow-1 mb-3">
                         {% if task %}
@@ -92,59 +93,59 @@
                     </div>
 
                     {# Message Input #}
-                    <div class="input-group">
-                        <input type="text" id="chatInput" class="form-control" 
+                    <div class="flex gap-2">
+                        <input type="text" id="chatInput" aria-label="Nachricht eingeben" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500" 
                                placeholder="Ask to modify, add, or change..." 
                                autocomplete="off">
-                        <button class="btn btn-primary" type="button" id="sendBtn" onclick="sendMessage()">
+                        <button class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700" type="button" id="sendBtn" onclick="sendMessage()">
                             <i class="fas fa-paper-plane"></i>
                         </button>
                     </div>
 
                     {# Save as Version Button #}
-                    <button class="btn btn-success btn-sm mt-3 w-100" onclick="saveVersion()">
-                        <i class="fas fa-save"></i> Save as Version
+                    <button class="mt-3 w-full rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-700" onclick="saveVersion()">
+                        <i class="fas fa-save mr-2"></i> Save as Version
                     </button>
                 </div>
             </div>
         </div>
 
         {# Right Column: Task Metadata + Rich Editor #}
-        <div class="col-lg-8">
+        <div class="lg:col-span-2">
             {# Task Metadata Card #}
-            <div class="card shadow-sm mb-3">
-                <div class="card-header">
-                    <h5 class="mb-0">Task Metadata</h5>
+            <div class="rounded-lg border border-gray-200 bg-white shadow-sm mb-4">
+                <div class="border-b border-gray-200 px-4 py-3">
+                    <h5 class="text-sm font-semibold text-gray-900">Task Metadata</h5>
                 </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label for="taskTitle" class="form-label">Title *</label>
-                            <input type="text" class="form-control" id="taskTitle" 
+                <div class="p-4">
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                        <div class="md:col-span-3">
+                            <label for="taskTitle" class="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                            <input type="text" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500" id="taskTitle" 
                                    value="{% if task %}{{ task.title }}{% endif %}" 
                                    placeholder="Task title (e.g., 'Conflict Resolution Exercise')">
                         </div>
-                        <div class="col-md-4">
-                            <label for="observationArea" class="form-label">Observation Area *</label>
-                            <input type="text" class="form-control" id="observationArea" 
+                        <div>
+                            <label for="observationArea" class="block text-sm font-medium text-gray-700 mb-1">Observation Area *</label>
+                            <input type="text" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500" id="observationArea" 
                                    value="{% if task %}{{ task.observation_area }}{% endif %}"
                                    placeholder="e.g., 'Sozialverhalten'">
                         </div>
-                        <div class="col-md-4">
-                            <label for="participantCount" class="form-label">Participants (1-6)</label>
-                            <input type="number" class="form-control" id="participantCount" 
+                        <div>
+                            <label for="participantCount" class="block text-sm font-medium text-gray-700 mb-1">Participants (1-6)</label>
+                            <input type="number" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500" id="participantCount" 
                                    value="{% if task and task.participant_count %}{{ task.participant_count }}{% endif %}"
                                    min="1" max="6" placeholder="1-6">
                         </div>
-                        <div class="col-md-4">
-                            <label for="duration" class="form-label">Duration (min)</label>
-                            <input type="number" class="form-control" id="duration" 
+                        <div>
+                            <label for="duration" class="block text-sm font-medium text-gray-700 mb-1">Duration (min)</label>
+                            <input type="number" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500" id="duration" 
                                    value="{% if task and task.duration_minutes %}{{ task.duration_minutes }}{% endif %}"
                                    min="25" max="35" placeholder="25-35">
                         </div>
-                        <div class="col-12">
-                            <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control" id="description" rows="2" 
+                        <div class="md:col-span-3">
+                            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500" id="description" rows="2" 
                                       placeholder="Brief description of the task">{% if task %}{{ task.description }}{% endif %}</textarea>
                         </div>
                     </div>
@@ -152,16 +153,16 @@
             </div>
 
             {# Editor Card #}
-            <div class="card shadow-sm">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Task Content (HTML Editor)</h5>
-                    <small class="text-muted">
+            <div class="rounded-lg border border-gray-200 bg-white shadow-sm">
+                <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+                    <h5 class="text-sm font-semibold text-gray-900">Task Content (HTML Editor)</h5>
+                    <small class="text-xs text-gray-500">
                         {% if current_version %}
                         Editing v{{ current_version.version_number }}
                         {% endif %}
                     </small>
                 </div>
-                <div class="card-body">
+                <div class="p-4">
                     {# Quill Rich Text Editor #}
                     <div id="taskEditor">
                         {% if current_version %}
@@ -170,15 +171,15 @@
                     </div>
 
                     {# Action Buttons #}
-                    <div class="mt-3 d-flex gap-2 justify-content-end">
-                        <button class="btn btn-outline-secondary" onclick="resetEditor()">
-                            <i class="fas fa-redo"></i> Reset
+                    <div class="mt-3 flex flex-wrap gap-2 justify-end">
+                        <button class="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50" onclick="resetEditor()">
+                            <i class="fas fa-redo mr-1"></i> Reset
                         </button>
-                        <button class="btn btn-outline-primary" onclick="generateContent()">
-                            <i class="fas fa-magic"></i> AI Generate
+                        <button class="rounded-md border border-indigo-300 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100" onclick="generateContent()">
+                            <i class="fas fa-magic mr-1"></i> AI Generate
                         </button>
-                        <button class="btn btn-success" onclick="saveTask()">
-                            <i class="fas fa-save"></i> {% if task %}Update{% else %}Create{% endif %} Task
+                        <button class="rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-700" onclick="saveTask()">
+                            <i class="fas fa-save mr-1"></i> {% if task %}Update{% else %}Create{% endif %} Task
                         </button>
                     </div>
                 </div>
@@ -186,13 +187,16 @@
 
             {# Version History Card (if editing) #}
             {% if task %}
-            <div class="card shadow-sm mt-3">
-                <div class="card-header">
-                    <h5 class="mb-0">Version History</h5>
+            <div class="rounded-lg border border-gray-200 bg-white shadow-sm mt-4">
+                <div class="border-b border-gray-200 px-4 py-3">
+                    <h5 class="text-sm font-semibold text-gray-900">Version History</h5>
                 </div>
-                <div class="card-body">
-                    <div class="list-group list-group-sm" id="versionsList">
-                        <div class="spinner-border spinner-border-sm" role="status"></div>
+                <div class="p-4">
+                    <div class="divide-y divide-gray-200" id="versionsList">
+                        <div class="flex items-center gap-2 text-sm text-gray-500">
+                            <span class="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-indigo-600"></span>
+                            Loading...
+                        </div>
                     </div>
                 </div>
             </div>
@@ -202,40 +206,36 @@
 </div>
 
 {# Save Version Modal #}
-<div class="modal fade" id="saveVersionModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Save as New Version</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <label class="form-label">Change Notes (optional)</label>
-                <textarea class="form-control" id="changeNotes" rows="3" 
-                          placeholder="e.g., 'Added presentation element', 'Refined instructions'"></textarea>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="confirmSaveVersion()">Save Version</button>
-            </div>
+<div id="saveVersionModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50">
+    <div class="w-full max-w-lg mx-4 rounded-lg bg-white shadow-xl">
+        <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+            <h5 class="text-lg font-semibold text-gray-900">Save as New Version</h5>
+            <button type="button" class="text-gray-500 hover:text-gray-700" onclick="closeSaveVersionModal()">&times;</button>
+        </div>
+        <div class="px-4 py-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Change Notes (optional)</label>
+            <textarea class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500" id="changeNotes" rows="3" 
+                      placeholder="e.g., 'Added presentation element', 'Refined instructions'"></textarea>
+        </div>
+        <div class="flex justify-end gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3">
+            <button type="button" class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50" onclick="closeSaveVersionModal()">Cancel</button>
+            <button type="button" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700" onclick="confirmSaveVersion()">Save Version</button>
         </div>
     </div>
 </div>
 
 {# AI Generate Modal #}
-<div class="modal fade" id="generateModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Generate Task Content</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>Generate AI-powered task content based on observation area.</p>
-                <div id="generateStatus" class="alert alert-info">
-                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                    Generating...
-                </div>
+<div id="generateModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50">
+    <div class="w-full max-w-lg mx-4 rounded-lg bg-white shadow-xl">
+        <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+            <h5 class="text-lg font-semibold text-gray-900">Generate Task Content</h5>
+            <button type="button" class="text-gray-500 hover:text-gray-700" onclick="closeGenerateModal()">&times;</button>
+        </div>
+        <div class="px-4 py-4">
+            <p class="text-sm text-gray-600 mb-3">Generate AI-powered task content based on observation area.</p>
+            <div id="generateStatus" class="rounded-md border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm text-indigo-700 flex items-center gap-2">
+                <span class="h-4 w-4 animate-spin rounded-full border-2 border-indigo-300 border-t-indigo-600"></span>
+                Generating...
             </div>
         </div>
     </div>
@@ -303,8 +303,7 @@ function addChatMessage(text, role) {
 
 // Save Version
 function saveVersion() {
-    const saveModal = new bootstrap.Modal(document.getElementById('saveVersionModal'));
-    saveModal.show();
+    openSaveVersionModal();
 }
 
 function confirmSaveVersion() {
@@ -319,7 +318,7 @@ function confirmSaveVersion() {
     .then(r => r.json())
     .then(data => {
         alert(`Saved as v${data.version_number}`);
-        bootstrap.Modal.getInstance(document.getElementById('saveVersionModal')).hide();
+        closeSaveVersionModal();
         location.reload();
     })
     .catch(err => alert(`Error: ${err.message}`));
@@ -327,9 +326,8 @@ function confirmSaveVersion() {
 
 // Generate Content
 function generateContent() {
-    const modal = new bootstrap.Modal(document.getElementById('generateModal'));
     const status = document.getElementById('generateStatus');
-    modal.show();
+    openGenerateModal();
 
     const area = document.getElementById('observationArea').value;
     const count = document.getElementById('participantCount').value;
@@ -347,11 +345,11 @@ function generateContent() {
     .then(r => r.json())
     .then(data => {
         quill.root.innerHTML = data.content;
-        status.innerHTML = '<div class="alert alert-success mb-0">Content generated!</div>';
-        setTimeout(() => modal.hide(), 1500);
+        status.innerHTML = '<div class="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">Content generated!</div>';
+        setTimeout(() => closeGenerateModal(), 1500);
     })
     .catch(err => {
-        status.innerHTML = `<div class="alert alert-danger mb-0">Error: ${err.message}</div>`;
+        status.innerHTML = `<div class="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">Error: ${err.message}</div>`;
     });
 }
 
@@ -406,14 +404,14 @@ document.addEventListener('DOMContentLoaded', () => {
             list.innerHTML = '';
             data.versions.forEach(v => {
                 const item = document.createElement('div');
-                item.className = 'list-group-item';
+                item.className = 'py-3';
                 const date = new Date(v.created_at);
                 item.innerHTML = `
-                    <div class="d-flex justify-content-between">
-                        <strong>v${v.version_number}</strong>
-                        <small class="text-muted">${date.toLocaleString()}</small>
+                    <div class="flex items-center justify-between text-sm">
+                        <strong class="text-gray-900">v${v.version_number}</strong>
+                        <span class="text-xs text-gray-500">${date.toLocaleString()}</span>
                     </div>
-                    <p class="mb-0 small">${v.change_notes || 'No notes'}</p>
+                    <p class="mt-1 text-xs text-gray-600">${v.change_notes || 'No notes'}</p>
                 `;
                 list.appendChild(item);
             });
@@ -427,6 +425,46 @@ document.getElementById('chatInput')?.addEventListener('keypress', (e) => {
         e.preventDefault();
         sendMessage();
     }
+});
+
+function openSaveVersionModal() {
+    const modal = document.getElementById('saveVersionModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeSaveVersionModal() {
+    const modal = document.getElementById('saveVersionModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+function openGenerateModal() {
+    const modal = document.getElementById('generateModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeGenerateModal() {
+    const modal = document.getElementById('generateModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    ['saveVersionModal', 'generateModal'].forEach(function(id) {
+        const modal = document.getElementById(id);
+        if (!modal) return;
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                if (id === 'saveVersionModal') {
+                    closeSaveVersionModal();
+                } else {
+                    closeGenerateModal();
+                }
+            }
+        });
+    });
 });
 </script>
 {% endblock %}

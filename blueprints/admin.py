@@ -9,7 +9,7 @@ from flask import Blueprint, flash, redirect, render_template, request, session,
 from flask_login import login_required
 
 import models
-from decorators import admin_required
+from decorators import admin_required, permission_required
 from extensions import db
 from utils import generate_secure_password
 from validation import AdminUserCreateForm, AdminUserUpdateForm, format_validation_error, parse_form
@@ -25,7 +25,7 @@ def _clear_user_groups(user: models.User) -> None:
 
 @admin_bp.route("/users", methods=["GET"])
 @login_required
-@admin_required
+@permission_required("users.manage")
 def manage_users():
     """Admin: Übersicht aller Benutzer."""
     users = db.session.scalars(db.select(models.User)).all()
@@ -42,7 +42,7 @@ def manage_users():
 
 @admin_bp.route("/user/add", methods=["GET", "POST"])
 @login_required
-@admin_required
+@permission_required("users.manage")
 def add_user():
     """Admin: Neuen Benutzer erstellen."""
     
@@ -91,7 +91,7 @@ def add_user():
         new_user.set_password(password)
 
         # Zuordne Gruppen
-        if group_ids and role_name == "beobachter":
+        if group_ids and not role.is_system:
             for group_id in group_ids:
                 try:
                     group = db.session.get(models.Group, int(group_id))
@@ -129,7 +129,7 @@ def add_user():
 
 @admin_bp.route("/user/<int:user_id>/edit", methods=["GET", "POST"])
 @login_required
-@admin_required
+@permission_required("users.manage")
 def edit_user(user_id: int):
     """Admin: Benutzer bearbeiten."""
     user = db.session.get(models.User, user_id)
@@ -162,7 +162,7 @@ def edit_user(user_id: int):
             user.role_id = role.id
 
         # Gruppen neu zuordnen (nur für Observer)
-        if role_name == "beobachter":
+        if not user.role.is_system:
             _clear_user_groups(user)
             for group_id in group_ids:
                 try:
@@ -210,7 +210,7 @@ def edit_user(user_id: int):
 
 @admin_bp.route("/user/<int:user_id>/delete", methods=["POST"])
 @login_required
-@admin_required
+@permission_required("users.manage")
 def delete_user(user_id: int):
     """Admin: Benutzer löschen."""
     user = db.session.get(models.User, user_id)
@@ -228,7 +228,7 @@ def delete_user(user_id: int):
 
 @admin_bp.route("/user/<int:user_id>/reset-password", methods=["POST"])
 @login_required
-@admin_required
+@permission_required("users.manage")
 def reset_password(user_id: int):
     """Admin: Passwort eines Benutzers zurücksetzen."""
     user = db.session.get(models.User, user_id)
@@ -254,7 +254,7 @@ def reset_password(user_id: int):
 
 @admin_bp.route("/user/<int:user_id>/toggle-active", methods=["POST"])
 @login_required
-@admin_required
+@permission_required("users.manage")
 def toggle_active(user_id: int):
     """Admin: Account aktivieren/deaktivieren."""
     user = db.session.get(models.User, user_id)
@@ -387,3 +387,174 @@ def ki_gym_delete_rule(rule_id):
     flash(f"Rule '{rule.rule_type}' gelöscht", "success")
     
     return redirect(url_for("admin.ki_gym_dashboard"))
+
+
+# =============================================================================
+# Rollenverwaltung
+# =============================================================================
+
+
+@admin_bp.route("/roles", methods=["GET"])
+@login_required
+@permission_required("roles.manage")
+def manage_roles():
+    """Admin: Übersicht aller Rollen."""
+    roles = db.session.scalars(db.select(models.Role).order_by(models.Role.name)).all()
+    breadcrumbs = [
+        {"link": url_for("dashboard"), "text": "Dashboard"},
+        {"text": "Rollenverwaltung"},
+    ]
+    return render_template("admin/manage_roles.html", roles=roles, breadcrumbs=breadcrumbs)
+
+
+@admin_bp.route("/role/add", methods=["GET", "POST"])
+@login_required
+@permission_required("roles.manage")
+def add_role():
+    """Admin: Neue Rolle erstellen."""
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        description = request.form.get("description", "").strip()
+        perm_ids = request.form.getlist("permissions")
+
+        if not name:
+            flash("Rollenname ist erforderlich.", "error")
+            return redirect(url_for("admin.add_role"))
+
+        existing = db.session.scalar(
+            db.select(models.Role).where(db.func.lower(models.Role.name) == name.lower())
+        )
+        if existing:
+            flash(f"Rolle '{name}' existiert bereits.", "error")
+            return redirect(url_for("admin.add_role"))
+
+        new_role = models.Role(name=name, description=description, is_system=False)
+        for pid in perm_ids:
+            try:
+                perm = db.session.get(models.Permission, int(pid))
+            except (ValueError, TypeError):
+                perm = None
+            if perm:
+                new_role.permissions.append(perm)
+
+        db.session.add(new_role)
+        db.session.commit()
+        flash(f"Rolle '{name}' erfolgreich erstellt.", "success")
+        return redirect(url_for("admin.manage_roles"))
+
+    permissions = db.session.scalars(
+        db.select(models.Permission).order_by(models.Permission.category, models.Permission.codename)
+    ).all()
+
+    perm_groups = {}
+    for permission in permissions:
+        category = permission.category or "Sonstige"
+        perm_groups.setdefault(category, []).append(permission)
+
+    breadcrumbs = [
+        {"link": url_for("dashboard"), "text": "Dashboard"},
+        {"link": url_for("admin.manage_roles"), "text": "Rollenverwaltung"},
+        {"text": "Neue Rolle"},
+    ]
+    return render_template(
+        "admin/role_form.html",
+        role=None,
+        perm_groups=perm_groups,
+        breadcrumbs=breadcrumbs,
+    )
+
+
+@admin_bp.route("/role/<int:role_id>/edit", methods=["GET", "POST"])
+@login_required
+@permission_required("roles.manage")
+def edit_role(role_id):
+    """Admin: Rolle bearbeiten."""
+    role = db.session.get(models.Role, role_id)
+    if not role:
+        flash("Rolle nicht gefunden.", "error")
+        return redirect(url_for("admin.manage_roles"))
+
+    if role.is_system:
+        flash("System-Rollen können nicht bearbeitet werden.", "warning")
+        return redirect(url_for("admin.manage_roles"))
+
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        description = request.form.get("description", "").strip()
+        perm_ids = request.form.getlist("permissions")
+
+        if name:
+            name_conflict = db.session.scalar(
+                db.select(models.Role)
+                .where(db.func.lower(models.Role.name) == name.lower())
+                .where(models.Role.id != role.id)
+            )
+            if name_conflict:
+                flash(f"Rollenname '{name}' ist bereits vergeben.", "error")
+                return redirect(url_for("admin.edit_role", role_id=role_id))
+            role.name = name
+
+        role.description = description
+        role.permissions = []
+
+        for pid in perm_ids:
+            try:
+                perm = db.session.get(models.Permission, int(pid))
+            except (ValueError, TypeError):
+                perm = None
+            if perm:
+                role.permissions.append(perm)
+
+        db.session.commit()
+        flash(f"Rolle '{role.name}' aktualisiert.", "success")
+        return redirect(url_for("admin.manage_roles"))
+
+    permissions = db.session.scalars(
+        db.select(models.Permission).order_by(models.Permission.category, models.Permission.codename)
+    ).all()
+
+    perm_groups = {}
+    for permission in permissions:
+        category = permission.category or "Sonstige"
+        perm_groups.setdefault(category, []).append(permission)
+
+    role_perm_ids = {p.id for p in role.permissions}
+    breadcrumbs = [
+        {"link": url_for("dashboard"), "text": "Dashboard"},
+        {"link": url_for("admin.manage_roles"), "text": "Rollenverwaltung"},
+        {"text": f"Rolle: {role.name}"},
+    ]
+    return render_template(
+        "admin/role_form.html",
+        role=role,
+        perm_groups=perm_groups,
+        role_perm_ids=role_perm_ids,
+        breadcrumbs=breadcrumbs,
+    )
+
+
+@admin_bp.route("/role/<int:role_id>/delete", methods=["POST"])
+@login_required
+@permission_required("roles.manage")
+def delete_role(role_id):
+    """Admin: Rolle löschen (nur wenn keine User zugewiesen)."""
+    role = db.session.get(models.Role, role_id)
+    if not role:
+        flash("Rolle nicht gefunden.", "error")
+        return redirect(url_for("admin.manage_roles"))
+
+    if role.is_system:
+        flash("System-Rollen können nicht gelöscht werden.", "error")
+        return redirect(url_for("admin.manage_roles"))
+
+    if role.users:
+        flash(
+            f"Rolle '{role.name}' hat noch {len(role.users)} zugewiesene Benutzer. Bitte erst die Benutzer einer anderen Rolle zuweisen.",
+            "error",
+        )
+        return redirect(url_for("admin.manage_roles"))
+
+    db.session.delete(role)
+    db.session.commit()
+    flash(f"Rolle '{role.name}' gelöscht.", "success")
+    return redirect(url_for("admin.manage_roles"))

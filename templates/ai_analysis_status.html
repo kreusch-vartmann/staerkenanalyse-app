@@ -3,26 +3,52 @@
 {% block title %}Analyse-Status für {{ group.name }}{% endblock %}
 
 {% block content %}
-    <h2 class="text-3xl font-bold text-gray-800 mb-2">Analyse-Status für Gruppe: {{ group.name }}</h2>
-    <p class="text-gray-600 mb-6">Die KI-Analyse wird für die folgenden Teilnehmer ausgeführt. Bitte schließen Sie dieses Fenster nicht.</p>
 
-    <div class="bg-white border border-gray-200 rounded-lg shadow p-6">
-        <div id="status-list" class="space-y-3">
-            {% for p in participants %}
-            <div id="status-{{ p.id }}" data-participant-id="{{ p.id }}" class="participant-row flex items-center justify-between p-3 rounded-md bg-gray-50">
-                <span class="font-medium text-gray-800">{{ p.name }}</span>
-                <span class="status-indicator text-gray-500 font-semibold">
-                    <i class="fas fa-clock me-2"></i> Wartend
-                </span>
+    <!-- ===== Loading Modal (Pinguin-Style) ===== -->
+    <div id="aiAnalysisModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div class="w-full max-w-md sm:mx-4 mx-2 rounded-lg bg-white shadow-xl">
+            <div class="px-6 py-6 text-center">
+                <div class="flex justify-center mb-4">
+                    <img src="/static/loading-robot.webp" alt="KI arbeitet..." class="h-48 w-48 object-contain">
+                </div>
+                <h5 class="text-lg font-semibold text-indigo-600 mb-2">🤖 KI-Analyse läuft...</h5>
+                <p id="modal-progress-text" class="text-sm text-gray-600 mb-3">
+                    Teilnehmer <span id="modal-current">0</span> von <span id="modal-total">{{ participants|length }}</span> wird analysiert.
+                </p>
+                <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+                    <div id="modal-progress-bar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <p id="modal-current-name" class="text-xs text-gray-500 mt-2">Bitte haben Sie einen Moment Geduld.</p>
             </div>
-            {% endfor %}
         </div>
     </div>
 
-    <div class="mt-8">
-        <a id="finish-button" href="{{ url_for('analysis.manage_final_reports') }}" target="_blank" class="hidden py-3 px-8 rounded-md text-white bg-blue-600 hover:bg-blue-700 font-semibold text-lg" title="Öffnet in neuem Tab">
-            <i class="fas fa-check-circle me-2"></i>Alle Berichte ansehen
-        </a>
+    <!-- ===== Ergebnis-Bereich (initial versteckt) ===== -->
+    <div id="results-section" class="hidden">
+        <h2 class="text-3xl font-bold text-gray-800 mb-2">Analyse abgeschlossen — {{ group.name }}</h2>
+        <p id="results-summary" class="text-gray-600 mb-6"></p>
+
+        <div class="bg-white border border-gray-200 rounded-lg shadow p-6">
+            <div id="status-list" class="space-y-3">
+                {% for p in participants %}
+                <div id="status-{{ p.id }}" data-participant-id="{{ p.id }}" data-participant-name="{{ p.name }}" class="participant-row flex items-center justify-between p-3 rounded-md bg-gray-50">
+                    <span class="font-medium text-gray-800">{{ p.name }}</span>
+                    <span class="status-indicator text-gray-500 font-semibold">
+                        <i class="fas fa-clock mr-2"></i> Wartend
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="mt-6 sm:mt-8 flex flex-col sm:flex-row flex-wrap gap-3">
+            <a id="finish-button" href="{{ url_for('analysis.manage_final_reports') }}" class="hidden inline-flex items-center justify-center gap-2 py-2 sm:py-3 px-6 sm:px-8 rounded-md text-white bg-indigo-600 hover:bg-indigo-700 font-semibold text-base sm:text-lg transition-colors w-full sm:w-auto">
+                <i class="fas fa-check-circle"></i> Alle Berichte ansehen
+            </a>
+            <a href="{{ url_for('analysis.ai_analysis_select_group') }}" class="hidden inline-flex items-center gap-2 py-3 px-6 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 font-semibold text-lg transition-colors" id="back-button">
+                <i class="fas fa-arrow-left"></i> Neue Analyse starten
+            </a>
+        </div>
     </div>
 
     <script nonce="{{ csp_nonce }}" id="analysis-config" type="application/json">
@@ -31,19 +57,32 @@
 
     <script nonce="{{ csp_nonce }}">
         const participantRows = document.querySelectorAll('.participant-row');
-        // Die Konfiguration wird sicher aus dem Script-Tag ausgelesen
         const analysisConfig = JSON.parse(document.getElementById('analysis-config').textContent);
         const editReportUrlBase = "{{ url_for('analysis.edit_report', participant_id=0) }}".replace('/0', '');
+        const totalCount = participantRows.length;
+        let completed = 0;
+        let successCount = 0;
+        let errorCount = 0;
 
-        async function runAnalysisForParticipant(participantRow) {
+        function updateModalProgress(current, name) {
+            document.getElementById('modal-current').textContent = current;
+            document.getElementById('modal-current-name').textContent = 'Aktuell: ' + name;
+            const pct = Math.round((current / totalCount) * 100);
+            document.getElementById('modal-progress-bar').style.width = pct + '%';
+        }
+
+        async function runAnalysisForParticipant(participantRow, index) {
             const participantId = participantRow.dataset.participantId;
+            const participantName = participantRow.dataset.participantName || '';
             const indicator = participantRow.querySelector('.status-indicator');
 
-            try {
-                indicator.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Wird analysiert...';
-                indicator.className = 'status-indicator text-blue-600 font-semibold';
+            updateModalProgress(index + 1, participantName);
 
-                const response = await fetch(`/api/run_single_analysis/${participantId}`, {
+            try {
+                indicator.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Wird analysiert...';
+                indicator.className = 'status-indicator text-indigo-600 font-semibold';
+
+                const response = await fetch('/api/run_single_analysis/' + participantId, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(analysisConfig)
@@ -52,34 +91,52 @@
                 const result = await response.json();
 
                 if (result.status === 'success') {
-                    indicator.innerHTML = '<i class="fas fa-check-circle me-2"></i> Erfolgreich';
+                    indicator.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Erfolgreich';
                     indicator.className = 'status-indicator text-green-600 font-semibold';
                     participantRow.classList.replace('bg-gray-50', 'bg-green-50');
+                    successCount++;
 
-                    const reportLink = document.createElement('a');
-                    reportLink.href = `${editReportUrlBase}/${participantId}`;
+                    var reportLink = document.createElement('a');
+                    reportLink.href = editReportUrlBase + '/' + participantId;
                     reportLink.target = '_blank';
-                    reportLink.className = 'ml-3 text-sm text-blue-600 hover:text-blue-800 font-semibold whitespace-nowrap';
-                    reportLink.innerHTML = '<i class="fas fa-edit me-1"></i>Bericht bearbeiten';
+                    reportLink.className = 'ml-3 text-sm text-indigo-600 hover:text-indigo-800 font-semibold whitespace-nowrap';
+                    reportLink.innerHTML = '<i class="fas fa-edit mr-1"></i>Bericht bearbeiten';
                     reportLink.title = 'Öffnet in neuem Tab';
                     participantRow.appendChild(reportLink);
                 } else {
-                    indicator.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i> Fehler: ${result.message}`;
+                    indicator.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i> Fehler: ' + result.message;
                     indicator.className = 'status-indicator text-red-600 font-semibold';
                     participantRow.classList.replace('bg-gray-50', 'bg-red-50');
+                    errorCount++;
                 }
             } catch (error) {
-                indicator.innerHTML = '<i class="fas fa-times-circle me-2"></i> Netzwerkfehler';
+                indicator.innerHTML = '<i class="fas fa-times-circle mr-2"></i> Netzwerkfehler';
                 indicator.className = 'status-indicator text-red-600 font-semibold';
                 participantRow.classList.replace('bg-gray-50', 'bg-red-50');
+                errorCount++;
             }
+            completed++;
         }
 
         async function startQueue() {
-            for (const row of participantRows) {
-                await runAnalysisForParticipant(row);
+            var index = 0;
+            for (var i = 0; i < participantRows.length; i++) {
+                await runAnalysisForParticipant(participantRows[i], i);
             }
+
+            // Modal schließen, Ergebnisse zeigen
+            document.getElementById('aiAnalysisModal').classList.add('hidden');
+            document.getElementById('results-section').classList.remove('hidden');
+
+            // Zusammenfassung
+            var summary = successCount + ' von ' + totalCount + ' Analysen erfolgreich abgeschlossen.';
+            if (errorCount > 0) {
+                summary += ' ' + errorCount + ' Fehler aufgetreten.';
+            }
+            document.getElementById('results-summary').textContent = summary;
+
             document.getElementById('finish-button').classList.remove('hidden');
+            document.getElementById('back-button').classList.remove('hidden');
         }
 
         document.addEventListener('DOMContentLoaded', startQueue);

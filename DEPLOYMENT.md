@@ -2,13 +2,50 @@
 
 ## 📋 Übersicht
 
-Dieses Dokument beschreibt zwei Deployment-Optionen:
+Dieses Dokument beschreibt drei Deployment-Optionen:
 1. **Docker (lokal + VPS)** - Für Entwicklung und Server mit Docker-Support
-2. **Infomaniak Web Hosting** - Für Production ohne Docker (empfohlen für 5-20 User)
+2. **PostgreSQL Production (Ubuntu)** - Für selbst verwaltete Linux-Server (empfohlen für Hostinger)
+3. **Infomaniak Web Hosting** - Für Managed Hosting ohne vollen Server-Zugriff
+
+---
+
+## 🖥️ Option 0: PostgreSQL Production (Ubuntu Server) - **EMPFOHLEN für Hostinger**
+
+**Ideal für:** Hostinger Ubuntu Server, volle Kontrolle, PostgreSQL
+
+Siehe: **[POSTGRESQL_PRODUCTION_GUIDE.md](POSTGRESQL_PRODUCTION_GUIDE.md)** für vollständige Anleitung
+
+**Quick-Start:**
+```bash
+# 1. PostgreSQL installieren
+sudo apt install -y postgresql-16
+
+# 2. Database & User erstellen
+sudo -u postgres createdb staerkenanalyse_prod
+sudo -u postgres createuser staerkenanalyse_prod_user
+
+# 3. App Code deployieren
+git clone <repo> /var/www/staerkenanalyse
+cd /var/www/staerkenanalyse
+
+# 4. Migrations ausführen
+flask db upgrade heads
+
+# 5. Gunicorn + Nginx konfigurieren (siehe Guide)
+# 6. HTTPS mit Let's Encrypt (siehe Guide)
+```
 
 ---
 
 ## 🐳 Option 1: Docker-Deployment
+
+### ⚠️ Hinweis: PostgreSQL-Testing lokal
+
+Bevor Deployment zu Production, **teste PostgreSQL lokal mit Docker:**
+
+Siehe: **[POSTGRESQL_TESTING_LOCAL.md](POSTGRESQL_TESTING_LOCAL.md)** 
+
+Dies ist wichtig um zu vermeiden, dass live data bei Migrationen verloren gehen.
 
 ### Voraussetzungen
 - Docker & Docker Compose installiert

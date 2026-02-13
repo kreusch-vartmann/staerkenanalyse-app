@@ -3,8 +3,8 @@
 [![Tests](https://github.com/kreusch-vartmann/staerkenanalyse-app/actions/workflows/tests.yml/badge.svg)](https://github.com/kreusch-vartmann/staerkenanalyse-app/actions/workflows/tests.yml)
 
 **Version:** 1.4.0  
-**Status:** Phase 3 Stabilisierung abgeschlossen ✅  
-**Neue Features:** Prompt‑Docs + Default‑Prompt, Security‑Audit, Incident‑Runbooks
+**Status:** Phase 4 Design‑Feinschliff ✅ ABGESCHLOSSEN  
+**Neue Features:** Prompt‑Docs + Default‑Prompt, Security‑Audit, Incident‑Runbooks, Dual‑DB‑Synchronisierung
 
 Eine lokale Flask-Webanwendung zur Verwaltung von Gruppen und Teilnehmenden mit rollenbasierter Zugriffskontrolle und zur Durchführung von KI-gestützten Stärkenanalysen.
 
@@ -98,7 +98,38 @@ python -m flask run --port 5002
 - `FLASK_ENV` bzw. `FLASK_DEBUG` (für Debug/Prod-Modus)
 - KI-Provider: Je nach eingesetzten Services benötigen Sie API-Schlüssel (z. B. `OPENAI_API_KEY`, `GOOGLE_API_KEY` usw.). Diese werden in `ki_services.py` bzw. in den Blueprints genutzt — prüfen Sie dort die genaue Erkennung und Umgebungsvariablen.
 
+## Database Management & Migrations
+
+Das Projekt verwendet ein **duales Datenbank-Setup** für sichere Entwicklung und Production-Readiness:
+- **SQLite** (`database.db`) - Hauptentwicklungsdatenbank
+- **PostgreSQL** (Docker) - Test- und Produktionsdatenbank
+
+### Automatische Synchronisierung mit `manage_db.py`
+
+Neue Funktionen und Datenbankänderungen werden **automatisch auf beide Datenbanken** angewendet:
+
+```bash
+# Eine neue Datenbank-Feature hinzufügen
+python manage_db.py migrate "beschreibung der änderung"
+# z.B.: python manage_db.py migrate "add_email_verification_to_users"
+```
+
+Das Tool:
+1. ✅ Erstellt automatisch eine Alembic-Migration
+2. ✅ Wendet sie auf SQLite an
+3. ✅ Wendet sie auf PostgreSQL an
+4. ✅ Validiert, dass beide Datenbanken synchronisiert sind
+
+Weitere Befehle:
+- `python manage_db.py current` — Zeigt aktuelle Versionen beider DBs
+- `python manage_db.py validate` — Überprüft Synchronisierung
+- `python manage_db.py upgrade` — Upgraded auf neueste Version
+- `python manage_db.py downgrade` — Rollback eine Version
+
+**Detaillierte Dokumentation:** Siehe [DEVELOPMENT_WORKFLOW.md](./DEVELOPMENT_WORKFLOW.md) für Szenarien, Best Practices und Troubleshooting.
+
 ## Troubleshooting / bekannte Probleme
+
 
 - Port belegt
   - Fehlermeldung: `Address already in use` → starten Sie die App auf einem anderen Port (siehe Schnellstart).
