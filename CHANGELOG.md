@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.4.0 — 2026-02-13
+
+### Phase 3 Complete
+- Added default prompt support (UI + DB) and prompt documentation.
+- Added security audit report and incident runbooks.
+- Reconstructed MistralSozVerb4 prompt template for analysis.
+
+### Tests & Migrations
+- Added prompt default integration tests.
+- Stabilized Alembic migrations (SQLite batch operations + merged heads).
+
 ## 1.3.1 — 2026-02-11
 
 ### Stabilization & Tests

@@ -5,9 +5,9 @@ Dieses Dokument erklärt, wie die Versionsnummern in dieser App verwaltet werden
 ## Zwei unabhängige Versionen
 
 ### 1. App-Version (`APP_VERSION`)
-**Aktuell:** `1.3.1`  
+**Aktuell:** `1.4.0`  
 **Zweck:** Release-Tracking, Bug-Reports, Changelog  
-**Status:** 🟡 Phase 3 Stabilisierung in Arbeit
+**Status:** ✅ Phase 3 Stabilisierung abgeschlossen
 
 **Format:** `MAJOR.MINOR.PATCH` (Semantic Versioning)
 
@@ -231,6 +231,17 @@ A: Nicht schlimm im Pre-Release! Nach 1.0.0 solltest du aber konsequent sein.
 ---
 
 ## Versions-Historie
+
+### v1.4.0 (2026-02-13) - Phase 3 Abschluss
+**Neue Features:**
+- ✅ Prompt‑Dokumentation + Default‑Prompt (UI/DB)
+- ✅ Security Audit Report + Incident Runbooks
+- ✅ Rekonstruiertes MistralSozVerb4‑Prompt (Basis‑Template)
+
+**Bugfixes:**
+- 🐛 Migrationen stabilisiert (SQLite‑Batch‑Alter + Merge‑Head)
+
+**Breaking Changes:** Keine
 
 ### v1.3.1 (2026-02-11) - Phase 3 Stabilisierung (Tests & RBAC)
 **Neue Features:**

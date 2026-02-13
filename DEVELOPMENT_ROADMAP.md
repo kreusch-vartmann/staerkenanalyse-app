@@ -1,10 +1,10 @@
 # DEVELOPMENT ROADMAP — Stärkenanalyse-App
 
-> **Erstellt**: 2026-02-09 | **Aktualisiert**: 2026-02-11 | **Version**: 1.0.0 → 1.3.1  
+> **Erstellt**: 2026-02-09 | **Aktualisiert**: 2026-02-13 | **Version**: 1.0.0 → 1.4.0  
 > **Ziel**: Produktionsreife, öffentlich zugängliche Web-Applikation  
 > **Hosting**: Infomaniak | **Auth**: Eigene Benutzerverwaltung | **Tenant**: Single-Tenant  
 > **Zeitrahmen**: So schnell wie möglich  
-> **Status**: ✅ Phase 1 COMPLETE | ✅ Phase 2 COMPLETE (v1.1.0: Tasks+KI-Gym; v1.2.0: Knowledge-Base; v1.2.1: Chat-Stabilisierung)
+> **Status**: ✅ Phase 1 COMPLETE | ✅ Phase 2 COMPLETE | ✅ Phase 3 COMPLETE
 
 ---
 
@@ -14,7 +14,7 @@
 |-------|--------|--------|-------------|
 | **1** | Benutzerverwaltung + Basis-Sicherheit | ✅ COMPLETE | v1.0.0 |
 | **2** | Aufgabengenerator + KI-Gym Learning System | ✅ COMPLETE | v1.1.0 → v1.2.1 |
-| **3** | Stabilisierung (Sicherheit, Tests, Funktions-Feinschliff) | 🟡 IN PROGRESS | v1.3.x |
+| **3** | Stabilisierung (Sicherheit, Tests, Funktions-Feinschliff) | ✅ COMPLETE | v1.4.0 |
 | **4** | Design-Feinschliff | ⬜ Offen | v1.3.0 |
 | **5** | Dokumentation + Produktions-Deployment | ⬜ Offen | v2.0.0 |
 
@@ -141,7 +141,7 @@
 
 ---
 
-## Phase 3: Stabilisierung (v0.7.0)
+## Phase 3: Stabilisierung (v1.4.0)
 
 ### C₂ — Erweiterte Sicherheit
 
@@ -156,18 +156,18 @@
 
 | # | Aufgabe | Status | Details |
 |---|---------|--------|---------|
-| D1 | Edge Cases bestehende Features | ⬜ | Fehlerbehandlung, Validierungen, Ladezeiten |
-| D2 | UX-Verbesserungen | ⬜ | Fehlermeldungen, Lädeindikatoren, Bestätigungsdialoge |
-| D3 | MistralSozVerb4-Prompt nachbauen | ⬜ | Verlorenen optimierten Prompt rekonstruieren |
+| D1 | Edge Cases bestehende Features | ✅ | Fehlerbehandlung + Validierungen erweitert, stabile APIs |
+| D2 | UX-Verbesserungen | ✅ | Default‑Prompt UX, Prompt‑Badges, Stabilitäts‑Fixes |
+| D3 | MistralSozVerb4-Prompt nachbauen | ✅ | Rekonstruiertes Prompt-Template hinzugefügt |
 
 ### F — Testing
 
 | # | Aufgabe | Status | Details |
 |---|---------|--------|---------|
 | F1 | Auth-Tests | ✅ | Login, Logout, Rollen, Berechtigungen, Gruppen-Sichtbarkeit |
-| F2 | Aufgabengenerator-Tests | ⬜ | Generierung, Chat, Versionierung |
-| F3 | Integrationstests | ⬜ | Komplette Workflows E2E |
-| F4 | Security-Tests | ⬜ | OWASP Top 10, Penetration-Basics |
+| F2 | Aufgabengenerator-Tests | ✅ | Generierung, Chat, Versionierung |
+| F3 | Integrationstests | ✅ | Komplette Workflows E2E |
+| F4 | Security-Tests | ✅ | OWASP Top 10, Penetration-Basics |
 
 ---
 

@@ -29,7 +29,7 @@
                 <select id="prompt_selection" class="flex-1 block px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                     <option value="">-- Bitte eine Vorlage wählen --</option>
                     {% for prompt in prompts %}
-                        <option value="{{ prompt.id }}">{{ prompt.name }}</option>
+                        <option value="{{ prompt.id }}" {% if prompt.is_default %}selected{% endif %}>{{ prompt.name }}</option>
                     {% endfor %}
                 </select>
                 <button type="button" id="togglePromptPreview" class="px-4 py-2 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700 font-medium transition" style="display: none;">
@@ -60,6 +60,11 @@
 // Initialize selectedPromptId from current dropdown value
 var selectedPromptId = document.getElementById('prompt_selection').value || null;
 console.log('[BatchAI] Initial selectedPromptId:', selectedPromptId);
+
+if (selectedPromptId) {
+    const previewBtn = document.getElementById('togglePromptPreview');
+    previewBtn.style.display = 'block';
+}
 
 document.getElementById('prompt_selection').addEventListener('change', function() {
     selectedPromptId = this.value || null;

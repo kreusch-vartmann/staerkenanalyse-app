@@ -1,6 +1,6 @@
 # Testdaten-Migration: Schritt-für-Schritt-Anleitung
 
-**Zuletzt geprüft:** 2026-02-11 (v1.3.1)
+**Zuletzt geprüft:** 2026-02-13 (v1.4.0)
 
 ## ⚠️ Wichtig: Vor dem Start
 

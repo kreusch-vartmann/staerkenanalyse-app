@@ -51,3 +51,41 @@ class TestPromptsRoutes:
     def test_get_prompt_content_api_not_found(self, client):
         response = client.get('/api/prompt/99999')
         assert response.status_code == 404
+
+    def test_add_prompt_can_set_default(self, client, db):
+        response = client.post(
+            '/prompt/add',
+            data={
+                'name': 'Default-Prompt',
+                'description': 'Default desc',
+                'content': 'Analyse: {x}',
+                'is_default': '1',
+            },
+            follow_redirects=True,
+        )
+        assert response.status_code == 200
+        prompt = db.session.query(Prompt).filter_by(name='Default-Prompt').first()
+        assert prompt is not None
+        assert prompt.is_default is True
+
+    def test_default_prompt_is_exclusive(self, client, db):
+        first = Prompt(name='Default A', description='A', content='A', is_default=True)
+        second = Prompt(name='Default B', description='B', content='B', is_default=False)
+        db.session.add_all([first, second])
+        db.session.commit()
+
+        response = client.post(
+            f'/prompt/edit/{second.id}',
+            data={
+                'name': 'Default B',
+                'description': 'B',
+                'content': 'B',
+                'is_default': '1',
+            },
+            follow_redirects=True,
+        )
+        assert response.status_code == 200
+        db.session.refresh(first)
+        db.session.refresh(second)
+        assert second.is_default is True
+        assert first.is_default is False

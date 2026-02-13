@@ -1,6 +1,6 @@
 # CONTEXT.md - Stärkenanalyse-App
 
-**Automatisch aktualisiert am**: 2026-02-11 (Version 1.3.1)
+**Automatisch aktualisiert am**: 2026-02-13 (Version 1.4.0)
 
 **Hinweis:** Diese Übersicht ist manuell aktualisiert. Für eine vollständige Route-/Dateiliste den Context Generator Workflow ausführen.
 
@@ -8,8 +8,8 @@
 
 ## 📋 Projektübersicht
 
-**Version**: 1.3.1  
-**Status**: Phase 3 Stabilisierung in Arbeit 🟡
+**Version**: 1.4.0  
+**Status**: Phase 3 Stabilisierung abgeschlossen ✅
 
 **Technologie-Stack**:
 - **Backend**: Python 3.11+, Flask 3.1.2
@@ -35,6 +35,11 @@
 - **Chat-Refinement Stabilisierung**: Normalisierte 4-Sektionen-Struktur (Szenario, Aufgabe, Ablauf, Materialien)
 - **HTML-Cleanup**: Entfernt Markdown-Artefakte und leere Sektionen
 - **Auto-Save + Reload**: Chat-Änderungen werden direkt gespeichert und korrekt aus DB geladen
+
+**Neue Komponenten in v1.4.0**:
+- **Default‑Prompt Support**: Standard‑Prompt in UI/DB auswählbar
+- **Security Audit + Runbooks**: Dokumentiert und versioniert
+- **Rekonstruiertes MistralSozVerb4‑Prompt**: Basis‑Template im Repo
 
 ---
 
@@ -201,4 +206,4 @@
 
 ---
 
-**Letzte Aktualisierung**: 2026-02-06
+**Letzte Aktualisierung**: 2026-02-13

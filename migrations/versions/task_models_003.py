@@ -17,53 +17,74 @@ depends_on = None
 
 
 def upgrade():
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    existing_tables = set(inspector.get_table_names())
+
     # Create task_versions table first (no foreign key to tasks yet)
-    op.create_table(
-        'task_versions',
-        sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('task_id', sa.Integer(), nullable=False),
-        sa.Column('version_number', sa.Float(), nullable=False),
-        sa.Column('content', sa.Text(), nullable=False),
-        sa.Column('context_data', sa.Text(), nullable=True),
-        sa.Column('change_notes', sa.Text(), nullable=True),
-        sa.Column('created_by_id', sa.Integer(), nullable=False),
-        sa.Column('created_at', sa.DateTime(), nullable=False),
-        sa.ForeignKeyConstraint(['created_by_id'], ['users.id'], ),
-        sa.PrimaryKeyConstraint('id')
-    )
+    if 'task_versions' not in existing_tables:
+        op.create_table(
+            'task_versions',
+            sa.Column('id', sa.Integer(), nullable=False),
+            sa.Column('task_id', sa.Integer(), nullable=False),
+            sa.Column('version_number', sa.Float(), nullable=False),
+            sa.Column('content', sa.Text(), nullable=False),
+            sa.Column('context_data', sa.Text(), nullable=True),
+            sa.Column('change_notes', sa.Text(), nullable=True),
+            sa.Column('created_by_id', sa.Integer(), nullable=False),
+            sa.Column('created_at', sa.DateTime(), nullable=False),
+            sa.ForeignKeyConstraint(['created_by_id'], ['users.id'], ),
+            sa.PrimaryKeyConstraint('id')
+        )
     
     # Create tasks table
-    op.create_table(
-        'tasks',
-        sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('title', sa.String(length=200), nullable=False),
-        sa.Column('description', sa.Text(), nullable=True),
-        sa.Column('notes', sa.Text(), nullable=True),
-        sa.Column('observation_area', sa.String(length=100), nullable=False),
-        sa.Column('participant_count', sa.Integer(), nullable=True),
-        sa.Column('duration_minutes', sa.Integer(), nullable=True),
-        sa.Column('current_version_id', sa.Integer(), nullable=True),
-        sa.Column('is_active', sa.Boolean(), nullable=False),
-        sa.Column('created_by_id', sa.Integer(), nullable=False),
-        sa.Column('created_at', sa.DateTime(), nullable=False),
-        sa.Column('updated_at', sa.DateTime(), nullable=False),
-        sa.ForeignKeyConstraint(['created_by_id'], ['users.id'], ),
-        sa.ForeignKeyConstraint(['current_version_id'], ['task_versions.id'], ),
-        sa.PrimaryKeyConstraint('id')
-    )
+    if 'tasks' not in existing_tables:
+        op.create_table(
+            'tasks',
+            sa.Column('id', sa.Integer(), nullable=False),
+            sa.Column('title', sa.String(length=200), nullable=False),
+            sa.Column('description', sa.Text(), nullable=True),
+            sa.Column('notes', sa.Text(), nullable=True),
+            sa.Column('observation_area', sa.String(length=100), nullable=False),
+            sa.Column('participant_count', sa.Integer(), nullable=True),
+            sa.Column('duration_minutes', sa.Integer(), nullable=True),
+            sa.Column('current_version_id', sa.Integer(), nullable=True),
+            sa.Column('is_active', sa.Boolean(), nullable=False),
+            sa.Column('created_by_id', sa.Integer(), nullable=False),
+            sa.Column('created_at', sa.DateTime(), nullable=False),
+            sa.Column('updated_at', sa.DateTime(), nullable=False),
+            sa.ForeignKeyConstraint(['created_by_id'], ['users.id'], ),
+            sa.ForeignKeyConstraint(['current_version_id'], ['task_versions.id'], ),
+            sa.PrimaryKeyConstraint('id')
+        )
     
     # Add foreign key from task_versions.task_id to tasks.id
-    op.create_foreign_key(
-        'fk_task_versions_task_id',
-        'task_versions', 'tasks',
-        ['task_id'], ['id']
-    )
+    inspector = sa.inspect(bind)
+    fk_names = {fk.get('name') for fk in inspector.get_foreign_keys('task_versions')}
+    if 'fk_task_versions_task_id' not in fk_names:
+        with op.batch_alter_table('task_versions') as batch_op:
+            batch_op.create_foreign_key(
+                'fk_task_versions_task_id',
+                'tasks',
+                ['task_id'],
+                ['id']
+            )
 
 
 def downgrade():
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    existing_tables = set(inspector.get_table_names())
+
     # Drop foreign key
-    op.drop_constraint('fk_task_versions_task_id', 'task_versions', type_='foreignkey')
-    
+    if 'task_versions' in existing_tables:
+        fk_names = {fk.get('name') for fk in inspector.get_foreign_keys('task_versions')}
+        if 'fk_task_versions_task_id' in fk_names:
+            with op.batch_alter_table('task_versions') as batch_op:
+                batch_op.drop_constraint('fk_task_versions_task_id', type_='foreignkey')
+
     # Drop tables
-    op.drop_table('tasks')
-    op.drop_table('task_versions')
+    if 'tasks' in existing_tables:
+        op.drop_table('tasks')
+    if 'task_versions' in existing_tables:
+        op.drop_table('task_versions')

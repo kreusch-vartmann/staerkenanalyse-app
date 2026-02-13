@@ -46,6 +46,10 @@ PROMPT_FILES = {
         "name": "Stärkenanalyse Original",
         "description": "Initiale Version des Stärkenanalyse-Prompts (historisch)",
     },
+    "mistralsozverb4.txt": {
+        "name": "MistralSozVerb4",
+        "description": "Rekonstruiertes Prompt-Template für soz./verb. Stärkenanalyse (JSON-Output)",
+    },
 }
 
 

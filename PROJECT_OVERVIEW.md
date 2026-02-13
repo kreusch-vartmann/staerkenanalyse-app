@@ -1,6 +1,6 @@
 # PROJECT_OVERVIEW.md
 
-**Generiert am**: 2026-02-11 (v1.3.1)
+**Generiert am**: 2026-02-13 (v1.4.0)
 
 ---
 
@@ -76,6 +76,13 @@ python app.py
 ```
 
 ---
+
+## 🆕 Neue Features in v1.4.0
+
+### Phase 3 Abschluss
+- Prompt‑Dokumentation + Default‑Prompt (UI/DB)
+- Security Audit Report + Incident Runbooks
+- Rekonstruiertes MistralSozVerb4‑Prompt (Basis‑Template)
 
 ## 🆕 Neue Features in v1.3.1
 

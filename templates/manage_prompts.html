@@ -23,7 +23,12 @@
             {% for prompt in prompts %}
             <tr>
                 <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm font-medium text-gray-900">{{ prompt.name }}</div>
+                    <div class="text-sm font-medium text-gray-900 flex items-center gap-2">
+                        <span>{{ prompt.name }}</span>
+                        {% if prompt.is_default %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">Standard</span>
+                        {% endif %}
+                    </div>
                 </td>
                 <td class="px-6 py-4">
                     <div class="text-sm text-gray-500">{{ prompt.description or 'Keine Beschreibung' }}</div>

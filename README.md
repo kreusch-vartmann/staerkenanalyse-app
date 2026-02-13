@@ -2,9 +2,9 @@
 
 [![Tests](https://github.com/kreusch-vartmann/staerkenanalyse-app/actions/workflows/tests.yml/badge.svg)](https://github.com/kreusch-vartmann/staerkenanalyse-app/actions/workflows/tests.yml)
 
-**Version:** 1.3.1  
-**Status:** Phase 3 Stabilisierung in Arbeit 🟡  
-**Neue Features:** Security-Härtung, Auth/RBAC-Tests, Admin-Flow-Tests
+**Version:** 1.4.0  
+**Status:** Phase 3 Stabilisierung abgeschlossen ✅  
+**Neue Features:** Prompt‑Docs + Default‑Prompt, Security‑Audit, Incident‑Runbooks
 
 Eine lokale Flask-Webanwendung zur Verwaltung von Gruppen und Teilnehmenden mit rollenbasierter Zugriffskontrolle und zur Durchführung von KI-gestützten Stärkenanalysen.
 
@@ -130,6 +130,14 @@ python -m flask run --port 5002
 
 - `services/report_generator.py` — **NEUE** ReportGenerator-Klasse für HTML-Rendering und PDF-Export mit konfigurierbarem Sidebar-Layout
 - `ai_gym.py` — **NEU v1.1.0** KI-Gym Service für Pattern-Extraktion und automatisches Prompt-Learning
+
+## Neu in Version 1.4.0 ✅
+
+### Phase 3 Abschluss
+- **Prompt‑Dokumentation** + Default‑Prompt (UI + DB)
+- **Security Audit Report** (Sprint 4.2)
+- **Incident Runbooks** (Sprint 4.3)
+- **Rekonstruiertes MistralSozVerb4‑Prompt** (Basis‑Template)
 
 ## Neu in Version 1.3.1 ✅
 
@@ -359,6 +367,7 @@ tests/
 1. Entfernen oder optionalisieren Sie große KI-Abhängigkeiten in `requirements.txt`, wenn Sie die App lokal mit eingeschränkten Features betreiben möchten.
 2. Falls Sie PDF-Generierung benötigen, installieren Sie die Systempakete für `weasyprint` (distribution-spezifisch).
 3. Fügen Sie ein CLI-Kommando `flask init-db` (oder ein kleines `manage.py`) hinzu, das `schema.sql` benutzt, damit die DB-Initialisierung benutzerfreundlicher wird.
+4. **Prompt-Dokumentation:** siehe `PROMPT_DOCUMENTATION.md`.
 
 ## GitHub Actions & CI/CD
 
@@ -435,7 +444,7 @@ cp .env.example .env
 
 Diese App verwendet **Semantic Versioning** (0.MAJOR.MINOR im Pre-Release):
 
-### App-Version (aktuell: `1.3.1`)
+### App-Version (aktuell: `1.4.0`)
 
 **Pre-Release (0.x.y):**
 - `0.MINOR.PATCH` - Breaking Changes zwischen Minor-Versions erlaubt
