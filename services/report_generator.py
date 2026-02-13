@@ -361,22 +361,35 @@ class ReportGenerator:
     # =========================================================================
 
     def _generate_css(self) -> str:
-        primary = self.theme.get("primary_color", "#5A7D7C")
-        secondary = self.theme.get("secondary_color", "#F0F5FF")
-        accent = self.theme.get("accent_color", "#FF6B6B")
-        font_family = self.theme.get("font_family", "'Inter', sans-serif")
+        """
+        Modernisierte CSS für Report-Templates.
+        Behält die bestehende HTML-Struktur bei, verbessert aber visuell:
+        - Moderne Farbpalette (Blau statt Graugrün)
+        - Elegante Typografie & Spacing
+        - Subtile Schatten & Corner Radius
+        - Bessere Kontraste & Lesbarkeit
+        """
+        primary = self.theme.get("primary_color", "#2c3e50")  # Dunkles Blau statt Graugrün
+        primary_light = self.theme.get("primary_light", "#34495e")  # Etwas heller
+        secondary = self.theme.get("secondary_color", "#ecf0f1")  # Heller Grau modernisiert
+        accent = self.theme.get("accent_color", "#e74c3c")
+        font_family = self.theme.get("font_family", "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif")
         font_size = self.theme.get("font_size_base", "11pt")
 
         return f"""
-        /* === Reset === */
+        /* ========================================
+           RESET & FOUNDATIONS
+           ======================================== */
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
 
         body {{
             font-family: {font_family};
             font-size: {font_size};
-            line-height: 1.6;
-            color: #333;
+            line-height: 1.65;
+            color: #2d3748;
             background: #fff;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }}
 
         @page {{
@@ -386,7 +399,9 @@ class ReportGenerator:
 
         .report-container {{ width: 100%; }}
 
-        /* === Sidebar-Layout (Shared für SE, FE, Abschluss) === */
+        /* ========================================
+           SIDEBAR + MAIN LAYOUT
+           ======================================== */
         .sb-page {{
             display: flex;
             width: 210mm;
@@ -394,70 +409,182 @@ class ReportGenerator:
             overflow: hidden;
             page-break-after: always;
             box-sizing: border-box;
+            background: #fff;
         }}
         .sb-page:last-child {{ page-break-after: avoid; }}
 
         .sb-sidebar {{
             width: 30%;
             color: white;
-            padding: 25px;
+            padding: 30px 28px;
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
-            font-family: 'Montserrat', 'Inter', sans-serif;
+            font-family: {font_family};
             font-size: 10pt;
+            background: linear-gradient(180deg, {primary} 0%, {primary_light} 100%);
+            position: relative;
         }}
-        .sb-header {{ flex-shrink: 0; }}
+        
+        .sb-sidebar::before {{
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            pointer-events: none;
+        }}
+
+        .sb-header {{ 
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1;
+        }}
+        
         .sb-spacer {{ flex-grow: 1; }}
-        .sb-logo {{ font-size: 2.5em; font-weight: 700; margin-bottom: 30px; }}
-        .sb-logo-img {{ max-width: 120px; max-height: 80px; margin-bottom: 30px; }}
-        .sb-title {{ font-size: 1.2em; line-height: 1.3; font-weight: 400; }}
-        .sb-participant-name {{ font-size: 1.2em; font-weight: 700; display: block; margin-top: 5px; word-wrap: break-word; }}
-        .sb-metadata {{ flex-shrink: 0; margin-bottom: 20px; font-size: 0.85em; line-height: 1.8; }}
-        .sb-metadata-title {{ font-weight: 700; letter-spacing: 1px; opacity: 0.8; margin-bottom: 10px; font-size: 1em; }}
-        .sb-metadata p {{ margin-bottom: 2px; text-align: left; }}
-        .sb-footer {{ flex-shrink: 0; opacity: 0.7; font-size: 0.85em; }}
+        
+        .sb-logo {{ 
+            font-size: 2.2em; 
+            font-weight: 700; 
+            margin-bottom: 25px;
+            letter-spacing: -1px;
+        }}
+        
+        .sb-logo-img {{ 
+            max-width: 110px; 
+            max-height: 75px; 
+            margin-bottom: 25px;
+            border-radius: 3px;
+        }}
+        
+        .sb-title {{ 
+            font-size: 0.95em; 
+            line-height: 1.4; 
+            font-weight: 400;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 8px;
+        }}
+        
+        .sb-participant-name {{
+            font-size: 1.25em; 
+            font-weight: 700; 
+            display: block; 
+            margin-top: 5px; 
+            word-wrap: break-word;
+            line-height: 1.3;
+        }}
+        
+        .sb-metadata {{ 
+            flex-shrink: 0; 
+            margin-bottom: 25px; 
+            font-size: 0.9em; 
+            line-height: 1.8;
+            position: relative;
+            z-index: 1;
+        }}
+        
+        .sb-metadata-title {{ 
+            font-weight: 700; 
+            letter-spacing: 1.1px; 
+            opacity: 0.85; 
+            margin-bottom: 12px; 
+            font-size: 0.9em;
+            text-transform: uppercase;
+        }}
+        
+        .sb-metadata p {{ 
+            margin-bottom: 3px; 
+            text-align: left;
+            opacity: 0.95;
+        }}
+        
+        .sb-footer {{ 
+            flex-shrink: 0; 
+            opacity: 0.75; 
+            font-size: 0.85em;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            padding-top: 12px;
+            position: relative;
+            z-index: 1;
+        }}
+        
         .sb-footer p {{ text-align: left; }}
 
         .sb-main {{
             width: 70%;
-            padding: 35px;
+            padding: 40px 42px;
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
+            background: #fafbfc;
         }}
+        
         .sb-main-spacer {{ flex-grow: 1; }}
 
-        /* === Inhalts-Styles innerhalb sb-main === */
+        /* ========================================
+           MAIN CONTENT TYPOGRAPHY & BLOCKS
+           ======================================== */
         .sb-subtitle {{
-            font-family: 'Montserrat', 'Inter', sans-serif;
-            color: #888;
-            margin-bottom: 25px;
+            font-family: {font_family};
+            color: #718096;
+            margin-bottom: 28px;
             text-align: center;
-            font-size: 1.1em;
+            font-size: 1.15em;
+            font-weight: 500;
+            letter-spacing: 0.3px;
         }}
-        .sb-section {{ margin-bottom: 25px; }}
+        
+        .sb-section {{ 
+            margin-bottom: 28px;
+            page-break-inside: avoid;
+        }}
+        
         .sb-section-title {{
-            font-family: 'Montserrat', 'Inter', sans-serif;
-            font-size: 1.3em;
+            font-family: {font_family};
+            font-size: 13pt;
             font-weight: 700;
             color: {primary};
             margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid {primary};
+            display: inline-block;
         }}
+        
         .sb-text-content {{
             font-size: 10.5pt;
             line-height: 1.7;
             text-align: justify;
+            color: #4a5568;
         }}
+        
+        .sb-text-content em {{
+            font-style: italic;
+            color: #718096;
+        }}
+
         .sb-chart-container {{
             width: 100%;
-            max-width: 320px;
-            margin: 20px auto 0 auto;
+            max-width: 340px;
+            margin: 24px auto 0 auto;
             text-align: center;
+            page-break-inside: avoid;
         }}
-        .sb-chart-container img {{ max-width: 100%; height: auto; }}
+        
+        .sb-chart-container img {{ 
+            max-width: 100%; 
+            height: auto;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }}
 
-        /* === Deckblatt (eigenständig, ohne Sidebar) === */
+        /* ========================================
+           COVER PAGE (Full-Width, No Sidebar)
+           ======================================== */
         .page {{
             page-break-after: always;
             min-height: 297mm;
@@ -472,123 +599,240 @@ class ReportGenerator:
             justify-content: center;
             align-items: center;
             text-align: center;
-            padding: 40mm 30mm;
+            padding: 45mm 35mm;
+            background: linear-gradient(135deg, {primary} 0%, {primary_light} 100%);
+            color: white;
+            position: relative;
+            overflow: hidden;
         }}
-        .cover-page .logo {{ max-width: 200pt; max-height: 100pt; margin: 20pt 0; }}
+        
+        .cover-page::before {{
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 400px;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            pointer-events: none;
+        }}
+        
+        .cover-page::after {{
+            content: '';
+            position: absolute;
+            bottom: -40%;
+            left: -5%;
+            width: 350px;
+            height: 350px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+            pointer-events: none;
+        }}
+        
+        .cover-page .logo {{ 
+            max-width: 180pt; 
+            max-height: 90pt; 
+            margin: 0 0 30pt 0;
+            border-radius: 4px;
+            position: relative;
+            z-index: 1;
+        }}
+        
         .cover-page h1 {{
-            color: {primary};
-            font-size: 36pt;
-            margin: 30pt 0 15pt 0;
-            border-bottom: 3pt solid {primary};
-            padding-bottom: 15pt;
+            color: white;
+            font-size: 38pt;
+            margin: 25pt 0 15pt 0;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+            position: relative;
+            z-index: 1;
         }}
+        
         .cover-page .cover-subtitle {{
-            font-size: 18pt;
-            color: {accent};
-            margin: 15pt 0;
+            font-size: 16pt;
+            color: rgba(255,255,255,0.95);
+            margin: 15pt 0 40pt 0;
+            font-weight: 400;
+            position: relative;
+            z-index: 1;
         }}
+        
         .cover-page .cover-meta {{
-            font-size: 13pt;
-            color: #555;
-            margin: 8pt 0;
+            font-size: 12pt;
+            color: rgba(255,255,255,0.85);
+            margin: 30pt 0 0 0;
+            line-height: 1.8;
+            position: relative;
+            z-index: 1;
         }}
 
-        /* === Info-Boxen === */
+        /* ========================================
+           INFO BOXES
+           ======================================== */
         .info-box {{
-            background: {secondary};
-            border-left: 4pt solid {primary};
-            padding: 15pt;
-            margin: 12pt 0;
-            border-radius: 3pt;
+            background: white;
+            border-left: 4px solid {primary};
+            padding: 16pt 16pt 16pt 18pt;
+            margin: 14pt 0;
+            border-radius: 3px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            page-break-inside: avoid;
         }}
+        
         .info-box h3 {{
             color: {primary};
-            font-size: 12pt;
+            font-size: 11pt;
             margin-bottom: 8pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }}
+        
+        .info-box p {{
+            font-size: 10pt;
+            line-height: 1.6;
+            color: #4a5568;
+            margin-bottom: 6pt;
         }}
 
-        /* === Hinweisblatt (eigenständig, ohne Sidebar) === */
+        /* ========================================
+           INFO PAGE (Hinweisblatt)
+           ======================================== */
         .info-page {{
-            padding: 30mm;
+            padding: 35mm 30mm;
         }}
+        
         .info-page h2 {{
             color: {primary};
             font-size: 18pt;
-            margin-bottom: 20pt;
-            border-bottom: 2pt solid {primary};
-            padding-bottom: 8pt;
+            margin-bottom: 25pt;
+            border-bottom: 2px solid {primary};
+            padding-bottom: 12pt;
+            font-weight: 700;
+        }}
+        
+        .info-page h3 {{
+            color: {primary};
+            font-size: 13pt;
+            margin-top: 18pt;
+            margin-bottom: 10pt;
+            font-weight: 700;
+        }}
+        
+        .info-page p {{
+            font-size: 10.5pt;
+            line-height: 1.7;
+            color: #4a5568;
+            text-align: justify;
+            margin-bottom: 10pt;
         }}
 
-        /* === Unterschriften === */
+        /* ========================================
+           SIGNATURES
+           ======================================== */
         .signature-block {{
-            margin-top: 40pt;
+            margin-top: 45pt;
+            display: flex;
+            justify-content: space-between;
+            gap: 20pt;
         }}
+        
         .signature-item {{
-            display: inline-block;
-            width: 45%;
-            margin: 20pt 2%;
+            flex: 1;
             text-align: center;
-            vertical-align: top;
         }}
+        
         .signature-item img {{
             max-width: 150px;
             max-height: 60px;
-            margin-bottom: 5pt;
+            margin-bottom: 8pt;
+            border-radius: 2px;
         }}
+        
         .signature-line {{
-            border-bottom: 1pt solid #000;
+            border-bottom: 1.5pt solid #2d3748;
             width: 100%;
-            margin-top: 10pt;
-            padding-top: 5pt;
-            text-align: center;
-            font-size: 9pt;
-            color: #555;
+            margin-bottom: 6pt;
+            padding-top: 30pt;
         }}
+        
         .signature-name {{
             font-size: 10pt;
             font-weight: 600;
-            margin-top: 5pt;
-            color: #333;
+            color: #2d3748;
+            margin-top: 6pt;
         }}
 
-        /* === Ratings-Tabelle === */
+        /* ========================================
+           TABLES
+           ======================================== */
         .rating-table {{
             width: 100%;
             border-collapse: collapse;
-            margin: 12pt 0;
+            margin: 14pt 0;
             font-size: 10pt;
+            background: white;
+            border-radius: 3px;
+            overflow: hidden;
         }}
+        
         .rating-table th, .rating-table td {{
-            border: 1pt solid #ddd;
-            padding: 8pt;
+            border: 1pt solid #e2e8f0;
+            padding: 10pt;
             text-align: left;
         }}
+        
         .rating-table th {{
             background: {secondary};
             color: {primary};
-            font-weight: bold;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 9pt;
+        }}
+        
+        .rating-table td {{
+            color: #4a5568;
+        }}
+        
+        .rating-table tbody tr:nth-child(even) {{
+            background: #f7fafc;
         }}
 
-        /* === Screen: Jede Seite als visuelles A4-Blatt === */
+        /* ========================================
+           SCREEN PREVIEW (Browser)
+           ======================================== */
         @media screen {{
-            body {{ background: #e0e0e0; }}
+            body {{ 
+                background: #e8eaed; 
+                padding: 16px 0;
+            }}
             .report-container {{
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                padding: 20px 0;
-                gap: 30px;
+                gap: 24px;
             }}
             .sb-page, .page {{
                 background: #fff;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+                border-radius: 6px;
+                overflow: hidden;
             }}
         }}
 
-        /* === Print/PDF: Kein visueller Chrome === */
+        /* ========================================
+           PRINT / PDF
+           ======================================== */
         @media print {{
-            body {{ background: #fff; }}
-            .sb-page, .page {{ box-shadow: none; margin: 0; }}
+            body {{ background: white; padding: 0; }}
+            .sb-page, .page {{ 
+                box-shadow: none; 
+                margin: 0;
+                border-radius: 0;
+            }}
         }}
         """
 
