@@ -3,7 +3,7 @@
 **Branch:** `phase3-stabilization`  
 **Start Date:** 11.02.2026  
 **Target Completion:** ~End of February 2026  
-**Current Sprint:** 3.4 - Security Tests
+**Current Sprint:** 4.1 - Prompt Documentation
 
 ---
 
@@ -35,8 +35,8 @@
 | **3.1** | Auth + RBAC Tests | ✅ COMPLETE | 2.5h KI + 1h Human | 100% |
 | **3.2** | Task Generation Tests | ✅ COMPLETE | 3h KI + 1.5h Human | 100% |
 | **3.3** | Integration Tests | ✅ COMPLETE | 2.5h KI + 1h Human | 100% |
-| **3.4** | Security Tests | 🟢 IN PROGRESS | 2h KI + 0.5h Human | 0% |
-| **4.1** | Prompt Documentation | ⬜ PENDING | 1.5h KI + 1h Human | 0% |
+| **3.4** | Security Tests | ✅ COMPLETE | 2h KI + 0.5h Human | 100% |
+| **4.1** | Prompt Documentation | 🟢 IN PROGRESS | 1.5h KI + 1h Human | 0% |
 | **4.2** | Security Audit Report | ⬜ PENDING | 1h KI + 1h Human | 0% |
 | **4.3** | Incident Runbooks | ⬜ PENDING | 1.5h KI + 1h Human | 0% |
 
@@ -129,6 +129,13 @@ None currently.
 - Sprint 3.3: Task‑Zuordnung → Analyse → Report‑PDF Workflow ergänzt
 - Sprint 3.3 abgeschlossen
 - Sprint 3.4 gestartet
+- Sprint 3.4: Security-Header Tests ergänzt (CSP, XFO, nosniff, Referrer-Policy)
+- Health-Endpoint Security-Checks ergänzt
+- Pytest: `tests/integration/test_security_headers.py` grün
+- Sprint 3.4: CSRF-/Rate-Limit-/Validation-Tests ergänzt
+- Pytest: `tests/integration/test_security_controls.py` grün
+- Sprint 3.4 abgeschlossen
+- Sprint 4.1 gestartet
 
 **Next Steps:**
 - Integrationstests für Kern-Workflows definieren/ergänzen
@@ -193,4 +200,4 @@ None currently.
 
 ---
 
-**Last Updated:** 2026-02-12 (Sprint 3.3 abgeschlossen, Sprint 3.4 gestartet)
+**Last Updated:** 2026-02-13 (Sprint 3.4 abgeschlossen, Sprint 4.1 gestartet)
