@@ -47,8 +47,7 @@ jobs:
           FLASK_ENV: testing
           DATABASE_URL: sqlite:///test.db
           SECRET_KEY: test-secret-key-ci
-        run: |
-          python -c "from app import create_app; app = create_app('testing'); ctx = app.app_context(); ctx.push(); from extensions import db; db.create_all()"
+        run: python scripts/init_test_db.py
       
       - name: Run Unit Tests
         env:
