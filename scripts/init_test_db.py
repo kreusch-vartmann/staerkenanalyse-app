@@ -7,7 +7,20 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 os.environ["FLASK_ENV"] = "testing"
 os.environ["DATABASE_URL"] = "sqlite:///test.db"
 os.environ["SECRET_KEY"] = "test-secret-key-ci"
+
 try:
+    # 🛡️ Clean up old test databases before initialization
+    test_db_path = Path("test.db")
+    corrupted_dbs = list(Path(".").glob("database_BROKEN_*.db"))
+
+    if test_db_path.exists():
+        test_db_path.unlink()
+        print("🧹 Removed old test.db")
+
+    for corrupted_db in corrupted_dbs:
+        corrupted_db.unlink()
+        print(f"🧹 Removed corrupted database: {corrupted_db}")
+
     from app import app
     from extensions import db
 
