@@ -54,6 +54,11 @@ def _validate_test_safety():
 # Führe Safety-Check VOR App-Import durch
 _validate_test_safety()
 
+# 🛡️ SET DEFAULT TEST DATABASE CONFIG BEFORE APP IMPORT
+# This prevents errors when app.py tries to initialize SQLAlchemy
+os.environ.setdefault('SQLALCHEMY_DATABASE_URI', 'sqlite:///:memory:')
+os.environ.setdefault('SQLALCHEMY_TRACK_MODIFICATIONS', 'False')
+
 # Import der App und Extensions
 from app import app as flask_app
 from extensions import db as _db
