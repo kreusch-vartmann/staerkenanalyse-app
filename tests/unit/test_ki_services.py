@@ -45,6 +45,7 @@ class TestGenerateReportWithAI:
         parsed = json.loads(result)
         assert "error" in parsed
 
+    @patch("services.ai_client.genai_client", True)
     @patch("services.ai_client.GenerativeModel")
     def test_gemini_success(self, mock_model_cls):
         """Test: Gemini-Call erfolgreich (mocked)"""
