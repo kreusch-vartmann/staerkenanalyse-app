@@ -43,17 +43,9 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-flask pytest-cov pytest-mock coverage coverage-badge
       
-      - name: Initialize Test Database
-        env:
-          FLASK_ENV: testing
-          DATABASE_URL: sqlite:///test.db
-          SECRET_KEY: test-secret-key-ci
-        run: python scripts/init_test_db.py
-      
       - name: Run Unit Tests
         env:
           FLASK_ENV: testing
-          DATABASE_URL: sqlite:///test.db
           SECRET_KEY: test-secret-key-ci
           WTF_CSRF_ENABLED: 'False'
         run: |
@@ -62,7 +54,6 @@ jobs:
       - name: Run Integration Tests
         env:
           FLASK_ENV: testing
-          DATABASE_URL: sqlite:///test.db
           SECRET_KEY: test-secret-key-ci
           WTF_CSRF_ENABLED: 'False'
         run: |
@@ -71,9 +62,6 @@ jobs:
       - name: Run Full Test Suite with Coverage
         env:
           FLASK_ENV: testing
-          DATABASE_URL: sqlite:///test.db
-          SECRET_KEY: test-secret-key-ci
-          WTF_CSRF_ENABLED: 'False'
         run: |
           coverage run -m pytest tests/ -v --tb=short
           coverage report --skip-empty
