@@ -35,18 +35,29 @@ jobs:
       
       - name: Run Black (Code Formatting Check)
         run: |
-          black --check --diff --color .
+          black --check --diff --color . \
+            --exclude="venv*|.venv|htmlcov|migrations|backups|uploads|instance|__pycache__"
         continue-on-error: true
       
       - name: Run isort (Import Sorting Check)
         run: |
-          isort --check-only --diff .
+          isort --check-only --diff . \
+            --skip-glob="venv*" \
+            --skip-glob=".venv" \
+            --skip-glob="htmlcov" \
+            --skip-glob="migrations" \
+            --skip-glob="backups" \
+            --skip-glob="uploads" \
+            --skip-glob="instance" \
+            --skip-glob="__pycache__"
         continue-on-error: true
       
       - name: Run Flake8 (Style & Error Check)
         run: |
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics \
+            --exclude=.git,__pycache__,venv*,.venv,htmlcov,migrations,backups,uploads,instance
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics \
+            --exclude=.git,__pycache__,venv*,.venv,htmlcov,migrations,backups,uploads,instance
       
       - name: Run Pylint (Deep Code Analysis)
         run: |
