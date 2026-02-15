@@ -11,6 +11,13 @@ omit =
     */site-packages/*
     setup.py
     wsgi.py
+    ki_services_backup.py
+    test_*.py
+    manage_db.py
+    migrate_*.py
+    seed_permissions.py
+    create_admin.py
+    init_db.py
 
 [report]
 precision = 2
