@@ -43,13 +43,17 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-flask pytest-cov pytest-mock coverage coverage-badge
       
+      - name: Cleanup before tests
+        run: |
+          rm -f test.db database*.db pytest_*.db 2>/dev/null || true
+      
       - name: Run Unit Tests
         env:
           FLASK_ENV: testing
           SECRET_KEY: test-secret-key-ci
           WTF_CSRF_ENABLED: 'False'
         run: |
-          pytest tests/unit/ -v --tb=short
+          pytest tests/unit/ -v --tb=short -s
       
       - name: Run Integration Tests
         env:
@@ -57,13 +61,15 @@ jobs:
           SECRET_KEY: test-secret-key-ci
           WTF_CSRF_ENABLED: 'False'
         run: |
-          pytest tests/integration/ -v --tb=short
+          pytest tests/integration/ -v --tb=short -s
       
       - name: Run Full Test Suite with Coverage
         env:
           FLASK_ENV: testing
+          SECRET_KEY: test-secret-key-ci
+          WTF_CSRF_ENABLED: 'False'
         run: |
-          coverage run -m pytest tests/ -v --tb=short
+          coverage run -m pytest tests/ -v --tb=short -s
           coverage report --skip-empty
           coverage html -d htmlcov
           coverage xml
