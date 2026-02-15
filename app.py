@@ -33,7 +33,7 @@ from blueprints.prompts import prompts_bp
 from blueprints.reports import bp as reports_bp
 from blueprints.observation_tasks import observation_tasks_bp
 # Neue Imports
-from config import DevelopmentConfig, ProductionConfig
+from config import DevelopmentConfig, ProductionConfig, TestingConfig
 from extensions import csrf, db, login_manager, migrate, limiter
 from version import APP_VERSION, get_version_info
 
@@ -44,6 +44,8 @@ app = Flask(__name__)
 env = os.getenv("FLASK_ENV", "development")
 if env == "production":
     app.config.from_object(ProductionConfig)
+elif env == "testing":
+    app.config.from_object(TestingConfig)
 else:
     app.config.from_object(DevelopmentConfig)
 

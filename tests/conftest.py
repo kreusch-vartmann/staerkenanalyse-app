@@ -56,7 +56,9 @@ _validate_test_safety()
 
 # 🛡️ SET DEFAULT TEST DATABASE CONFIG BEFORE APP IMPORT
 # This prevents errors when app.py tries to initialize SQLAlchemy
-os.environ.setdefault('SQLALCHEMY_DATABASE_URI', 'sqlite:///:memory:')
+# NOTE: config.py reads DATABASE_URL, not SQLALCHEMY_DATABASE_URI
+os.environ.setdefault('DATABASE_URL', 'sqlite:///:memory:')
+os.environ.setdefault('FLASK_ENV', 'testing')
 os.environ.setdefault('SQLALCHEMY_TRACK_MODIFICATIONS', 'False')
 
 # Import der App und Extensions

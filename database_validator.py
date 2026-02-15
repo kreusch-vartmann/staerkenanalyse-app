@@ -212,12 +212,14 @@ def validate_and_recover():
 # Wird beim Import ausgeführt (vor Flask-App-Initialisierung)
 if __name__ != "__main__":
     # Nur prüfen wenn nicht als Skript ausgeführt
-    # Und nur wenn DATABASE_URL auf SQLite zeigt (oder leer ist)
+    # NICHT prüfen wenn FLASK_ENV=testing (CI/Test-Umgebung)
+    flask_env = os.environ.get('FLASK_ENV', '').lower()
     db_url = os.environ.get('DATABASE_URL', '')
     is_sqlite = 'sqlite' in db_url.lower() or not db_url
     is_not_test = 'test' not in db_url.lower()
-    
-    if is_sqlite and is_not_test:
+    is_not_testing_env = flask_env != 'testing'
+
+    if is_sqlite and is_not_test and is_not_testing_env:
         validate_and_recover()
 
 
