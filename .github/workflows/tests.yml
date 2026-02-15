@@ -9,6 +9,7 @@ on:
       - 'requirements.txt'
       - '.github/workflows/tests.yml'
       - 'pytest.ini'
+      - 'scripts/**'
   pull_request:
     branches: [main, develop]
     paths:
