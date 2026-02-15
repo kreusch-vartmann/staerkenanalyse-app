@@ -195,10 +195,20 @@ def _normalize_ki_data(ki_data):
         verbal_analysis = analysis_block.get("verbal_analysis") or {}
 
         summary_block = ki_data.get("summary") or {}
+
+        def _stringify_summary_part(part):
+            if part is None:
+                return ""
+            if isinstance(part, list):
+                return "\n".join(str(item) for item in part if item is not None)
+            if isinstance(part, dict):
+                return json.dumps(part, ensure_ascii=False)
+            return str(part)
+
         summary_parts = [
-            summary_block.get("key_strengths"),
-            summary_block.get("development_areas"),
-            summary_block.get("task_alignment"),
+            _stringify_summary_part(summary_block.get("key_strengths")),
+            _stringify_summary_part(summary_block.get("development_areas")),
+            _stringify_summary_part(summary_block.get("task_alignment")),
         ]
         summary_text = "\n".join([part for part in summary_parts if part])
 
@@ -613,11 +623,11 @@ def execute_batch_ai_analysis():
         "ki_model": prompt_payload.ki_model,
         "additional_content": "\n\n---\n\n".join(
             [
-                get_file_content(file)
+                str(get_file_content(file))
                 for file in request.files.getlist("additional_files")
                 if file and file.filename != ""
             ]
-        ),
+        ) if request.files.getlist("additional_files") else "",
     }
 
     participants = (

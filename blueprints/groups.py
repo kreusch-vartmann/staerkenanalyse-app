@@ -173,6 +173,7 @@ def get_available_tasks():
                 "observation_area": task.observation_area,
                 "participant_count": task.participant_count,
                 "duration_minutes": task.duration_minutes,
+                "is_example": task.is_example,
             }
             for task in tasks
         ]

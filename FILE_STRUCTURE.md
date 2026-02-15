@@ -1,8 +1,8 @@
 # 📁 Vollständige Dateistruktur - Stärkenanalyse-App
 
-**Erstellt am**: 7. Februar 2026  
-**Aktualisiert am**: 13. Februar 2026  
-**Version**: 1.4.0  
+**Erstellt am**: 7. Februar 2026
+**Aktualisiert am**: 15. Februar 2026
+**Version**: 1.5.1  
 **Beschreibung**: Vollständige Übersicht aller Projektdateien mit ihren Funktionen
 
 ---
@@ -10,6 +10,136 @@
 ## 📋 Projektübersicht
 
 Diese Dokumentation beschreibt **alle** Dateien des Stärkenanalyse-App Projekts. Jede Datei wird in 1-2 Sätzen erklärt.
+
+## 🧭 Projektstruktur (Grafische Übersicht)
+
+```tree
+staerkenanalyse-app/
+│
+├─── 🔴 KERN-APPLICATION
+│    ├─ app.py                      Flask-Haupteinstieg
+│    ├─ config.py                   Umgebungs-Konfiguration
+│    ├─ extensions.py               Flask-Extensions
+│    ├─ models.py                   SQLAlchemy Datenbankmodelle
+│    ├─ version.py                  Versions-Management
+│    └─ wsgi.py                     Production WSGI-Entry
+│
+├─── 🟢 KI-SERVICES
+│    ├─ ki_services.py              Mistral + Gemini API-Integration
+│    ├─ ai_gym.py                   KI-Gym Learning System
+│    └─ ki_services_backup.py       Legacy-Backup
+│
+├─── 🟡 BLUEPRINTS (Funktionale Module)
+│    ├─ blueprints/
+│    │  ├─ analysis.py              📊 KI-Analysen & Report-Editing
+│    │  ├─ admin.py                 👥 Admin-Dashboard & Settings
+│    │  ├─ groups.py                👨‍👩‍👧 Gruppen-Management
+│    │  ├─ participants.py          👤 Teilnehmer-Management
+│    │  ├─ reports.py               📋 Report-Anzeige & Verwaltung
+│    │  ├─ observation_tasks.py     📝 Beobachtungsaufgaben-Library
+│    │  ├─ data_import.py           📥 CSV/JSON-Import
+│    │  ├─ data_io.py               💾 Daten Export/Import
+│    │  ├─ explanation_blocks.py    📖 Erklärblöcke & Kompetenz-Infos
+│    │  ├─ auth.py                  🔐 Authentifizierung & RBAC
+│    │  └─ prompts.py               🎯 Prompt-Template-Verwaltung
+│
+├─── 🔵 SERVICES (Business-Logik)
+│    ├─ services/
+│    │  ├─ report_generator.py      📄 PDF-Report-Generierung
+│    │  ├─ ai_client.py             🤖 Zentrale KI-Client-Abstraktionen
+│    │  ├─ task_generator.py        🚀 Automatische Task-Generierung
+│    │  ├─ task_knowledge_base.py   💡 Task-Kontext & Metadaten
+│    │  └─ ... weitere Services
+│
+├─── 🟣 TEMPLATES (Frontend UI)
+│    ├─ templates/
+│    │  ├─ base.html                🎨 Basis-Layout
+│    │  ├─ dashboard.html           📊 Start-Dashboard
+│    │  ├─ manage_*.html            UI-Formulare & Listen
+│    │  ├─ observation_tasks/       📝 Task-Library & Generierung
+│    │  ├─ reports/                 📋 Report-Templates & Anzeige
+│    │  ├─ admin/                   👨‍💼 Admin-Interfaces
+│    │  └─ modals/                  ⚙️ Reusable Modal-Komponenten
+│
+├─── 📋 MIGRATIONS (Datenbank-Versionierung)
+│    ├─ migrations/versions/        🔄 SQLAlchemy-Migrationen
+│
+├─── 🎨 STATIC ASSETS
+│    ├─ static/
+│    │  ├─ css/                     Tailwind + Custom Styles
+│    │  ├─ js/                      Vanilla JS + Libraries
+│    │  ├─ fonts/                   Schriftarten
+│    │  └─ uploads/                 User-Uploads
+│
+├─── 🔧 SCRIPTS (Utilities & Automation)
+│    ├─ scripts/
+│    │  ├─ import_example_tasks.py  📥 Referenzaufgaben-Import
+│    │  ├─ ... weitere Scripts
+│
+├─── 📚 DOCUMENTATION
+│    ├─ README.md                   Projekt-Überblick
+│    ├─ CONTEXT.md                  🤖 KI-Agent-optimierte Kurzfassung
+│    ├─ FILE_STRUCTURE.md           📖 Diese Datei (Vollständiges Inventory)
+│    ├─ DEVELOPMENT_ROADMAP.md      🗺️ Feature-Planung
+│    ├─ DEPLOYMENT.md               🚀 Produktions-Deployment
+│    ├─ SECURITY_AUDIT_REPORT.md    🔒 Sicherheits-Analyse
+│    ├─ PROJECT_OVERVIEW.md         📘 Konzept & Architektur
+│    ├─ PHASE*.md                   ✅ Implementations-Status pro Phase
+│    └─ ... weitere Dokumentation
+│
+├─── ⚙️ KONFIGURATIONSDATEIEN
+│    ├─ requirements.txt            📦 Python-Dependencies
+│    ├─ requirements-test.txt       🧪 Test-Dependencies
+│    ├─ .env                        🔑 Lokale Umgebungsvariablen
+│    ├─ .env.example                📋 .env-Template
+│    ├─ .env.production             ☁️ Production-Settings
+│    ├─ pytest.ini                  🧪 Pytest-Konfiguration
+│    ├─ .pylintrc                   ✨ Code-Quality-Config
+│    ├─ schema.sql                  💾 SQL-Schema
+│    ├─ Dockerfile                  🐳 Container-Definition
+│    ├─ docker-compose.yml          🐙 Multi-Container-Setup
+│    └─ .dockerignore               🚫 Docker-Ausschlüsse
+│
+└─── 📦 DATENORDNER
+     ├─ instance/                   SQLite-Datenbankdatei
+     ├─ migrations/                 Alembic-Versionierung
+     ├─ uploads/                    User-Datei-Uploads
+     ├─ backups/                    Datenbank-Backups
+     └─ htmlcov/                    Coverage-Reports
+```
+
+### 🎯 Logische Abhängigkeiten
+
+```tree
+                    ┌──────────────────┐
+                    │   Frontend UI    │
+                    │  (templates/)    │
+                    └────────┬─────────┘
+                             │
+                    ┌────────▼─────────┐
+                    │  Flask Blueprints│
+                    │  (blueprints/)   │
+                    └────────┬─────────┘
+                             │
+        ┌────────────────────┼────────────────────┐
+        │                    │                    │
+    ┌───▼───┐        ┌──────▼──────┐      ┌─────▼─────┐
+    │Analytics  │        │  KI-Services │      │  Services │
+    │ (analysis)│        │(ki_services) │      │(business) │
+    └───┬───┘        └──────┬──────┘      └─────┬─────┘
+        │                    │                    │
+        └────────────────────┼────────────────────┘
+                             │
+                    ┌────────▼─────────┐
+                    │  SQLAlchemy ORM  │
+                    │  (models.py)     │
+                    └────────┬─────────┘
+                             │
+                    ┌────────▼─────────┐
+                    │   SQLite DB      │
+                    │  (instance/)     │
+                    └──────────────────┘
+```
 
 ---
 
@@ -23,7 +153,7 @@ Diese Dokumentation beschreibt **alle** Dateien des Stärkenanalyse-App Projekts
 
 - **extensions.py**: Zentrale Instanzen von Flask-Extensions (SQLAlchemy db, Flask-Migrate). Verhindert zirkuläre Imports durch separierte Extension-Initialisierung.
 
-- **models.py**: SQLAlchemy-Datenbankmodelle für alle Entitäten (Participant, Group, Observation, Competency, SelfAssessment, AnalysisResult, ExplanationBlock, Prompt, ReportTemplate, GeneratedReport, SignatureImage). Enthält Beziehungen und Validierungen.
+- **models.py**: SQLAlchemy-Datenbankmodelle für alle Entitäten (Participant, Group, Task, SelfAssessment, Report-Modelle, KI-Gym). Enthält Beziehungen und Validierungen.
 
 - **ki_services.py**: KI-API-Integration für Mistral AI und Google Gemini. Stellt Funktionen für strukturierte Kompetenz-Analysen, Report-Generierung und Prompt-basierte KI-Anfragen bereit.
 
@@ -31,9 +161,9 @@ Diese Dokumentation beschreibt **alle** Dateien des Stärkenanalyse-App Projekts
 
 - **ai_gym.py**: KI-Gym Learning System (NEU v1.1.0). Pattern-Extraktion aus Content-Edits, automatische Prompt-Rule-Generierung basierend auf User-Verbesserungen.
 
-- **utils.py**: Hilfsfunktionen für Dateiverarbeitung. Extrahiert Text aus PDF- und DOCX-Dateien für Import-Funktionalität.
+- **utils.py**: Hilfsfunktionen für Dateiverarbeitung. Extrahiert Text aus PDF/DOCX, HTML-Sanitizing, Helper für KI-Parsing.
 
-- **version.py**: Zentrale Versionsnummer der Anwendung (aktuell: 1.4.0). Wird für Version-Display im Dashboard und für Deployment verwendet.
+- **version.py**: Zentrale Versionsnummer der Anwendung (aktuell: 1.5.0). Wird für Version-Display im Dashboard und für Deployment verwendet.
 
 - **wsgi.py**: WSGI-Entry-Point für Production-Deployment. Lädt Anwendung für Gunicorn oder andere WSGI-Server.
 
@@ -44,6 +174,8 @@ Diese Dokumentation beschreibt **alle** Dateien des Stärkenanalyse-App Projekts
 - **generate_test_data.py**: Generiert Testdaten für Entwicklung und Testing. Erstellt Sample-Gruppen, Teilnehmer und Beobachtungen in der Datenbank.
 
 - **migrate_old_data.py**: Migrations-Script für Legacy-Daten. Konvertiert alte Datenbankstrukturen in das aktuelle Schema.
+
+- **scripts/import_example_tasks.py**: Importiert Referenzaufgaben (EXAMPLE_TASKS) als DB‑Einträge (`is_example=True`).
 
 ### Konfigurationsdateien
 
@@ -150,6 +282,10 @@ Wiederverwendbare Service-Layer für Business-Logic.
 - **__init__.py**: Service-Package-Initialisierung. Macht Services importierbar und definiert Public-API für ReportGenerator und Knowledge-Base-Funktionen.
 
 - **report_generator.py**: ReportGenerator-Service-Klasse. Kern-Logik für Report-Generierung: Template-Processing, Sidebar-Layout, Daten-Aggregation, WeasyPrint-Integration.
+
+- **ai_client.py**: KI‑Provider‑Abstraktion (Mistral/Gemini), Fehlerbehandlung und JSON‑Response.
+
+- **task_generator.py**: KI‑Task‑Generierung inkl. Prompt‑Knowledge‑Injection.
 
 - **task_knowledge_base.py** (NEU v1.2.0): Assessment-Center Task Knowledge Base. Strukturierte Wissensdatenbank mit 12 AC-Aufgabentypen, 10 Kompetenzdimensionen mit Verhaltensankern, 6 Zielgruppen-Kategorien und vergleichenden Phasenmodellen. Bietet `get_knowledge_for_prompt()` für KI-Prompt-Injection und `get_target_group_options()` für UI-Rendering.
 

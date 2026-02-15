@@ -19,7 +19,8 @@
 # - 1.3.1 (2026-02-11): Phase-3 Stabilisierung (Auth/RBAC Tests, Admin-Flow-Fix)
 # - 1.4.0 (2026-02-13): Phase 3 Complete (Prompts, Security Audit, Runbooks)
 # - 1.5.0 (2026-02-13): Phase 4 Design COMPLETE + PostgreSQL Production Ready + DB Sync Mechanism
-APP_VERSION = "1.5.0"
+# - 1.5.1 (2026-02-15): GitHub Actions Fixes + Documentation Improvements + KI-Analysis Bugfixes
+APP_VERSION = "1.5.1"
 
 # Export-Schema-Version (unabhängig von App-Version)
 # Ändert sich nur bei Änderungen der CSV/Excel-Export-Struktur

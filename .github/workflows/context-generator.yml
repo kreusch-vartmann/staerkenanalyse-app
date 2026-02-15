@@ -2,6 +2,9 @@ name: Context Generator
 
 on:
   workflow_dispatch:
+  schedule:
+    # Täglich um 3 Uhr UTC ausführen
+    - cron: '0 3 * * *'
 
 permissions:
   contents: write

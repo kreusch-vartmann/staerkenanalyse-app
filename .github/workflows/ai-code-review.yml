@@ -13,11 +13,14 @@ permissions:
   pull-requests: write
   issues: write
 
+env:
+  SKIP_AI_REVIEW: ${{ secrets.MISTRAL_API_KEY == '' }}
+
 jobs:
   ai-review:
     name: Mistral AI Code Review
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
+    if: github.event.pull_request.draft == false && secrets.MISTRAL_API_KEY != ''
     
     steps:
       - name: Checkout PR Branch
