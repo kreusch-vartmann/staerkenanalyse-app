@@ -1,93 +1,149 @@
-# CONTEXT.md - KI-optimierter Projektkontext
+# CONTEXT.md - Stärkenanalyse-App
 
-**Aktualisiert am**: 2026-02-14 (Version 1.5.0)
-
-**Ziel**: Diese Datei liefert KI‑Agenten einen schnellen, präzisen Überblick über Architektur, Datenflüsse, Regeln und kritische Stellen. 
-**Für vollständige Dateilisten** siehe `FILE_STRUCTURE.md`.
+**Automatisch generiert am**: 2026-08-07 04:57:26
 
 ---
 
-## 📌 Projektzweck (Kurzfassung)
+## 📋 Projektübersicht
 
-Die Stärkenanalyse‑App unterstützt Assessment‑Center‑Workflows: Teilnehmende erfassen Beobachtungen (sozial/verbal), KI generiert Fremdeinschätzungen, und Abschlussberichte (Fremd + Selbst) werden als PDF erstellt.
-
----
-
-## 🧱 Architektur & Kernmodule
-
-**Backend**: Flask (Python 3.11+), SQLAlchemy, SQLite/PostgreSQL via `DATABASE_URL`  
-**KI**: Mistral + Google Gemini (Fallback), JSON‑Antworten werden normalisiert
-
-**Wichtige Dateien**:
-- `blueprints/analysis.py`: KI‑Analyse (Batch/Single), Report‑Editing, Status‑UI
-- `services/ai_client.py`: KI‑Provider‑Adapter, Fehler‑Handling, JSON‑Response
-- `services/report_generator.py`: HTML/CSS für Reports, PDF‑Export
-- `models.py`: Kern‑Modelle (Participant, Group, Task, SelfAssessment)
-- `utils.py`: File‑Parsing, HTML‑Sanitizing, Helper (z. B. `html_to_plaintext`)
+**Technologie-Stack**:
+- **Backend**: Python 3.12.12, Flask 3.1.2
+- **ORM**: SQLAlchemy 2.0.28 + Flask-SQLAlchemy 3.0.4
+- **Database**: SQLite (via DATABASE_URL env var)
+- **KI-Integration**: Mistral API (mistralai==0.4.2), Google Generative AI
+- **Frontend**: Vanilla JavaScript, Chart.js, Tailwind CSS, Bootstrap 4
+- **PDF-Generation**: WeasyPrint
+- **Migrations**: Flask-Migrate 4.0.4 (Alembic)
 
 ---
 
-## 🔁 Haupt‑Flows (für KI‑Agenten)
+## 🗂️ Dateistruktur
 
-### 1) Batch‑KI‑Analyse
-`ai_analysis_select_group` → `ai_analysis_select_participants` → `execute_batch_ai_analysis` → UI Status in `ai_analysis_status.html` → API `run_single_analysis_api`
+### Core Application Files
+- **app.py**: Flask-App-Initialisierung, Blueprint-Registrierung, Dashboard-Route
+- **models.py**: SQLAlchemy-Modelle (0 Models: )
+- **extensions.py**: db, migrate Objekte (verhindert circular imports)
+- **ki_services.py**: KI-API-Integration (Mistral, Google Gemini)
+- **utils.py**: File-Processing (PDF, DOCX Extraktion)
 
-### 2) Einzel‑KI‑Analyse (z. B. „KI neu“ im Report)
-`run_ki_analysis` → `generate_report_with_ai` → `_normalize_ki_data` → Speicherung `participant.ki_texts`
+### Blueprints (12 total)
 
-### 3) Report‑Bearbeitung
-`edit_report` (Template `staerkenanalyse_bericht_vorlage3.html`) → Autosave via `save_report` → optional PDF
+#### _tasks_deprecated.py (0 Routes)
 
-### 4) Abschlussbericht
-`final_report` → `reports.preview_report_html` (kombiniert FE + SE) → PDF über `reports.generate_pdf_report`
+#### admin.py (0 Routes)
+
+#### analysis.py (0 Routes)
+
+#### auth.py (0 Routes)
+
+#### data_import.py (0 Routes)
+
+#### data_io.py (0 Routes)
+
+#### explanation_blocks.py (0 Routes)
+
+#### groups.py (0 Routes)
+
+#### observation_tasks.py (0 Routes)
+
+#### participants.py (0 Routes)
+
+#### prompts.py (0 Routes)
+
+#### reports.py (0 Routes)
+
+### Templates (30 HTML-Dateien)
+- ai_analysis_select_group.html
+- ai_analysis_select_participants.html
+- ai_analysis_status.html
+- base.html
+- bericht_pdf_vorlage.html
+- change_password.html
+- dashboard.html
+- data_entry.html
+- data_entry_rework.html
+- data_entry_search.html
+- explanation_block_form.html
+- export_selection.html
+- final_report.html
+- final_report_pdf.html
+- import_page.html
+- info.html
+- login.html
+- login_base.html
+- manage_explanation_blocks.html
+- manage_final_reports.html
+- manage_foreign_assessments.html
+- manage_groups.html
+- manage_participants.html
+- manage_prompts.html
+- manage_self_assessments.html
+- participants.html
+- prompt_form.html
+- run_batch_ai.html
+- self_assessment_entry.html
+- staerkenanalyse_bericht_vorlage3.html
 
 ---
 
-## 🧬 Domänenlogik (kritisch)
-
-- **Selbsteinschätzung** = reiner Text (keine Riemannkreuze)
-- **Fremdeinschätzung** = 2 Seiten (Sozial + Verbal, inkl. Radar‑Charts)
-- **Kompetenzbereiche**: „Soziale Kompetenzen“ und „Verbale Kompetenzen“
-- **Referenzaufgaben**: Tasks mit `is_example=True` sind funktional identisch zu normalen Aufgaben
+## 🗄️ Datenbank-Schema (SQLAlchemy Models)
 
 ---
 
-## 🧪 Typische Fehlerquellen
+## 🔐 Environment Variables
 
-- **KI‑Antwort enthält Listen** → `_normalize_ki_data()` muss Listen/Dictionaries in Strings umwandeln (fixiert)
-- **`participant.ki_texts`** ist JSON‑String; immer `json.loads` verwenden
-- **Berichte**: CSS ausschließlich in `services/report_generator.py` ändern (HTML‑Struktur stabil halten)
+**Erforderlich**:
+- `DATABASE_URL`: SQLAlchemy Database URI (z.B. `sqlite:///instance/database.db`)
+- `MISTRAL_API_KEY`: Mistral AI API Key (optional, für KI-Analysen)
+- `GOOGLE_API_KEY`: Google Generative AI Key (optional, Fallback)
 
----
-
-## 🗃️ Datenmodell (Essentials)
-
-- `Participant`: `observations`, `sk_ratings`, `vk_ratings`, `ki_texts`, `ki_raw_response`
-- `Task`: `observation_area`, `is_example`, `current_version`
-- `SelfAssessment`: Text für SE
+**Flask-Konfiguration**:
+- `SECRET_KEY`: Automatisch generiert via `os.urandom(24)` (⚠️ regeneriert bei Restart!)
+- Port: 5001 (hardcoded in app.py)
+- Debug: Aktiviert (⚠️ für Production deaktivieren!)
 
 ---
 
-## 🔐 Umgebung & Betrieb
+## 📦 Wichtige Abhängigkeiten
 
-**Env Vars**:
-- `DATABASE_URL` (SQLite/PostgreSQL)
-- `MISTRAL_API_KEY`, `GOOGLE_API_KEY`
-
-**Start lokal**:
-- Üblich: `flask run --port 5002`
-
-**Testdaten**:
-- Beispiel‑Teilnehmer vorhanden: Gruppe 1, Participant 1 (komplett mit SE+FE)
+**Kritische Libraries**:
+- Flask 3.1.2, SQLAlchemy 2.0.28
+- mistralai==0.4.2 (⚠️ Version fixed wegen Kompatibilität)
+- WeasyPrint (benötigt System-Dependencies: libcairo, libpango)
+- pandas 2.3.2, numpy 2.3.3 (für Excel-Export)
+- protobuf==5.29.5 (⚠️ Bekannter Konflikt mit älteren Packages)
 
 ---
 
-## 📚 Weiterführend
+## 🚀 Typische Workflows
 
-- Struktur & Dateien: `FILE_STRUCTURE.md`
-- Workflows: `PROJECT_OVERVIEW.md`
-- Prompts: `PROMPT_DOCUMENTATION.md`
+### 1. Neuen Teilnehmer hinzufügen
+1. Dashboard → "Gruppen verwalten" → Gruppe auswählen
+2. "Teilnehmer hinzufügen" → Name eingeben
+3. → `participants.add_participant()` → Participant-Model erstellt
+
+### 2. KI-Analyse durchführen
+1. Dashboard → "KI-Analyse" → Gruppe auswählen
+2. Teilnehmer auswählen → "Starten"
+3. → `analysis.run_ki_analysis_api()` → Mistral API Call
+4. Weiterleitung → `analysis.edit_report()` → staerkenanalyse_bericht_vorlage3.html
+
+### 3. Bericht bearbeiten/exportieren
+1. Dashboard → "Berichte bearbeiten" (manage_participants.html)
+2. "Bericht ansehen" Button (nur wenn `ki_texts` vorhanden)
+3. → `analysis.edit_report()` → HTML-Bericht editieren
+4. PDF-Export → `analysis.bericht_pdf()` → WeasyPrint → PDF
 
 ---
 
-**Letzte Aktualisierung**: 2026-02-14
+## ⚠️ Bekannte Issues & TODOs
+
+1. **SECRET_KEY regeneriert bei Restart** → Sessions werden ungültig
+2. **3x TODOs in blueprints/data_io.py** → Export-Funktion Field-Mapping
+3. **schema.sql veraltet** → Nur `leitung`, models.py hat `leitung_fremdeinschatzung` + `leitung_selbsteinschatzung`
+4. **database.py (338 Zeilen)** → Legacy Code, vermutlich unused
+5. **Debug-Modus in Production** → `app.run(debug=True)` hardcoded
+
+---
+
+**Letzte Aktualisierung**: {self._get_timestamp()}
