@@ -93,6 +93,7 @@ def add_participant(group_id):
 @participants_bp.route("/participant/edit/<int:participant_id>", methods=["POST"])
 @login_required
 @permission_required("participants.edit")
+@participant_access_required
 def edit_participant(participant_id):
     """Aktualisiert den Namen eines Teilnehmers."""
     participant = db.get_or_404(Participant, participant_id)
@@ -120,6 +121,7 @@ def edit_participant(participant_id):
 @participants_bp.route("/participant/delete/<int:participant_id>", methods=["POST"])
 @login_required
 @permission_required("participants.delete")
+@participant_access_required
 def delete_participant(participant_id):
     """Löscht einen Teilnehmer."""
     participant = db.get_or_404(Participant, participant_id)

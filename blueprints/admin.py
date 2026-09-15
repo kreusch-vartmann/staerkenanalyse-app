@@ -159,7 +159,10 @@ def edit_user(user_id: int):
             if not role:
                 flash(f"Rolle {role_name} nicht gefunden.", "error")
                 return redirect(url_for("admin.edit_user", user_id=user_id))
-            user.role_id = role.id
+            # Relationship setzen (nicht nur role_id): Sonst zeigt
+            # `user.role` bis zum nächsten Flush weiterhin auf die alte
+            # Rolle und die folgende is_system-Prüfung greift zu früh.
+            user.role = role
 
         # Gruppen neu zuordnen (nur für Observer)
         if not user.role.is_system:
@@ -558,3 +561,90 @@ def delete_role(role_id):
     db.session.commit()
     flash(f"Rolle '{role.name}' gelöscht.", "success")
     return redirect(url_for("admin.manage_roles"))
+
+
+# =============================================================================
+# APP-EINSTELLUNGEN: API-KEYS (verschlüsselt in der DB)
+# =============================================================================
+
+_SETTINGS_FIELDS = (
+    {
+        "name": "MISTRAL_API_KEY",
+        "label": "Mistral API-Key",
+        "hint": "API-Key für Mistral AI (console.mistral.ai).",
+    },
+    {
+        "name": "GOOGLE_API_KEY",
+        "label": "Google Gemini API-Key",
+        "hint": "API-Key für Google Gemini (aistudio.google.com/app/apikey).",
+    },
+)
+
+
+@admin_bp.route("/settings", methods=["GET", "POST"])
+@login_required
+@admin_required
+def settings():
+    """Admin: API-Keys verwalten (verschlüsselte Speicherung in der DB)."""
+    from flask_login import current_user
+
+    from services import settings as settings_service
+
+    if request.method == "POST":
+        delete_key = request.form.get("delete_key")
+        if delete_key:
+            if delete_key not in settings_service.MANAGED_KEYS:
+                flash("Unbekannter Einstellungs-Schlüssel.", "error")
+            elif settings_service.delete_setting(delete_key):
+                flash(f"{delete_key} aus der Datenbank gelöscht.", "success")
+            else:
+                flash(f"{delete_key} war nicht in der Datenbank gespeichert.", "info")
+            return redirect(url_for("admin.settings"))
+
+        saved = []
+        for field in _SETTINGS_FIELDS:
+            value = (request.form.get(field["name"]) or "").strip()
+            if value:
+                settings_service.set_setting(field["name"], value, current_user.id)
+                saved.append(field["label"])
+
+        if saved:
+            flash("Gespeichert: " + ", ".join(saved), "success")
+        else:
+            flash("Keine Änderungen vorgenommen.", "info")
+        return redirect(url_for("admin.settings"))
+
+    fields = []
+    for field in _SETTINGS_FIELDS:
+        value = settings_service.get_setting(field["name"])
+        fields.append(
+            {
+                **field,
+                "masked": settings_service.mask_secret(value),
+                "source": settings_service.get_setting_source(field["name"]),
+            }
+        )
+
+    breadcrumbs = [
+        {"link": url_for("dashboard"), "text": "Dashboard"},
+        {"text": "KI-Einstellungen"},
+    ]
+    return render_template("admin/settings.html", fields=fields, breadcrumbs=breadcrumbs)
+
+
+@admin_bp.route("/settings/test", methods=["GET"])
+@login_required
+@admin_required
+def test_ai_connection():
+    """Admin: Prüft, welche KI-Provider mit den aktuellen Keys verfügbar sind."""
+    from services.ai_client import get_available_models
+
+    status = get_available_models()
+    available = [name for name, ok in status.items() if ok]
+
+    if available:
+        flash("Verfügbare KI-Provider: " + ", ".join(available), "success")
+    else:
+        flash("Kein KI-Provider verfügbar. Bitte API-Key hinterlegen.", "error")
+
+    return redirect(url_for("admin.settings"))

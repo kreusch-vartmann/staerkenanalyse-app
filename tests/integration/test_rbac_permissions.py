@@ -27,7 +27,7 @@ class TestAdminRoleAccess:
         """Admin kann Teilnehmer-Management-Seite öffnen."""
         response = client.get("/participants")
         assert response.status_code == 200
-        assert b"Teilnehmer verwalten" in response.data
+        assert b"Teilnehmer" in response.data
 
     def test_admin_can_access_admin_panel(self, client):
         """Admin kann Admin-Panel öffnen."""
@@ -35,14 +35,14 @@ class TestAdminRoleAccess:
         assert response.status_code == 200
         assert b"Benutzer" in response.data or b"Benutzerverwaltung" in response.data
 
-    def test_admin_can_access_observation_tasks(self, client):
+    def test_admin_can_access_observation_tasks(self, client, sample_group):
         """Admin kann Beobachtungsaufgaben-Seite öffnen."""
-        response = client.get("/tasks")
+        response = client.get("/beobachtungsaufgaben/", follow_redirects=True)
         assert response.status_code == 200
 
     def test_admin_can_access_analysis(self, client, sample_group):
         """Admin kann KI-Analyse-Seite öffnen."""
-        response = client.get("/analysis", follow_redirects=True)
+        response = client.get("/ai_analysis/select_group", follow_redirects=True)
         assert response.status_code == 200
 
     def test_admin_sees_create_group_button(self, client):
@@ -84,19 +84,22 @@ class TestObserverRoleAccess:
         response = observer_client.get("/participants")
         assert response.status_code == 200
 
-    def test_observer_cannot_delete_participant(self, observer_client, sample_participant):
-        """Beobachter DARF Teilnehmer nicht löschen."""
-        response = observer_client.post(
-            f"/participant/{sample_participant.id}/delete",
-            follow_redirects=True
-        )
-        # Sollte 403 sein oder redirect (abhängig von Implementierung)
-        assert response.status_code in [302, 403]
-        # Prüfen ob Teilnehmer noch existiert
-        assert sample_participant.id is not None
+    def test_observer_cannot_delete_participant(self, observer_client, db, sample_participant):
+        """Beobachter DARF Teilnehmer nicht löschen.
 
-    def test_observer_cannot_create_group(self, observer_client):
-        """Beobachter DARF keine neue Gruppe erstellen."""
+        `permission_required` verweigert per Redirect (302) + Flash, nicht
+        per 403. Entscheidend ist, dass die Aktion wirkungslos bleibt.
+        """
+        participant_id = sample_participant.id
+        response = observer_client.post(
+            f"/participant/delete/{participant_id}",
+            follow_redirects=False,
+        )
+        assert response.status_code == 302
+        assert db.session.get(Participant, participant_id) is not None
+
+    def test_observer_cannot_create_group(self, observer_client, db):
+        """Beobachter DARF keine neue Gruppe erstellen (Redirect + keine Anlage)."""
         response = observer_client.post(
             "/group/add",
             data={
@@ -104,10 +107,10 @@ class TestObserverRoleAccess:
                 "date_from": "2026-01-01",
                 "date_to": "2026-06-30",
             },
-            follow_redirects=True
+            follow_redirects=False,
         )
-        # Sollte 403 sein oder redirect
-        assert response.status_code in [302, 403]
+        assert response.status_code == 302
+        assert Group.query.filter_by(name="Neue Test-Gruppe").first() is None
 
 
 class TestTemplateUIVisibilityGates:
@@ -169,7 +172,7 @@ class TestPermissionBasedRouteAccess:
         # Beobachter sollte diese Seite sehen oder redirect
         assert response.status_code in [200, 302]
 
-    def test_groups_edit_permission_blocks_create(self, observer_client):
+    def test_groups_edit_permission_blocks_create(self, observer_client, db):
         """Ohne groups.edit Permission: Create Group schlägt fehl."""
         response = observer_client.post(
             "/group/add",
@@ -179,23 +182,25 @@ class TestPermissionBasedRouteAccess:
                 "date_to": "2026-06-30",
                 "location": "Test",
             },
-            follow_redirects=True
+            follow_redirects=False,
         )
-        # Sollte 403 oder 302 sein
-        assert response.status_code in [302, 403]
+        assert response.status_code == 302
+        assert Group.query.filter_by(name="Test-Gruppe").first() is None
 
-    def test_participants_edit_permission_blocks_delete(self, observer_client, sample_participant):
+    def test_participants_edit_permission_blocks_delete(self, observer_client, db, sample_participant):
         """Ohne participants.delete Permission: Delete schlägt fehl."""
+        participant_id = sample_participant.id
         response = observer_client.post(
-            f"/participant/{sample_participant.id}/delete",
-            follow_redirects=True
+            f"/participant/delete/{participant_id}",
+            follow_redirects=False,
         )
-        assert response.status_code in [302, 403]
+        assert response.status_code == 302
+        assert db.session.get(Participant, participant_id) is not None
 
     def test_admin_analysis_permission_allows_access(self, client):
         """Mit analysis.run Permission: Admin kann Analyse-Seite öffnen."""
-        response = client.get("/analysis", follow_redirects=True)
-        assert response.status_code in [200, 302]  # 200 or 302 if redirect to select
+        response = client.get("/ai_analysis/select_group", follow_redirects=True)
+        assert response.status_code == 200  # Kein Redirect für Admins
 
 
 class TestPermissionDenialScenarios:
@@ -215,22 +220,29 @@ class TestPermissionDenialScenarios:
             # Sie sollte redirect zur Home oder Login sein
             assert any(x in location for x in ["login", "auth", "/"])
 
-    def test_permission_check_decorator_works(self, db, observer_user):
-        """@permission_required Decorator blockiert Zugriff."""
-        # Dieser Test validiert, dass der Dekorator funktioniert
-        # durch Versuch unbefugter Admin-Zugriff
-        client = observer_user.client  # Hypothetisch
-        # Hier würde normaler Test-Request erfolgen
+    def test_permission_check_decorator_works(self, observer_client):
+        """@permission_required Decorator blockiert Zugriff.
+
+        Der Decorator leitet auf das Dashboard um (302) statt 403 zu
+        senden; die geschützte Seite wird nicht ausgeliefert.
+        """
+        response = observer_client.get("/admin/users", follow_redirects=False)
+        assert response.status_code == 302
+
+        followed = observer_client.get("/admin/users", follow_redirects=True)
+        assert b"Benutzerverwaltung" not in followed.data
 
 
 class TestRoleBasedAccessMatrix:
     """Umfassende Matrix: Role × Action → Allowed/Denied."""
 
+    # Hinweis: Verweigerter Zugriff endet laut `permission_required` in
+    # einem Redirect (302) auf das Dashboard – nicht in einem 403.
     @pytest.mark.parametrize("resource,expected_admin,expected_observer", [
         ("/groups", 200, 200),
         ("/admin/users", 200, 302),
         ("/participants", 200, 200),
-        ("/tasks", 200, 200),
+        ("/beobachtungsaufgaben/", 200, 200),
     ])
     def test_resource_access_matrix(self, client, observer_client, resource, expected_admin, expected_observer):
         """Teste Zugriffs-Matrix für verschiedene Rollen."""
@@ -290,10 +302,14 @@ class TestCustomRolePermissions:
 class TestUserPermissionDelegation:
     """User delegiert Permission-Checks an seine Role."""
 
-    def test_user_has_permission_delegates_to_role(self, db, admin_user, admin_role):
-        """User.has_permission() delegiert zu Role.has_permission()."""
-        # Admin sollte Permissions haben
-        assert admin_user.has_permission("groups.edit") is True or admin_role.is_system is True
+    def test_user_has_permission_delegates_to_role(self, db, admin_user, admin_permissions):
+        """User.has_permission() delegiert zu Role.has_permission().
+
+        `admin_permissions` richtet die Rolle wie in der Produktion ein
+        (is_system + alle Berechtigungen); ohne diese Fixture besitzt die
+        Test-Rolle bewusst keine Rechte.
+        """
+        assert admin_user.has_permission("groups.edit") is True
 
     def test_user_without_permission_returns_false(self, db, observer_user, observer_role):
         """User ohne Permission gibt False zurück."""

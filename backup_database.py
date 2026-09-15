@@ -37,51 +37,71 @@ MAX_BACKUPS = 50  # Maximale Anzahl aufbewahrter Backups
 
 
 def get_db_path():
-    """Ermittelt den aktuellen Datenbankpfad."""
-    instance_dir = Path(__file__).parent / "instance"
-    return instance_dir / "database.db"
+    """Gibt den Pfad zur Datenbank zurück oder None für PostgreSQL."""
+    db_url = os.getenv("DATABASE_URL", "sqlite:///instance/database.db")
+    if db_url.startswith("sqlite:///"):
+        return Path(db_url.replace("sqlite:///", ""))
+    elif db_url.startswith("postgresql://"):
+        return None  # PostgreSQL
+    else:
+        raise ValueError(f"Unbekanntes DATABASE_URL-Schema: {db_url}")
 
 
 def create_backup(reason="manual"):
     """
-    Erstellt ein Backup der Datenbank.
+    Erstellt ein Backup der Datenbank (SQLite oder PostgreSQL).
     
     Args:
         reason: Grund für das Backup (z.B. 'startup', 'manual', 'before_migration')
     
     Returns:
-        Path zum erstellten Backup oder None bei Fehler.
+        Path: Pfad zum Backup-File
+    
+    Raises:
+        RuntimeError: Bei Fehlern während des Backups
     """
     db_path = get_db_path()
-    
-    if not db_path.exists():
-        print(f"⚠️  Datenbank nicht gefunden: {db_path}")
-        return None
-    
-    if db_path.stat().st_size == 0:
-        print(f"⚠️  Datenbank ist leer (0 bytes): {db_path}")
-        return None
-    
-    # Backup-Verzeichnis erstellen
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
-    
-    # Backup-Dateiname mit Zeitstempel und Grund
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    backup_name = f"database_{timestamp}_{reason}.db"
+    backup_name = f"database_{timestamp}_{reason}.sql"
     backup_path = BACKUP_DIR / backup_name
-    
-    # Kopie erstellen
-    shutil.copy2(str(db_path), str(backup_path))
-    
-    # Verifizierung: Größe vergleichen
-    if backup_path.stat().st_size != db_path.stat().st_size:
-        print(f"❌ FEHLER: Backup-Größe stimmt nicht überein!")
-        return None
-    
-    size_kb = backup_path.stat().st_size / 1024
-    print(f"✅ Backup erstellt: {backup_name} ({size_kb:.1f} KB)")
-    
-    return backup_path
+
+    try:
+        if db_path is None:  # PostgreSQL
+            db_url = os.getenv("DATABASE_URL")
+            if not db_url:
+                raise RuntimeError("DATABASE_URL nicht gesetzt")
+            
+            # pg_dump mit Umgebungsvariablen
+            cmd = [
+                "pg_dump",
+                f"--dbname={db_url}",
+                "--format=plain",
+                "--no-owner",
+                "--no-privileges",
+                f"--file={backup_path}"
+            ]
+            env = os.environ.copy()
+            env["PGPASSWORD"] = db_url.split(":")[2].split("@")[0]
+            
+            result = subprocess.run(cmd, env=env, capture_output=True, text=True)
+            if result.returncode != 0:
+                raise RuntimeError(f"pg_dump fehlgeschlagen: {result.stderr}")
+            print(f"✅ PostgreSQL-Backup erstellt: {backup_name} ({backup_path.stat().st_size / 1024:.1f} KB)")
+        else:  # SQLite
+            if not db_path.exists():
+                raise RuntimeError(f"Datenbank nicht gefunden: {db_path}")
+            if db_path.stat().st_size == 0:
+                raise RuntimeError(f"Datenbank ist leer (0 bytes): {db_path}")
+            
+            shutil.copy2(str(db_path), str(backup_path))
+            print(f"✅ SQLite-Backup erstellt: {backup_name} ({backup_path.stat().st_size / 1024:.1f} KB)")
+        
+        # Alte Backups bereinigen
+        cleanup_old_backups()
+        return backup_path
+    except Exception as e:
+        raise RuntimeError(f"Backup fehlgeschlagen: {e}")
 
 
 def cleanup_old_backups(keep=MAX_BACKUPS):
@@ -157,10 +177,23 @@ def startup_backup():
     """
     Wird beim App-Start ausgeführt. Erstellt ein Backup,
     aber nur wenn sich die DB seit dem letzten Backup geändert hat.
+    
+    Raises:
+        RuntimeError: Bei Fehlern während des Backups
     """
     db_path = get_db_path()
-    if not db_path.exists() or db_path.stat().st_size == 0:
+    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Für PostgreSQL: Immer Backup erstellen (keine Änderungsprüfung)
+    if db_path is None:
+        create_backup("startup")
         return
+
+    # Für SQLite: Änderungsprüfung
+    if not db_path.exists():
+        raise RuntimeError(f"Datenbank nicht gefunden: {db_path}")
+    if db_path.stat().st_size == 0:
+        raise RuntimeError(f"Datenbank ist leer (0 bytes): {db_path}")
     
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
     
@@ -261,15 +294,37 @@ def restore_db_command(backup_file):
     db_path = get_db_path()
     
     # Sicherheitsbackup der aktuellen DB vor dem Restore
-    if db_path.exists() and db_path.stat().st_size > 0:
+    if db_path is not None and db_path.exists() and db_path.stat().st_size > 0:
         create_backup(reason="before_restore")
     
     # Restore durchführen
-    if click.confirm(f"\n⚠️  {backup_path.name} → instance/database.db\nAktuelle DB wird überschrieben! Fortfahren?"):
-        shutil.copy2(str(backup_path), str(db_path))
-        click.echo(f"✅ Datenbank wiederhergestellt aus: {backup_path.name}")
-    else:
-        click.echo("❌ Abgebrochen.")
+    try:
+        if db_path is None:  # PostgreSQL
+            db_url = os.getenv("DATABASE_URL")
+            if not db_url:
+                raise RuntimeError("DATABASE_URL nicht gesetzt")
+            
+            # psql für Restore
+            cmd = [
+                "psql",
+                f"--dbname={db_url}",
+                f"--file={backup_path}"
+            ]
+            env = os.environ.copy()
+            env["PGPASSWORD"] = db_url.split(":")[2].split("@")[0]
+            
+            result = subprocess.run(cmd, env=env, capture_output=True, text=True)
+            if result.returncode != 0:
+                raise RuntimeError(f"psql fehlgeschlagen: {result.stderr}")
+            click.echo(f"✅ PostgreSQL-Datenbank wiederhergestellt aus: {backup_path.name}")
+        else:  # SQLite
+            if click.confirm(f"\n⚠️  {backup_path.name} → {db_path}\nAktuelle DB wird überschrieben! Fortfahren?"):
+                shutil.copy2(str(backup_path), str(db_path))
+                click.echo(f"✅ SQLite-Datenbank wiederhergestellt aus: {backup_path.name}")
+            else:
+                click.echo("❌ Abgebrochen.")
+    except Exception as e:
+        click.echo(f"❌ Wiederherstellung fehlgeschlagen: {e}")
 
 
 def register_backup_commands(app):

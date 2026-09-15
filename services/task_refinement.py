@@ -5,7 +5,7 @@ Task refinement using AI models.
 import logging
 import re
 
-from services.ai_client import MISTRAL_CLIENT, MISTRAL_MODEL, genai_client, _call_gemini
+from services.ai_client import MISTRAL_MODEL, get_mistral_client, ensure_gemini_configured, _call_gemini
 from services.task_normalization import (
     _clean_html_output,
     _ensure_all_sections_filled,
@@ -84,16 +84,20 @@ ANTWORTE NUR MIT DEM KOMPLETTEN HTML-CODE - NICHTS ANDERES!"""
     try:
         temperatures = [0.5, 0.3]
         updated_html = None
+        # Clients zur Laufzeit auflösen (ENV ODER Admin-UI/DB-Key) - siehe
+        # gleichnamiger Fix in task_generator.py.
+        mistral_client = get_mistral_client()
+        gemini_available = ensure_gemini_configured()
 
         for attempt, temp in enumerate(temperatures, 1):
             logger.debug("REFINE_TASK_CONTENT ATTEMPT %s (temp=%s)", attempt, temp)
 
-            if ki_model == "mistral" and MISTRAL_CLIENT:
+            if ki_model == "mistral" and mistral_client:
                 messages = [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ]
-                response = MISTRAL_CLIENT.chat(
+                response = mistral_client.chat(
                     model=MISTRAL_MODEL,
                     messages=messages,
                     temperature=temp,
@@ -101,7 +105,7 @@ ANTWORTE NUR MIT DEM KOMPLETTEN HTML-CODE - NICHTS ANDERES!"""
                 )
                 result = response.choices[0].message.content
 
-            elif ki_model == "gemini" and genai_client:
+            elif ki_model == "gemini" and gemini_available:
                 result, _used_model = _call_gemini(system_prompt, user_prompt, max_output_tokens=8000)
 
             else:

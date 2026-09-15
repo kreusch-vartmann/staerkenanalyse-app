@@ -150,9 +150,46 @@ def upload_client_logo(group_id):
 
 @bp.route("/uploads/<path:filename>")
 @login_required
+@permission_required("analysis.view_reports")
 def serve_upload(filename):
-    """Serviert Upload-Dateien (Logos) aus dem uploads-Verzeichnis."""
-    return send_from_directory("uploads", filename)
+    """Serviert Upload-Dateien (Logos, Signaturen) aus dem uploads-Verzeichnis.
+    
+    Prüft:
+    - Dateipfad liegt innerhalb von UPLOAD_FOLDER
+    - Nutzer hat Zugriff auf die Gruppe/Report-Konfiguration
+    """
+    from flask import current_app, abort
+    import os
+    
+    # 1. Pfadvalidierung
+    base = os.path.abspath(current_app.config["UPLOAD_FOLDER"])
+    target = os.path.abspath(os.path.join(base, filename))
+    if not target.startswith(base + os.sep):
+        current_app.logger.warning(f"Path traversal attempt: {filename}")
+        abort(404)
+    
+    # 2. Datei-Existenzprüfung
+    if not os.path.exists(target):
+        abort(404)
+    
+    # 3. Autorisierung: Nur Admins oder Gruppenmitglieder
+    if not current_user.is_admin:
+        # Prüfe ClientLogo (Gruppenlogo)
+        client_logo = ClientLogo.query.filter_by(logo_path=f"uploads/{filename}").first()
+        if client_logo and not current_user.has_group_access(client_logo.group_id):
+            abort(403)
+        
+        # Prüfe CompanyLogo (Firmenlogo)
+        company_logo = CompanyLogo.query.filter_by(logo_path=f"uploads/{filename}").first()
+        if company_logo and not current_user.has_access_to_any_group():
+            abort(403)
+        
+        # Prüfe SignatureImage (Unterschriften)
+        signature = SignatureImage.query.filter_by(image_path=f"uploads/{filename}").first()
+        if signature and not current_user.has_role("leitung_fe") and not current_user.has_role("leitung_se"):
+            abort(403)
+    
+    return send_from_directory(base, filename)
 
 
 # =============================================================================

@@ -2,12 +2,15 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyc
 *.so
 .Python
+.venv/
 venv/
 venv_py313_broken/
 ENV/
 env/
+sys/
 
 # Flask
 instance/
@@ -17,6 +20,14 @@ instance/
 *.db
 *.sqlite
 database.db
+
+# Build & Deployment
+backups/
+Dist/
+tests/
+*.md
+*.txt
+*.bak
 
 # Environment
 .env

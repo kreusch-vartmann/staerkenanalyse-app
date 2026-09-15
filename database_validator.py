@@ -215,7 +215,7 @@ if __name__ != "__main__":
     # NICHT prüfen wenn FLASK_ENV=testing (CI/Test-Umgebung)
     flask_env = os.environ.get('FLASK_ENV', '').lower()
     db_url = os.environ.get('DATABASE_URL', '')
-    is_sqlite = 'sqlite' in db_url.lower() or not db_url
+    is_sqlite = bool(db_url) and db_url.lower().startswith('sqlite')
     is_not_test = 'test' not in db_url.lower()
     is_not_testing_env = flask_env != 'testing'
 

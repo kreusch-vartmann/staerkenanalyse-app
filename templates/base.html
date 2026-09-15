@@ -233,6 +233,11 @@
                                     <i class="fas fa-shield-alt"></i> Rollenverwaltung
                                 </a>
                             {% endif %}
+                            {% if current_user.is_admin %}
+                                <a class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" href="{{ url_for('admin.settings') }}">
+                                    <i class="fas fa-key"></i> KI-Einstellungen
+                                </a>
+                            {% endif %}
                             <a class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" href="{{ url_for('info') }}">
                                 <i class="fas fa-info-circle"></i> Informationen
                             </a>
@@ -439,6 +444,189 @@
             }
         });
     </script>
+    <script nonce="{{ csp_nonce }}">
+        // Löschbestätigungen via data-confirm (CSP-konform)
+        document.addEventListener('submit', (e) => {
+            const msg = e.target.getAttribute?.('data-confirm');
+            if (msg && !window.confirm(msg)) {
+                e.preventDefault();
+            }
+        }, true);
+        
+        // Event-Delegation für data-action (CSP-konform)
+        document.addEventListener('click', (e) => {
+            const el = e.target.closest('[data-action]');
+            if (!el) return;
+            const action = el.dataset.action;
+            if (action === 'noop') return;
+            
+            switch (action) {
+                case 'start-batch-analysis':
+                    if (typeof startAnalysisWithKiSelection === 'function') {
+                        startAnalysisWithKiSelection();
+                    } else {
+                        console.error('startAnalysisWithKiSelection is not defined');
+                    }
+                    break;
+                case 'open-add-group-modal':
+                    openAddGroupModal();
+                    break;
+                case 'toggle-accordion':
+                    toggleAccordion(el.dataset.groupId);
+                    break;
+                case 'remove-task-from-group':
+                    removeTaskFromGroup(el.dataset.groupId, el.dataset.taskId);
+                    break;
+                case 'open-task-selection-modal':
+                    openTaskSelectionModal(el.dataset.groupId);
+                    break;
+                case 'open-edit-group-modal':
+                    openEditGroupModal(
+                        el.dataset.groupId,
+                        el.dataset.groupName,
+                        el.dataset.dateFrom,
+                        el.dataset.dateTo,
+                        el.dataset.location,
+                        el.dataset.leitungFe,
+                        el.dataset.leitungSe,
+                        el.dataset.beobachter1,
+                        el.dataset.beobachter2
+                    );
+                    break;
+                case 'close-add-group-modal':
+                    closeAddGroupModal();
+                    break;
+                case 'close-task-selection-modal':
+                    closeTaskSelectionModal();
+                    break;
+                case 'close-edit-group-modal':
+                    closeEditGroupModal();
+                    break;
+                case 'open-modal':
+                    openModal();
+                    break;
+                case 'save-report':
+                    saveReport();
+                    break;
+                case 'download-pdf':
+                    downloadPDF();
+                    break;
+                case 'reset-section':
+                    resetSection(el.dataset.section);
+                    break;
+                case 'close-modal':
+                    closeModal();
+                    break;
+                case 'save-report':
+                    saveReport();
+                    break;
+                case 'download-pdf':
+                    downloadPDF();
+                    break;
+                case 'reset-section':
+                    resetSection(el.dataset.section);
+                    break;
+                case 'save-version':
+                    saveVersion();
+                    break;
+                case 'view-history':
+                    viewHistory();
+                    break;
+                case 'switch-tab':
+                    switchTab(el.dataset.tab);
+                    break;
+                case 'send-chat':
+                    sendChat();
+                    break;
+                case 'close-versions-modal':
+                    closeVersionsModal();
+                    break;
+                case 'select-ki-model':
+                    selectKiModel(el.dataset.model, el);
+                    break;
+                case 'close-ki-model-modal':
+                    closeKiModelModal();
+                    break;
+                case 'confirm-ki-model-selection':
+                    confirmKiModelSelection();
+                    break;
+                case 'open-example-modal':
+                    openExampleModal(el.dataset.key);
+                    break;
+                case 'close-example-modal':
+                    closeExampleModal();
+                    break;
+                case 'open-edit-participant-modal':
+                    openEditParticipantModal(el.dataset.participantId, el.dataset.participantName);
+                    break;
+                case 'close-edit-participant-modal':
+                    closeEditParticipantModal();
+                    break;
+                case 'copy-temp-password':
+                    copyTempPassword();
+                    break;
+                case 'toggle-user-menu':
+                    toggleUserMenu(el.dataset.userId);
+                    break;
+                case 'save-self-assessment':
+                    saveSelfAssessment();
+                    break;
+                case 'submit-pdf-form':
+                    document.getElementById('pdf-form').submit();
+                    break;
+                case 'decrease-count':
+                    decreaseCount();
+                    break;
+                case 'increase-count':
+                    increaseCount();
+                    break;
+                case 'send-message':
+                    sendMessage();
+                    break;
+                case 'reset-editor':
+                    resetEditor();
+                    break;
+                case 'generate-content':
+                    generateContent();
+                    break;
+                case 'save-task':
+                    saveTask();
+                    break;
+                case 'close-save-version-modal':
+                    closeSaveVersionModal();
+                    break;
+                case 'confirm-save-version':
+                    confirmSaveVersion();
+                    break;
+                case 'close-generate-modal':
+                    closeGenerateModal();
+                    break;
+                case 'open-generation-modal':
+                    openGenerationModal();
+                    break;
+                case 'delete-signature-fe':
+                    deleteSignatureFE();
+                    break;
+                case 'delete-signature-se':
+                    deleteSignatureSE();
+                    break;
+                default:
+                    console.warn('Unbekannte data-action:', action);
+            }
+        });
+    </script>
+    <!--
+        HINWEIS: Hier stand zuvor ein zweites `startAnalysisWithKiSelection()`
+        (globales window.startAnalysisWithKiSelection = ...), das die echte
+        Implementierung aus templates/run_batch_ai.html überschrieb. Es
+        suchte nach `input[name="prompt_id"]:checked` (Radio-Buttons einer
+        alten UI-Version), obwohl die aktuelle Seite ein `<select
+        id="prompt_selection">` nutzt. Da kein solches Radio-Element je
+        existierte, schlug die Prompt-Auswahl dadurch IMMER fehl – unabhängig
+        davon, was im Dropdown ausgewählt war. Die Funktion gehört nur auf
+        die Seite, die sie tatsächlich braucht (run_batch_ai.html); dort ist
+        sie korrekt implementiert (liest den Wert live aus dem DOM).
+    -->
     {% block scripts %}{% endblock %}
 </body>
 </html>

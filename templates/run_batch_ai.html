@@ -57,39 +57,53 @@
 {% include 'partials/_ki_model_modal.html' %}
 
 <script nonce="{{ csp_nonce }}">
-// Initialize selectedPromptId from current dropdown value
-var selectedPromptId = document.getElementById('prompt_selection').value || null;
-console.log('[BatchAI] Initial selectedPromptId:', selectedPromptId);
-
-if (selectedPromptId) {
-    const previewBtn = document.getElementById('togglePromptPreview');
-    previewBtn.style.display = 'block';
+// Liest die aktuelle Auswahl immer live aus dem DOM statt aus einer
+// manuell synchronisierten Variable. Eine gecachte Variable, die nur
+// per 'change'-Event aktualisiert wird, kann von der tatsächlichen
+// Select-Auswahl abweichen (z. B. bei Formular-Restore durch den
+// Browser, Autofill oder falls das 'change'-Event aus anderen Gründen
+// nicht feuert) – das führte dazu, dass die Validierung fälschlich
+// "keine Vorlage ausgewählt" meldete, obwohl im Dropdown ein Wert
+// sichtbar war.
+function getSelectedPromptId() {
+    var select = document.getElementById('prompt_selection');
+    return (select && select.value) || null;
 }
 
-document.getElementById('prompt_selection').addEventListener('change', function() {
-    selectedPromptId = this.value || null;
-    console.log('[BatchAI] Prompt changed to:', selectedPromptId);
-    const previewBtn = document.getElementById('togglePromptPreview');
-    const previewContainer = document.getElementById('promptPreviewContainer');
-    
-    if (!selectedPromptId) {
+function updatePromptPreviewVisibility() {
+    var previewBtn = document.getElementById('togglePromptPreview');
+    var previewContainer = document.getElementById('promptPreviewContainer');
+    if (getSelectedPromptId()) {
+        previewBtn.style.display = 'block';
+    } else {
         previewBtn.style.display = 'none';
         previewContainer.style.display = 'none';
-        return;
     }
+}
 
-    previewBtn.style.display = 'block';
+// Initialer Zustand beim Laden der Seite (z. B. Default-Prompt vorausgewählt)
+updatePromptPreviewVisibility();
+
+document.getElementById('prompt_selection').addEventListener('change', function() {
+    console.log('[BatchAI] Prompt changed to:', getSelectedPromptId());
+    updatePromptPreviewVisibility();
 });
 
 document.getElementById('togglePromptPreview').addEventListener('click', function() {
     var previewContainer = document.getElementById('promptPreviewContainer');
     var previewText = document.getElementById('promptPreviewText');
     var btn = this;
-    
+    var promptId = getSelectedPromptId();
+
+    if (!promptId) {
+        alert('Bitte wählen Sie zuerst eine Prompt-Vorlage aus.');
+        return;
+    }
+
     // Toggle
     if (previewContainer.style.display === 'none') {
         // Load and show
-        fetch('/api/prompt/' + selectedPromptId)
+        fetch('/api/prompt/' + promptId)
             .then(function(response) {
                 if (!response.ok) throw new Error('Prompt konnte nicht geladen werden (Status ' + response.status + ')');
                 return response.json();
@@ -110,10 +124,11 @@ document.getElementById('togglePromptPreview').addEventListener('click', functio
 });
 
 function startAnalysisWithKiSelection() {
-    console.log('[BatchAI] startAnalysisWithKiSelection called, selectedPromptId:', selectedPromptId);
-    
-    // Validate prompt selection
-    if (!selectedPromptId) {
+    var promptId = getSelectedPromptId();
+    console.log('[BatchAI] startAnalysisWithKiSelection called, promptId:', promptId);
+
+    // Validate prompt selection (live DOM-Wert, nicht gecacht)
+    if (!promptId) {
         alert('Bitte wählen Sie zuerst eine Prompt-Vorlage aus.');
         return;
     }
@@ -126,8 +141,8 @@ function startAnalysisWithKiSelection() {
         document.getElementById('ki_model_input').value = selectedModel;
         
         // Fetch prompt content, then submit form
-        console.log('[BatchAI] Fetching prompt content for ID:', selectedPromptId);
-        fetch('/api/prompt/' + selectedPromptId)
+        console.log('[BatchAI] Fetching prompt content for ID:', promptId);
+        fetch('/api/prompt/' + promptId)
             .then(function(response) {
                 console.log('[BatchAI] Fetch response status:', response.status);
                 if (!response.ok) {

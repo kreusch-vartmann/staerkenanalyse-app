@@ -203,7 +203,7 @@ staerkenanalyse-app/
 
 - **app.log**: Haupt-Logfile der Anwendung. Enthält Runtime-Logs, Errors und Debug-Informationen.
 
-- **app_5002.log**: Sekundäres Logfile für Port 5002 (falls parallel laufend). Für Multi-Instance-Setups.
+- **app_5001.log**: Sekundäres Logfile für Port 5001 (falls parallel laufend). Für Multi-Instance-Setups.
 
 - **pylint_report.txt**: Letzter Pylint-Analyse-Report. Enthält Code-Quality-Metriken und gefundene Issues.
 

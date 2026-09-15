@@ -1,0 +1,62 @@
+# docker-compose.example.yml - Vorlage für manuelle Konfiguration
+# Kopiere diese Datei nach docker-compose.yml und passe die Umgebungsvariablen an.
+
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: stark
+      POSTGRES_PASSWORD: stark
+      POSTGRES_DB: stark
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stark"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - app_network
+
+  app:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://stark:stark@postgres:5432/stark
+      RATELIMIT_STORAGE_URI: redis://redis:6379
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY muss gesetzt sein}
+      # Weitere Umgebungsvariablen aus .env.example hier ergänzen
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app_network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  app_network:
+    driver: bridge

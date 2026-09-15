@@ -11,7 +11,26 @@ source venv/bin/activate
 pip install -q -r requirements.txt
 ```
 
-### 2. Apply Database Migrations
+### 2. PostgreSQL einrichten (Standard)
+```bash
+sudo ./scripts/setup_postgres.sh  # PostgreSQL 16 + Datenbank erstellen
+```
+
+### 3. `.env` anpassen
+```ini
+# PostgreSQL (Standard)
+DATABASE_URL=postgresql://stark:stark@localhost:5432/stark
+
+# SQLite (Fallback)
+# DATABASE_URL=sqlite:////home/timok/kDrive/Dokumente/staerkenanalyse-app/instance/database.db
+```
+
+### 4. Datenbank migrieren (falls SQLite → PostgreSQL)
+```bash
+python scripts/migrate_sqlite_to_postgresql.py
+```
+
+### 5. Apply Database Migrations
 ```bash
 flask db upgrade
 # Output should show: "Running upgrade ... add_auth_models_001"

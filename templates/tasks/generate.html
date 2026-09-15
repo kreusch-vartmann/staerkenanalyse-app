@@ -97,13 +97,13 @@
                         <input type="text" id="chatInput" aria-label="Nachricht eingeben" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500" 
                                placeholder="Ask to modify, add, or change..." 
                                autocomplete="off">
-                        <button class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700" type="button" id="sendBtn" onclick="sendMessage()">
+                         <button class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700" type="button" id="sendBtn" data-action="send-message">
                             <i class="fas fa-paper-plane"></i>
                         </button>
                     </div>
 
                     {# Save as Version Button #}
-                    <button class="mt-3 w-full rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-700" onclick="saveVersion()">
+                     <button class="mt-3 w-full rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-700" data-action="save-version">
                         <i class="fas fa-save mr-2"></i> Save as Version
                     </button>
                 </div>
@@ -172,13 +172,13 @@
 
                     {# Action Buttons #}
                     <div class="mt-3 flex flex-wrap gap-2 justify-end">
-                        <button class="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50" onclick="resetEditor()">
+                         <button class="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50" data-action="reset-editor">
                             <i class="fas fa-redo mr-1"></i> Reset
                         </button>
-                        <button class="rounded-md border border-indigo-300 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100" onclick="generateContent()">
+                         <button class="rounded-md border border-indigo-300 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100" data-action="generate-content">
                             <i class="fas fa-magic mr-1"></i> AI Generate
                         </button>
-                        <button class="rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-700" onclick="saveTask()">
+                         <button class="rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-700" data-action="save-task">
                             <i class="fas fa-save mr-1"></i> {% if task %}Update{% else %}Create{% endif %} Task
                         </button>
                     </div>
@@ -210,7 +210,7 @@
     <div class="w-full max-w-lg mx-4 rounded-lg bg-white shadow-xl">
         <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3">
             <h5 class="text-lg font-semibold text-gray-900">Save as New Version</h5>
-            <button type="button" class="text-gray-500 hover:text-gray-700" onclick="closeSaveVersionModal()">&times;</button>
+             <button type="button" class="text-gray-500 hover:text-gray-700" data-action="close-save-version-modal">&times;</button>
         </div>
         <div class="px-4 py-4">
             <label class="block text-sm font-medium text-gray-700 mb-2">Change Notes (optional)</label>
@@ -218,8 +218,8 @@
                       placeholder="e.g., 'Added presentation element', 'Refined instructions'"></textarea>
         </div>
         <div class="flex justify-end gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3">
-            <button type="button" class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50" onclick="closeSaveVersionModal()">Cancel</button>
-            <button type="button" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700" onclick="confirmSaveVersion()">Save Version</button>
+             <button type="button" class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50" data-action="close-save-version-modal">Cancel</button>
+             <button type="button" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700" data-action="confirm-save-version">Save Version</button>
         </div>
     </div>
 </div>
@@ -229,7 +229,7 @@
     <div class="w-full max-w-lg mx-4 rounded-lg bg-white shadow-xl">
         <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3">
             <h5 class="text-lg font-semibold text-gray-900">Generate Task Content</h5>
-            <button type="button" class="text-gray-500 hover:text-gray-700" onclick="closeGenerateModal()">&times;</button>
+             <button type="button" class="text-gray-500 hover:text-gray-700" data-action="close-generate-modal">&times;</button>
         </div>
         <div class="px-4 py-4">
             <p class="text-sm text-gray-600 mb-3">Generate AI-powered task content based on observation area.</p>

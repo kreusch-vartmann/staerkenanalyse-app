@@ -12,9 +12,10 @@ from flask import (Blueprint, Response, flash, jsonify, redirect,
 from flask_login import login_required, current_user
 
 from blueprints.data_import import import_participants_from_export
-from extensions import db
+from extensions import db, limiter
 from models import Group, Participant
-from utils import validate_upload_file, log_activity
+from utils import ALLOWED_IMPORT_EXTENSIONS, validate_upload_file, log_activity
+from services.import_service import ImportParseError, extract_names_from_file
 from validation import (
     DataEntrySearchQuery,
     ExportDataForm,
@@ -298,20 +299,25 @@ def import_names():
         flash("Bitte Gruppennamen angeben und eine Datei auswählen.", "warning")
         return redirect(url_for("data_io.import_page"))
 
-    # Validiere Upload-Datei
+    # Validiere Upload-Datei (Import erlaubt Tabellenformate)
     try:
-        validate_upload_file(file)
+        validate_upload_file(file, allowed_extensions=ALLOWED_IMPORT_EXTENSIONS)
     except ValueError as e:
         flash(f"Datei-Validierung fehlgeschlagen: {e}", "error")
         return redirect(url_for("data_io.import_page"))
 
+    # Namen aus TXT/CSV/XLSX/ODS/DOCX extrahieren
     try:
-        content = file.read().decode("utf-8")
-        names = [name.strip() for name in content.splitlines() if name.strip()]
-        if not names:
-            flash("Die ausgewählte Datei enthält keine gültigen Namen.", "warning")
-            return redirect(url_for("data_io.import_page"))
+        names = extract_names_from_file(file)
+    except ImportParseError as e:
+        flash(str(e), "error")
+        return redirect(url_for("data_io.import_page"))
 
+    if not names:
+        flash("Die ausgewählte Datei enthält keine gültigen Namen.", "warning")
+        return redirect(url_for("data_io.import_page"))
+
+    try:
         new_group = Group(
             name=group_name,
             date_from=datetime.now(timezone.utc).date(),
@@ -331,6 +337,7 @@ def import_names():
             url_for("groups.show_group_participants", group_id=new_group.id)
         )
     except Exception as e:
+        db.session.rollback()
         flash(f"Ein Fehler ist beim Verarbeiten der Datei aufgetreten: {e}", "error")
         return redirect(url_for("data_io.import_page"))
 

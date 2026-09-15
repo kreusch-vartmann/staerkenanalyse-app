@@ -259,7 +259,14 @@ def generate(task_id):
             
             flash("✓ Aufgabenvorschlag generiert!", "success")
         else:
-            flash("KI-Generierung fehlgeschlagen", "error")
+            # ai_response kann {"error": "..."} enthalten (z. B. Provider-
+            # Rate-Limit) oder None sein. Vorher wurde in jedem Fall nur
+            # "KI-Generierung fehlgeschlagen" ohne jeden Hinweis angezeigt.
+            reason = (ai_response or {}).get("error")
+            flash(
+                f"KI-Generierung fehlgeschlagen: {reason}" if reason else "KI-Generierung fehlgeschlagen",
+                "error",
+            )
         
         return redirect(url_for("observation_tasks.edit", task_id=task.id))
     

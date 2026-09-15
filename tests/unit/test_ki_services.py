@@ -68,7 +68,16 @@ class TestGenerateReportWithAI:
 
     @patch("services.ai_client.MISTRAL_CLIENT")
     def test_mistral_exception_returns_error(self, mock_client):
-        """Test: Mistral-Exception wird als Error-JSON zurückgegeben"""
+        """Test: Mistral-Exception wird als Error-JSON zurückgegeben (nicht geworfen).
+
+        generate_report_with_ai() darf laut Contract niemals eine Exception
+        werfen - auch nicht bei unerwarteten Fehlern von Provider-SDKs
+        (z. B. google.api_core.exceptions.ResourceExhausted bei Gemini-
+        Rate-Limits). Sonst landet der Request beim generischen 500-Handler
+        und der Nutzer sieht nur "Ein interner Fehler ist aufgetreten."
+        """
         mock_client.chat.side_effect = Exception("Boom")
-        with pytest.raises(Exception):
-            generate_report_with_ai("Prompt", "mistral")
+        result = generate_report_with_ai("Prompt", "mistral")
+        parsed = json.loads(result)
+        assert "error" in parsed
+        assert "Boom" in parsed["error"]

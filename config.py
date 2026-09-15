@@ -79,6 +79,20 @@ class ProductionConfig(Config):
     # Logging
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
+    # Rate Limiting
+    RATELIMIT_STORAGE_URI = os.getenv("RATELIMIT_STORAGE_URI", "redis://localhost:6379")
+    RATELIMIT_DEFAULT = "200 per day;50 per minute"
+    RATELIMIT_LOGIN = "5 per minute"
+    RATELIMIT_KI_ANALYSIS = "5 per hour"
+    RATELIMIT_PDF_EXPORT = "5 per hour"
+    RATELIMIT_DATA_EXPORT = "3 per hour"
+
+    def __init__(self):
+        """Prüft Pflicht-Umgebungsvariablen beim Initialisieren."""
+        missing = [k for k in ("SECRET_KEY", "DATABASE_URL") if not os.getenv(k)]
+        if missing:
+            raise RuntimeError(f"Pflicht-Umgebungsvariablen fehlen: {', '.join(missing)}")
+
 
 class TestingConfig(Config):
     """Test-Konfiguration."""

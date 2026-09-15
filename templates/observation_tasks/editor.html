@@ -53,10 +53,10 @@
 
             <!-- Speichern -->
             <div class="p-5 flex flex-wrap gap-3">
-                <button class="inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700" onclick="saveVersion()">
+                 <button class="inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700" data-action="save-version">
                     💾 Version speichern
                 </button>
-                <button class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50" onclick="viewHistory()">
+                 <button class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50" data-action="view-history">
                     📜 Versionshistorie
                 </button>
                 <form method="POST" action="{{ url_for('observation_tasks.discard_task', task_id=task.id) }}" onsubmit="return confirm('Aufgabe wirklich verwerfen?');">
@@ -73,10 +73,10 @@
             
             <!-- Tabs: Chat / Infos -->
             <div class="flex items-center gap-2 border-b border-gray-200 bg-white px-4 pt-4">
-                <button class="tab-button active" id="chatTab" onclick="switchTab('chat')">
+                 <button class="tab-button active" id="chatTab" data-action="switch-tab" data-tab="chat">
                     💬 Chat mit KI
                 </button>
-                <button class="tab-button" id="infosTab" onclick="switchTab('infos')">
+                 <button class="tab-button" id="infosTab" data-action="switch-tab" data-tab="infos">
                     ℹ️ Infos
                 </button>
             </div>
@@ -102,7 +102,7 @@
                               placeholder="Schreib deine Anfrage..."
                               onkeypress="if(event.key==='Enter' && !event.shiftKey) { event.preventDefault(); sendChat(); }"></textarea>
                 </div>
-                <button class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700" onclick="sendChat()">
+                 <button class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700" data-action="send-chat">
                     Senden
                 </button>
             </div>
@@ -158,13 +158,13 @@
     <div class="w-full max-w-3xl mx-4 rounded-lg bg-white shadow-xl">
         <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3">
             <h5 class="text-lg font-semibold text-gray-900">Versionshistorie</h5>
-            <button type="button" class="text-gray-500 hover:text-gray-700" onclick="closeVersionsModal()">&times;</button>
+             <button type="button" class="text-gray-500 hover:text-gray-700" data-action="close-versions-modal">&times;</button>
         </div>
         <div class="px-4 py-4">
             <ul id="versionsList" class="divide-y divide-gray-200"></ul>
         </div>
         <div class="flex justify-end border-t border-gray-200 bg-gray-50 px-4 py-3">
-            <button type="button" class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50" onclick="closeVersionsModal()">Schließen</button>
+             <button type="button" class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50" data-action="close-versions-modal">Schließen</button>
         </div>
     </div>
 </div>

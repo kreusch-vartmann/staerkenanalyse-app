@@ -9,9 +9,10 @@ import re
 
 from services.task_knowledge_base import get_knowledge_for_prompt
 from services.ai_client import (
-    MISTRAL_CLIENT,
     MISTRAL_MODEL,
-    genai_client,
+    get_mistral_client,
+    ensure_gemini_configured,
+    describe_ai_error,
     _call_gemini,
     save_ai_raw_response,
 )
@@ -264,15 +265,23 @@ Gib SOFORT NUR das JSON zurück - keine Erklärungen."""
         )
 
         parsed_result = None
+        # Clients zur Laufzeit auflösen (ENV ODER über Admin-UI in der DB
+        # gespeicherter Key). Die vorherigen Modul-Konstanten MISTRAL_CLIENT/
+        # genai_client wurden nur einmal beim Prozessstart aus ENV-Variablen
+        # gesetzt und blieben None, wenn der Key stattdessen über die
+        # Admin-UI (Datenbank) hinterlegt wurde – die Generierung fiel dann
+        # unbemerkt auf die Mock-Antwort zurück.
+        mistral_client = get_mistral_client()
+        gemini_available = ensure_gemini_configured()
 
-        if ki_model == "mistral" and MISTRAL_CLIENT:
+        if ki_model == "mistral" and mistral_client:
             logger.info("Verwende Mistral API...")
             for attempt, temp in enumerate([0.7, 0.2], start=1):
                 messages = [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ]
-                response = MISTRAL_CLIENT.chat(
+                response = mistral_client.chat(
                     model=MISTRAL_MODEL,
                     messages=messages,
                     temperature=temp,
@@ -322,7 +331,7 @@ Gib SOFORT NUR das JSON zurück - keine Erklärungen."""
                     )
                     parsed_result = None
 
-        elif ki_model == "gemini" and genai_client:
+        elif ki_model == "gemini" and gemini_available:
             logger.info("Verwende Google Gemini API...")
             response_text, used_model = _call_gemini(system_prompt, user_prompt)
             logger.debug(
@@ -363,15 +372,22 @@ Gib SOFORT NUR das JSON zurück - keine Erklärungen."""
             logger.warning("Keine KI verfügbar für '%s' - verwende Mock-Antwort", ki_model)
             logger.warning(
                 "Mistral verfügbar: %s, Gemini verfügbar: %s",
-                bool(MISTRAL_CLIENT),
-                bool(genai_client),
+                bool(mistral_client),
+                bool(gemini_available),
             )
-            response_text = json.dumps({
+            # WICHTIG: parsed_result muss hier direkt gesetzt werden. Vorher
+            # wurde nur `response_text` (die rohe JSON-Zeichenkette) belegt;
+            # `parsed_result` blieb None und der Code lief in den Fallback
+            # weiter unten, der die rohe JSON-Zeichenkette ungeparst in
+            # <p>...</p> gewrappt hat ("{"title": ..., "content": ...}"
+            # als sichtbarer Text im Editor statt echtem Inhalt).
+            parsed_result = {
                 "title": f"Assessment-Aufgabe: {observation_area}",
                 "content": f"<h2>{observation_area}</h2><h3>Ablauf</h3><ol><li>Vorbereitung (10 Min)</li><li>Durchführung ({duration_minutes-10} Min)</li></ol>",
                 "observation_focus": area_spec['focus'],
-                "facilitator_notes": "Achten Sie auf typische Verhaltensweisen in dieser Domäne",
-            })
+                "facilitator_notes": "Kein KI-Provider konfiguriert – dies ist eine Platzhalter-Aufgabe. Bitte API-Key in den KI-Einstellungen hinterlegen.",
+            }
+            response_text = json.dumps(parsed_result)
 
         if parsed_result and parsed_result.get("content"):
             parsed_result['content'] = _clean_html_output(parsed_result['content'])
@@ -390,4 +406,9 @@ Gib SOFORT NUR das JSON zurück - keine Erklärungen."""
 
     except Exception as e:
         logger.exception("Task generation error: %s: %s", type(e).__name__, e)
-        return None
+        # Vorher: `return None`. Der Aufrufer (blueprints/observation_tasks.py)
+        # zeigte dann nur "KI-Generierung fehlgeschlagen" ohne jeden Hinweis
+        # auf die Ursache (z. B. Google-Tageskontingent im Gratis-Tarif
+        # erschöpft). "error" wird von der Route ausgewertet und als
+        # Flash-Nachricht angezeigt.
+        return {"error": describe_ai_error(e, ki_model)}

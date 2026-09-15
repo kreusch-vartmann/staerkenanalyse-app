@@ -22,7 +22,7 @@ Oder manuell:
 
 ```bash
 source venv/bin/activate
-flask run --port 5002
+flask run --port 5001
 ```
 
 ## PDF-Features
@@ -55,7 +55,7 @@ Jetzt funktionieren alle PDF-Routes:
 3. **Starte Flask neu mit venv:**
    ```bash
    source venv/bin/activate
-   flask run --port 5002
+   flask run --port 5001
    ```
 
 ## System-Abhängigkeiten

@@ -57,8 +57,25 @@ class TestObservationTasksRoutes:
         response = client.get("/beobachtungsaufgaben/")
         assert response.status_code == 200
 
-    def test_observer_blocked_from_task_library(self, observer_client):
-        response = observer_client.get("/beobachtungsaufgaben/")
+    def test_observer_can_view_but_not_manage_tasks(self, observer_client):
+        """Beobachter dürfen die Bibliothek sehen, aber nicht verwalten.
+
+        Laut Rollen-Template (`seed_permissions.ROLE_TEMPLATES`) besitzt die
+        Beobachter-Rolle `observation_tasks.view`, nicht aber
+        `observation_tasks.manage`. Die Bibliothek ist damit lesbar –
+        schreibende Routen bleiben gesperrt.
+        """
+        assert observer_client.get("/beobachtungsaufgaben/").status_code == 200
+
+        response = observer_client.post(
+            "/beobachtungsaufgaben/neu",
+            data={
+                "observation_area": "Soziale Kompetenzen",
+                "title": "Unerlaubte Aufgabe",
+                "description": "Beschreibung",
+            },
+            follow_redirects=False,
+        )
         assert response.status_code == 302
         assert response.headers.get("Location", "").endswith("/")
 

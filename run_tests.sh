@@ -23,7 +23,7 @@ echo -e "${BLUE}🛡️  Stärkenanalyse-App Test-Suite (mit DB-Isolation)${NC}\
 # Prüfe ob venv aktiviert ist
 if [[ -z "${VIRTUAL_ENV}" ]]; then
     echo -e "${YELLOW}⚠️  Virtual Environment nicht aktiviert!${NC}"
-    echo -e "Aktiviere mit: ${GREEN}source venv/bin/activate${NC}\n"
+    echo -e "Aktiviere mit: ${GREEN}source .venv/bin/activate${NC}\n"
     exit 1
 fi
 
@@ -121,6 +121,9 @@ elif [[ ! -f "$PROD_DB" ]]; then
 fi
 
 echo -e "\n${GREEN}✅ Tests abgeschlossen - DB-Isolation validiert!${NC}"
+
+# 🚀 Starte Tests
+case $TEST_TYPE in
     quick)
         echo -e "${YELLOW}▶️  Quick Test (parallel, no output)...${NC}\n"
         pytest -n auto -q

@@ -90,9 +90,9 @@ docker-compose logs -f staerkenanalyse_web
 export DATABASE_URL="postgresql://staerkenanalyse_user:changeme_secure_password@localhost:5432/staerkenanalyse_db"
 
 source venv/bin/activate
-flask run --port 5002
+flask run --port 5001
 
-# Visit http://localhost:5002 und teste Features
+# Visit http://localhost:5001 und teste Features
 ```
 
 ## Schritt 6: Cleanup
@@ -182,7 +182,7 @@ python migrate_sqlite_to_postgresql.py postgresql://...
 pip install locust
 
 # Einfacher Performance Check
-# Öffne mehrere Browser-Tabs mit http://localhost:5002
+# Öffne mehrere Browser-Tabs mit http://localhost:5001
 # Beobachte Docker-Logs:
 
 docker-compose logs --tail=20 -f staerkenanalyse_web

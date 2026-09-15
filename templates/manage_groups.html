@@ -9,7 +9,7 @@
         <p class="text-sm text-gray-700 mt-2">Gruppen erstellen, bearbeiten und Teilnehmer zuordnen</p>
     </div>
     {% if current_user.has_permission('groups.edit') %}
-    <button onclick="openAddGroupModal()" class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
+    <button data-action="open-add-group-modal" class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
         <i class="fas fa-plus me-2"></i>Neue Gruppe
     </button>
     {% endif %}
@@ -44,7 +44,7 @@
 
         <!-- Accordion Header -->
         <div class="accordion-header cursor-pointer hover:bg-gray-50 px-6 py-4 transition-colors"
-             onclick="toggleAccordion({{ group.id }})">
+              data-action="toggle-accordion" data-group-id="{{ group.id }}">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4 flex-1">
                     <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
@@ -174,7 +174,7 @@
                                             </p>
                                         </div>
                                         {% if current_user.has_permission('groups.edit') %}
-                                        <button type="button" onclick="removeTaskFromGroup({{ group.id }}, {{ task.id }})" class="ml-4 text-red-500 hover:text-red-700 font-bold" title="Aufgabe entfernen">✕</button>
+                                         <button type="button" data-action="remove-task-from-group" data-group-id="{{ group.id }}" data-task-id="{{ task.id }}" class="ml-4 text-red-500 hover:text-red-700 font-bold" title="Aufgabe entfernen">✕</button>
                                         {% endif %}
                                     </div>
                                 {% endfor %}
@@ -184,7 +184,7 @@
                         {% endif %}
                     </div>
                     {% if current_user.has_permission('groups.edit') %}
-                    <button type="button" onclick="openTaskSelectionModal({{ group.id }})" class="mt-3 inline-flex items-center rounded-md border border-indigo-300 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100">
+                     <button type="button" data-action="open-task-selection-modal" data-group-id="{{ group.id }}" class="mt-3 inline-flex items-center rounded-md border border-indigo-300 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100">
                         <i class="fas fa-plus me-1"></i>Aufgabe hinzufügen
                     </button>
                     {% endif %}
@@ -193,7 +193,7 @@
                 <!-- Aktionsbuttons -->
                 <div class="flex flex-wrap gap-2">
                     {% if current_user.has_permission('groups.edit') %}
-                    <button onclick="openEditGroupModal({{ group.id }}, '{{ group.name|e }}', '{{ group.date_from.strftime('%Y-%m-%d') if group.date_from else '' }}', '{{ group.date_to.strftime('%Y-%m-%d') if group.date_to else '' }}', '{{ group.location|e if group.location else '' }}', '{{ group.leitung_fremdeinschatzung|e if group.leitung_fremdeinschatzung else '' }}', '{{ group.leitung_selbsteinschatzung|e if group.leitung_selbsteinschatzung else '' }}', '{{ group.beobachter1|e if group.beobachter1 else '' }}', '{{ group.beobachter2|e if group.beobachter2 else '' }}')"
+                     <button data-action="open-edit-group-modal" data-group-id="{{ group.id }}" data-group-name="{{ group.name|e }}" data-date-from="{{ group.date_from.strftime('%Y-%m-%d') if group.date_from else '' }}" data-date-to="{{ group.date_to.strftime('%Y-%m-%d') if group.date_to else '' }}" data-location="{{ group.location|e if group.location else '' }}" data-leitung-fe="{{ group.leitung_fremdeinschatzung|e if group.leitung_fremdeinschatzung else '' }}" data-leitung-se="{{ group.leitung_selbsteinschatzung|e if group.leitung_selbsteinschatzung else '' }}" data-beobachter1="{{ group.beobachter1|e if group.beobachter1 else '' }}" data-beobachter2="{{ group.beobachter2|e if group.beobachter2 else '' }}"
                             class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
                         <i class="fas fa-edit me-1"></i>Bearbeiten
                     </button>
@@ -230,7 +230,7 @@
         <p class="mt-1 text-sm text-gray-500">Erstellen Sie Ihre erste Gruppe, um zu beginnen.</p>
         {% if current_user.has_permission('groups.edit') %}
         <div class="mt-6">
-            <button onclick="openAddGroupModal()" class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
+    <button data-action="open-add-group-modal" class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
                 <i class="fas fa-plus me-2"></i>Neue Gruppe
             </button>
         </div>
@@ -287,7 +287,7 @@
                                class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500">
                     </div>
                 <div class="flex justify-end space-x-3 pt-4">
-                    <button type="button" onclick="closeAddGroupModal()"
+                     <button type="button" data-action="close-add-group-modal"
                             class="inline-flex items-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200">
                         Abbrechen
                     </button>
@@ -312,7 +312,7 @@
                 <p class="text-gray-500 italic">Lädt verfügbare Aufgaben...</p>
             </div>
             <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                <button type="button" onclick="closeTaskSelectionModal()" class="inline-flex items-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200">
+                 <button type="button" data-action="close-task-selection-modal" class="inline-flex items-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200">
                     Abbrechen
                 </button>
             </div>
@@ -370,7 +370,7 @@
                            class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500">
                 </div>
                 <div class="flex justify-end space-x-3 pt-4">
-                    <button type="button" onclick="closeEditGroupModal()"
+                     <button type="button" data-action="close-edit-group-modal"
                             class="inline-flex items-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200">
                         Abbrechen
                     </button>
@@ -622,7 +622,7 @@ function updateGroupTasksDisplay(groupId) {
                                             ${task.observation_area || ''} • ${task.participant_count || '?'} TN • ${task.duration_minutes || '?'} Min
                                         </p>
                                     </div>
-                                    <button type="button" onclick="removeTaskFromGroup(${groupId}, ${task.id})" class="ml-4 text-red-500 hover:text-red-700 font-bold" title="Aufgabe entfernen">✕</button>
+                                     <button type="button" data-action="remove-task-from-group" data-group-id="${groupId}" data-task-id="${task.id}" class="ml-4 text-red-500 hover:text-red-700 font-bold" title="Aufgabe entfernen">✕</button>
                                 </div>
                             `).join('')}
                         </div>

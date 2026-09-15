@@ -35,7 +35,7 @@
 
         <!-- Accordion Header -->
         <div class="accordion-header cursor-pointer hover:bg-gray-50 px-6 py-4 transition-colors"
-             onclick="toggleAccordion({{ group.id }})">
+              data-action="toggle-accordion" data-group-id="{{ group.id }}">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4 flex-1">
                     <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
@@ -167,7 +167,7 @@
 
                         <!-- Bearbeiten -->
                         {% if current_user.has_permission('participants.edit') %}
-                        <button onclick="openEditParticipantModal({{ participant.id }}, '{{ participant.name|e }}')"
+                         <button data-action="open-edit-participant-modal" data-participant-id="{{ participant.id }}" data-participant-name="{{ participant.name|e }}"
                             class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
                                 title="Teilnehmer umbenennen">
                             <i class="fas fa-edit me-1"></i>Bearbeiten
@@ -221,7 +221,7 @@
                     <input type="hidden" name="redirect_url" value="{{ request.url }}">
                 </div>
                 <div class="flex justify-end space-x-3 pt-4">
-                    <button type="button" onclick="closeEditParticipantModal()" class="inline-flex items-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200">Abbrechen</button>
+                     <button type="button" data-action="close-edit-participant-modal" class="inline-flex items-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200">Abbrechen</button>
                     <button type="submit" class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">Speichern</button>
                 </div>
             </form>

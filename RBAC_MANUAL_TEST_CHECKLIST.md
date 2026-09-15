@@ -11,7 +11,7 @@
 ## Setup für Tests
 
 ### Voraussetzungen
-1. Flask-App läuft: `FLASK_APP=app.py flask run --port 5002`
+1. Flask-App läuft: `FLASK_APP=app.py flask run --port 5001`
 2. Browser-Konsole offen (F12 → Console)
 3. Zwei separate Browser-Fenster/Tabs bereit (Admin + Beobachter)
 

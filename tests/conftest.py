@@ -72,6 +72,7 @@ from models import (
     Prompt,
     User,
     Role,
+    Permission,
     ReportTemplate,
     ReportConfiguration,
     CompanyLogo,
@@ -139,10 +140,47 @@ def app():
     # Nutze existierende Flask-App mit Test-Config
     flask_app.config.update(test_config)
     app = flask_app
-    
+
     # Setup App-Context
     with app.app_context():
+        # 🛡️ SAFETY LAYER 4: SAVEPOINT-Unterstützung für SQLite aktivieren
+        # pysqlite startet Transaktionen implizit und bricht dadurch die
+        # SAVEPOINT-Semantik, auf der die Test-Isolation beruht (Writes
+        # würden trotz Rollback in der Datei landen). Offizielles
+        # SQLAlchemy-Rezept: Autocommit des Treibers abschalten und BEGIN
+        # selbst ausgeben.
+        from sqlalchemy import event
+
+        engine = _db.engine
+
+        @event.listens_for(engine, "connect")
+        def _sqlite_disable_implicit_begin(dbapi_connection, connection_record):
+            dbapi_connection.isolation_level = None
+
+        @event.listens_for(engine, "begin")
+        def _sqlite_explicit_begin(conn):
+            # Nur beginnen, wenn der Treiber nicht bereits in einer
+            # Transaktion ist – sonst: "cannot start a transaction
+            # within a transaction".
+            driver_connection = conn.connection.driver_connection
+            if not getattr(driver_connection, "in_transaction", False):
+                conn.exec_driver_sql("BEGIN")
+
         _db.create_all()  # Erstelle alle Tabellen in temporärer DB
+
+        # 🛡️ SAFETY LAYER 5: Flask-Login-Cache pro Request zurücksetzen
+        # Die `db`-Fixture hält einen App-Context über den gesamten Test.
+        # Flask reused diesen Context für Requests, wodurch Flask-Logins
+        # Cache `g._login_user` erhalten bleibt: Ein zweiter Test-Client
+        # (z. B. observer_client nach client) würde dann als der zuvor
+        # geladene Benutzer auftreten. Dieser Hook erzwingt pro Request
+        # ein erneutes Laden des Benutzers.
+        from flask import g as _flask_g
+
+        @app.before_request
+        def _reset_login_user_cache():
+            _flask_g.pop("_login_user", None)
+
         yield app
         _db.drop_all()  # Cleanup nach Tests
     
@@ -155,10 +193,105 @@ def app():
         print(f"⚠️  Fehler beim DB-Cleanup: {e}")
 
 
-@pytest.fixture(scope="function")
-def client(app, db, admin_user):
+@pytest.fixture
+def seeded_permissions(db):
+    """Legt die Standard-Permissions an (identisch zu seed_permissions.py).
+
+    Ohne diese Datensätze schlägt `@permission_required` in allen Routen
+    an und leitet auf das Dashboard um – Tests sehen dann 302 statt der
+    erwarteten Antwort.
     """
-    Test-Client für HTTP-Requests.
+    from seed_permissions import DEFAULT_PERMISSIONS
+
+    existing = {p.codename for p in Permission.query.all()}
+    for codename, description, category in DEFAULT_PERMISSIONS:
+        if codename not in existing:
+            db.session.add(
+                Permission(codename=codename, description=description, category=category)
+            )
+    db.session.commit()
+    return Permission.query.all()
+
+
+@pytest.fixture
+def admin_permissions(db, admin_role, seeded_permissions):
+    """Richtet die Admin-Rolle wie in der Produktion ein.
+
+    Produktion (`seed_permissions.py`): `is_system = True` und damit alle
+    Berechtigungen. `is_system` steuert zusätzlich Anwendungslogik – etwa
+    dass Admins keine Gruppen-Zuordnungen behalten (Zugriff auf alles).
+
+    Wird von der `client`-Fixture genutzt. Tests, die `admin_role` direkt
+    ohne `client`/`admin_permissions` verwenden (z. B. RBAC-Edge-Cases),
+    erhalten weiterhin eine Rolle ohne Berechtigungen.
+    """
+    admin_role.is_system = True
+    admin_role.permissions = list(seeded_permissions)
+    db.session.commit()
+    return admin_role
+
+
+@pytest.fixture
+def observer_permissions(db, observer_role, seeded_permissions):
+    """Weist der Beobachter-Rolle ihr Produktions-Template zu.
+
+    Quelle: ROLE_TEMPLATES["beobachter"] aus seed_permissions.py – also
+    lesende Rechte plus Datenerfassung, aber keine Verwaltungsrechte.
+    Dadurch bleiben Negativ-Tests (z. B. "Beobachter darf keine Gruppe
+    anlegen") weiterhin valide.
+    """
+    from seed_permissions import ROLE_TEMPLATES
+
+    codenames = ROLE_TEMPLATES["beobachter"]
+    observer_role.is_system = False
+    observer_role.permissions = [
+        p for p in seeded_permissions if p.codename in codenames
+    ]
+    db.session.commit()
+    return observer_role
+
+
+TEST_PASSWORD = "testpassword123"
+
+
+@pytest.fixture(scope="session")
+def test_password_hash():
+    """Berechnet den Hash des Testpassworts einmal pro Session.
+
+    `User.set_password()` nutzt PBKDF2 mit 600.000 Iterationen (~0,25 s).
+    Bei echter Test-Isolation werden Benutzer pro Test neu angelegt, was
+    die Suite unnötig verlangsamt. Der Hash ist für alle Testnutzer
+    identisch, daher genügt eine einmalige Berechnung.
+    """
+    from werkzeug.security import generate_password_hash
+
+    return generate_password_hash(TEST_PASSWORD, method="pbkdf2:sha256")
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limiter(app):
+    """Setzt die Rate-Limit-Zähler vor jedem Test zurück.
+
+    Der Limiter nutzt in Tests den In-Memory-Storage, dessen Zähler sonst
+    über Testgrenzen hinweg bestehen bleiben. Bei zufälliger Testreihenfolge
+    (pytest-randomly) führte das zu 429-Antworten in Login-Tests, sobald
+    zuvor andere Tests denselben Endpunkt aufgerufen hatten.
+
+    Bewusst kein globales Abschalten des Limiters: `test_security_controls`
+    prüft das Rate-Limiting explizit.
+    """
+    from extensions import limiter
+
+    try:
+        limiter.reset()
+    except Exception:  # Storage ohne reset()-Unterstützung
+        pass
+    yield
+
+
+@pytest.fixture(scope="function")
+def client(app, db, admin_user, admin_permissions):
+    """    Test-Client für HTTP-Requests.
     Jeder Test bekommt einen frischen Client.
     """
     client = app.test_client()
@@ -176,7 +309,7 @@ def unauth_client(app):
 
 
 @pytest.fixture(scope="function")
-def observer_client(app, db, observer_user):
+def observer_client(app, db, observer_user, observer_permissions):
     """Test-Client mit eingeloggtem Beobachter."""
     client = app.test_client()
     with client.session_transaction() as session:
@@ -189,18 +322,41 @@ def observer_client(app, db, observer_user):
 @pytest.fixture(scope="function")
 def db(app):
     """
-    Datenbank-Session mit automatischem Rollback.
-    Jeder Test bekommt eine saubere DB-Session.
+    Datenbank-Session mit echter Test-Isolation.
+
+    Umsetzung: Die Session wird an eine einzelne Connection mit einer
+    äußeren Transaktion gebunden (`join_transaction_mode="create_savepoint"`).
+    Dadurch wirken `db.session.commit()`-Aufrufe – die in vielen Fixtures
+    und im Anwendungscode vorkommen – nur auf einen SAVEPOINT. Die äußere
+    Transaktion wird am Testende zurückgerollt, sodass jeder Test mit
+    einer leeren Datenbank startet.
+
+    Vorher wurde `begin_nested()` + `rollback()` verwendet; das erste
+    `commit()` einer Fixture hat die äußere Transaktion jedoch
+    mitgeschrieben, wodurch Daten über Testgrenzen hinweg bestehen
+    blieben (Reihenfolgen-Abhängigkeiten und maskierte Fehler).
     """
+    from sqlalchemy.orm import scoped_session, sessionmaker
+
     with app.app_context():
-        # Begin nested transaction
-        _db.session.begin_nested()
-        
-        yield _db
-        
-        # Rollback after test
-        _db.session.rollback()
-        _db.session.remove()
+        connection = _db.engine.connect()
+        transaction = connection.begin()
+
+        original_session = _db.session
+        session_factory = sessionmaker(
+            bind=connection,
+            join_transaction_mode="create_savepoint",
+            expire_on_commit=False,
+        )
+        _db.session = scoped_session(session_factory)
+
+        try:
+            yield _db
+        finally:
+            _db.session.remove()
+            _db.session = original_session
+            transaction.rollback()
+            connection.close()
 
 
 @pytest.fixture
@@ -228,7 +384,7 @@ def observer_role(db):
 
 
 @pytest.fixture
-def admin_user(db, admin_role):
+def admin_user(db, admin_role, test_password_hash):
     """Erstellt einen Admin-User für Tests."""
     user = User.query.filter_by(email="admin@test.de").first()
     if user:
@@ -241,14 +397,14 @@ def admin_user(db, admin_role):
         role_id=admin_role.id,
         force_password_change=False,
     )
-    user.set_password("testpassword123")
+    user.password_hash = test_password_hash
     db.session.add(user)
     db.session.commit()
     return user
 
 
 @pytest.fixture
-def observer_user(db, observer_role, sample_group):
+def observer_user(db, observer_role, sample_group, test_password_hash):
     """Erstellt einen Beobachter-User mit Gruppenzuordnung."""
     user = User.query.filter_by(email="observer@test.de").first()
     if user:
@@ -266,7 +422,7 @@ def observer_user(db, observer_role, sample_group):
         force_password_change=False,
         is_active=True,
     )
-    user.set_password("testpassword123")
+    user.password_hash = test_password_hash
     user.groups.append(sample_group)
     db.session.add(user)
     db.session.commit()

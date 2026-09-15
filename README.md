@@ -10,7 +10,7 @@ Eine lokale Flask-Webanwendung zur Verwaltung von Gruppen und Teilnehmenden mit 
 
 ## Kurze Zusammenfassung
 - Backend: Flask (Blueprint-basierte Struktur in `blueprints/`)
-- Datenbank: SQLite (`database.db`, Schema in `schema.sql`)
+- Datenbank: **PostgreSQL 16** (Standard) oder SQLite (Fallback, nur für lokale Entwicklung)
 - Templates: Jinja2 Vorlagen im Ordner `templates/`
 - Statische Dateien: `static/`
 - KI-Integration: optional über mehrere SDKs (Google Generative AI, Mistral, OpenAI, u. a.)
@@ -62,36 +62,71 @@ pip install -r requirements.txt
 
 Hinweis: Bei Problemen mit Abhängigkeitskonflikten (siehe unten) lesen Sie bitte den Abschnitt "Troubleshooting".
 
-4. Datenbank initialisieren
-
-Das Projekt erwartet eine SQLite-Datenbank (`database.db`). Falls ein CLI-Kommando `flask init-db` nicht vorhanden ist, können Sie das SQL-Skript `schema.sql` verwenden:
+4. **PostgreSQL einrichten** (Standard)
 
 ```bash
-sqlite3 database.db < schema.sql
+sudo ./scripts/setup_postgres.sh  # PostgreSQL 16 + Datenbank erstellen
 ```
 
-Prüfen Sie anschließend `database.db` im Projektverzeichnis.
+5. `.env` anpassen (PostgreSQL oder SQLite)
 
-5. Anwendung starten
+```ini
+# PostgreSQL (Standard)
+DATABASE_URL=postgresql://stark:stark@localhost:5432/stark
 
-Sie können die App direkt starten:
+# SQLite (Fallback)
+# DATABASE_URL=sqlite:////home/timok/kDrive/Dokumente/staerkenanalyse-app/instance/database.db
+```
+
+6. Datenbank initialisieren
 
 ```bash
-# Standard (Port 5001 in app.py)
-python app.py
+flask db init  # Nur beim ersten Mal
+flask db migrate -m "Initial migration"
+flask db upgrade
+```
 
-# Alternativ mit Flask-CLI
-export FLASK_APP=app.py
+7. **Daten migrieren (falls SQLite → PostgreSQL)**
+
+```bash
+python scripts/migrate_sqlite_to_postgresql.py
+```
+
+8. Anwendung starten
+
+```bash
 flask run --port 5001
 ```
+
+## 🔄 Backup & Restore
+
+- **Backup erstellen**: `flask backup-db`
+- **Datenbank wiederherstellen**: `flask restore-db`
+- **Testanleitung**: [BACKUP_RESTORE_TESTS.md](./BACKUP_RESTORE_TESTS.md)
+
+## 📊 Monitoring
+
+- **Prometheus + Grafana**: Metriken und Dashboards für die App.
+- **Structlog**: Strukturierte JSON-Logs für Debugging.
+- **Setup-Anleitung**: [MONITORING_SETUP.md](./MONITORING_SETUP.md)
+
+## 🚀 Deployment
+
+- **Coolify**: Vollautomatisches Deployment mit Docker.
+- **Anleitung**: [COOLIFY_DEPLOYMENT.md](./COOLIFY_DEPLOYMENT.md)
+
+## 🤖 CI/CD
+
+- **GitHub Actions**: Automatisierte Tests + Docker-Builds.
+- **Pipeline**: [.github/workflows/tests.yml](.github/workflows/tests.yml)
 
 Wenn Port 5001 bereits belegt ist, starten Sie auf einem anderen Port:
 
 ```bash
-python -m flask run --port 5002
+python -m flask run --port 5001
 ```
 
-Öffnen Sie dann http://localhost:5001 (oder 5002) im Browser.
+Öffnen Sie dann http://localhost:5001 (oder 5001) im Browser.
 
 ## Konfiguration und Umgebungsvariablen
 

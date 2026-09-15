@@ -9,7 +9,7 @@ from flask_login import current_user, login_required
 from extensions import db
 from models import Group, Participant, Task
 from utils import log_activity
-from decorators import permission_required, filter_groups_by_access
+from decorators import group_access_required, participant_access_required, permission_required, filter_groups_by_access
 
 groups_bp = Blueprint("groups", __name__)
 
@@ -37,15 +37,10 @@ def manage_groups():
 @groups_bp.route("/group/<int:group_id>/participants")
 @login_required
 @permission_required("groups.view")
+@group_access_required
 def show_group_participants(group_id):
     """Zeigt die Teilnehmer einer bestimmten Gruppe an."""
     group = db.get_or_404(Group, group_id)
-    
-    # Check permission: Admin always allowed, Beobachter only for assigned groups
-    if not current_user.role.is_system:
-        if not current_user.groups.filter_by(id=group_id).first():
-            flash("Sie haben keinen Zugriff auf diese Gruppe.", "error")
-            return redirect(url_for("dashboard"))
     
     participants = group.participants.order_by(Participant.name).all()
 
@@ -108,6 +103,7 @@ def add_group():
 @groups_bp.route("/group/edit/<int:group_id>", methods=["POST"])
 @login_required
 @permission_required("groups.edit")
+@group_access_required
 def edit_group(group_id):
     """Verarbeitet die Aktualisierung einer bestehenden Gruppe aus dem Modal."""
     group_to_edit = db.get_or_404(Group, group_id)
@@ -143,6 +139,7 @@ def edit_group(group_id):
 @groups_bp.route("/group/delete/<int:group_id>", methods=["POST"])
 @login_required
 @permission_required("groups.delete")
+@group_access_required
 def delete_group(group_id):
     """Entfernt eine Gruppe und alle zugehörigen Teilnehmer."""
     group_to_delete = db.get_or_404(Group, group_id)
@@ -183,6 +180,7 @@ def get_available_tasks():
 @groups_bp.route("/api/groups/<int:group_id>/tasks", methods=["POST"])
 @login_required
 @permission_required("groups.edit")
+@group_access_required
 def assign_task_to_group(group_id):
     """Ordnet eine Aufgabe einer Gruppe zu. Max. 1 pro Beobachtungsbereich."""
     group = db.get_or_404(Group, group_id)

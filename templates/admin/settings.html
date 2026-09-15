@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}API-Keys - Stärkenanalyse{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-3xl px-4 py-6">
+    <div class="mb-6">
+        <h2 class="text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <i class="fas fa-key text-indigo-600"></i> KI-Einstellungen
+        </h2>
+        <p class="mt-2 text-sm text-gray-600">
+            Hier hinterlegte API-Keys werden verschlüsselt in der Datenbank gespeichert
+            und haben Vorrang vor Umgebungsvariablen.
+        </p>
+    </div>
+
+    <div class="rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div class="border-b border-gray-200 px-6 py-4">
+            <h3 class="text-lg font-semibold text-gray-900">KI-Provider</h3>
+        </div>
+
+        <form method="POST" class="px-6 py-5 space-y-6">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+            {% for field in fields %}
+            <div>
+                <div class="flex items-center justify-between mb-1">
+                    <label for="{{ field.name }}" class="block text-sm font-medium text-gray-900">
+                        {{ field.label }}
+                    </label>
+                    {% if field.source == 'db' %}
+                        <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                            <i class="fas fa-database"></i> aus Datenbank
+                        </span>
+                    {% elif field.source == 'env' %}
+                        <span class="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
+                            <i class="fas fa-server"></i> aus Umgebungsvariable
+                        </span>
+                    {% else %}
+                        <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
+                            <i class="fas fa-circle-minus"></i> nicht gesetzt
+                        </span>
+                    {% endif %}
+                </div>
+
+                <input type="password"
+                       id="{{ field.name }}"
+                       name="{{ field.name }}"
+                       autocomplete="off"
+                       placeholder="{% if field.masked %}{{ field.masked }} (leer lassen = unverändert){% else %}Key eingeben{% endif %}"
+                       class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"/>
+
+                <p class="mt-1 text-xs text-gray-500">{{ field.hint }}</p>
+
+                {% if field.source == 'db' %}
+                <button type="submit"
+                        name="delete_key"
+                        value="{{ field.name }}"
+                        class="mt-2 inline-flex items-center gap-1.5 rounded-md border border-red-300 px-2.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50">
+                    <i class="fas fa-trash"></i> DB-Wert löschen
+                </button>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <div class="flex items-center gap-3 border-t border-gray-200 pt-5">
+                <button type="submit"
+                        class="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
+                    <i class="fas fa-save"></i> Speichern
+                </button>
+            </div>
+        </form>
+        <div class="border-t border-gray-200 px-6 py-4">
+            <!--
+                Bewusst AUSSERHALB des <form>: Ein <a>-Link innerhalb eines
+                <form method="POST"> ist technisch gültig, aber unnötig
+                fehleranfällig (z. B. Interferenz mit Formular-Scans von
+                Passwort-Manager-Erweiterungen). Diese Aktion ist reine
+                Navigation (GET), kein Teil des Speicher-Formulars.
+            -->
+            <a href="{{ url_for('admin.test_ai_connection') }}"
+               class="inline-flex items-center gap-2 rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                <i class="fas fa-plug"></i> Verbindung testen
+            </a>
+        </div>
+    </div>
+
+    <div class="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+        <p class="text-sm text-amber-900">
+            <i class="fas fa-triangle-exclamation"></i>
+            Die Verschlüsselung basiert auf dem <code>SECRET_KEY</code> der Anwendung.
+            Wird dieser geändert, müssen die Keys hier neu eingetragen werden.
+        </p>
+    </div>
+</div>
+{% endblock %}

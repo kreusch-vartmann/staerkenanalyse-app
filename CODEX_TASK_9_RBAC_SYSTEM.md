@@ -614,7 +614,7 @@ def manage_groups():
 1. `flask db migrate -m "add_permissions_and_role_permissions"` → Migration erstellt
 2. `flask db upgrade` → Tabellen erstellt
 3. `python seed_permissions.py` → Permissions und Rollen-Zuordnungen erstellt
-4. Server starten: `flask run --port 5002` → Keine Fehler
+4. Server starten: `flask run --port 5001` → Keine Fehler
 5. `/admin/roles` → Zeigt Admin (System) und Beobachter mit jeweiligen Permissions
 6. Neue Rolle erstellen → Funktioniert mit Permission-Checkboxen
 7. System-Rolle "Admin" → Bearbeiten/Löschen nicht möglich

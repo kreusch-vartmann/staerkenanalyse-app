@@ -6,7 +6,7 @@
         <form id="kiModelForm">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <!-- Mistral Option -->
-                <div class="ki-model-option border-2 border-gray-200 rounded-lg p-6 cursor-pointer hover:border-yellow-400 hover:bg-yellow-50 transition" onclick="selectKiModel('mistral', this)">
+                 <div class="ki-model-option border-2 border-gray-200 rounded-lg p-6 cursor-pointer hover:border-yellow-400 hover:bg-yellow-50 transition" data-action="select-ki-model" data-model="mistral">
                     <div class="mb-4">
                         <input type="radio" id="mistral_radio" name="ki_model" value="mistral" checked class="mr-3">
                         <label for="mistral_radio" class="font-bold text-lg flex items-center gap-2 cursor-pointer">
@@ -31,7 +31,7 @@
                 </div>
 
                 <!-- Gemini Option -->
-                <div class="ki-model-option border-2 border-gray-200 rounded-lg p-6 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition" onclick="selectKiModel('gemini', this)">
+                 <div class="ki-model-option border-2 border-gray-200 rounded-lg p-6 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition" data-action="select-ki-model" data-model="gemini">
                     <div class="mb-4">
                         <input type="radio" id="gemini_radio" name="ki_model" value="gemini" class="mr-3">
                         <label for="gemini_radio" class="font-bold text-lg flex items-center gap-2 cursor-pointer">
@@ -59,10 +59,10 @@
             </div>
 
             <div class="flex gap-4 justify-end">
-                <button type="button" onclick="closeKiModelModal()" class="px-6 py-2 border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                 <button type="button" data-action="close-ki-model-modal" class="px-6 py-2 border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
                     Abbrechen
                 </button>
-                <button type="button" onclick="confirmKiModelSelection()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">
+                 <button type="button" data-action="confirm-ki-model-selection" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">
                     Starten
                 </button>
             </div>

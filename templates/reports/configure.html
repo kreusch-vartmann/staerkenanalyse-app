@@ -46,7 +46,7 @@
     <!-- Section 1: Design & Logos -->
     <div class="bg-white shadow-md rounded-lg overflow-hidden">
         <div class="accordion-header cursor-pointer hover:bg-gray-50 px-6 py-4 transition-colors"
-             onclick="toggleAccordion(1)">
+              data-action="toggle-accordion" data-section-id="1">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
                     <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
@@ -115,7 +115,7 @@
     <!-- Section 2: Deckblatt -->
     <div class="bg-white shadow-md rounded-lg overflow-hidden">
         <div class="accordion-header cursor-pointer hover:bg-gray-50 px-6 py-4 transition-colors"
-             onclick="toggleAccordion(2)">
+              data-action="toggle-accordion" data-section-id="2">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
                     <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
@@ -191,7 +191,7 @@
     <!-- Section 3: Selbsteinschätzung -->
     <div class="bg-white shadow-md rounded-lg overflow-hidden">
         <div class="accordion-header cursor-pointer hover:bg-gray-50 px-6 py-4 transition-colors"
-             onclick="toggleAccordion(3)">
+              data-action="toggle-accordion" data-section-id="3">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
                     <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
@@ -218,7 +218,7 @@
     <!-- Section 4: Fremdeinschätzung -->
     <div class="bg-white shadow-md rounded-lg overflow-hidden">
         <div class="accordion-header cursor-pointer hover:bg-gray-50 px-6 py-4 transition-colors"
-             onclick="toggleAccordion(4)">
+              data-action="toggle-accordion" data-section-id="4">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
                     <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
@@ -245,7 +245,7 @@
     <!-- Section 5: Abschlussblatt -->
     <div class="bg-white shadow-md rounded-lg overflow-hidden mb-4">
         <div class="accordion-header cursor-pointer hover:bg-gray-50 px-6 py-4 transition-colors"
-             onclick="toggleAccordion(5)">
+              data-action="toggle-accordion" data-section-id="5">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
                     <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
@@ -301,7 +301,7 @@
                             <div class="mb-3 flex items-center gap-3">
                                 <img src="{{ url_for('reports.serve_upload', filename=signature_fe.image_path|replace('uploads/', '')) }}" 
                                      alt="Unterschrift FE" class="max-w-xs h-16 border border-gray-300 rounded p-1">
-                                <button type="button" onclick="deleteSignatureFE()" class="px-3 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200">
+                                 <button type="button" data-action="delete-signature-fe" class="px-3 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200">
                                     <i class="fas fa-trash"></i>
                                 </button>
                                 <form id="del-fe-form" method="POST" action="{{ url_for('reports.delete_signature', sig_id=signature_fe.id) }}" class="hidden"></form>
@@ -319,7 +319,7 @@
                             <div class="mb-3 flex items-center gap-3">
                                 <img src="{{ url_for('reports.serve_upload', filename=signature_se.image_path|replace('uploads/', '')) }}" 
                                      alt="Unterschrift SE" class="max-w-xs h-16 border border-gray-300 rounded p-1">
-                                <button type="button" onclick="deleteSignatureSE()" class="px-3 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200">
+                                 <button type="button" data-action="delete-signature-se" class="px-3 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200">
                                     <i class="fas fa-trash"></i>
                                 </button>
                                 <form id="del-se-form" method="POST" action="{{ url_for('reports.delete_signature', sig_id=signature_se.id) }}" class="hidden"></form>
@@ -364,7 +364,7 @@
     <!-- Section 6: Hinweisblatt & Inhaltsverzeichnis -->
     <div class="bg-white shadow-md rounded-lg overflow-hidden">
         <div class="accordion-header cursor-pointer hover:bg-gray-50 px-6 py-4 transition-colors"
-             onclick="toggleAccordion(6)">
+              data-action="toggle-accordion" data-section-id="6">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
                     <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">

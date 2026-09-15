@@ -20,7 +20,13 @@
 # - 1.4.0 (2026-02-13): Phase 3 Complete (Prompts, Security Audit, Runbooks)
 # - 1.5.0 (2026-02-13): Phase 4 Design COMPLETE + PostgreSQL Production Ready + DB Sync Mechanism
 # - 1.5.1 (2026-02-15): GitHub Actions Fixes + Documentation Improvements + KI-Analysis Bugfixes
-APP_VERSION = "1.5.1"
+# - 1.6.0 (2026-09-15): Admin-KI-Einstellungen (verschlüsselte API-Keys in DB) +
+#   CSV/Office-Import (CSV/XLSX/ODS/DOCX) + robuste KI-Provider-Fehlermeldungen
+#   (Rate-Limits statt generischer 500er) + Test-Suite-Isolation überarbeitet
+#   (SAVEPOINT-basiert, RBAC-Permission-Seeding) + mehrere Produktionsbugs
+#   behoben (Rollenwechsel behielt Gruppen-Zuordnung; KI-Provider ignorierten
+#   in der DB gespeicherte Keys; doppelte JS-Funktion überschrieb Prompt-Auswahl)
+APP_VERSION = "1.6.0"
 
 # Export-Schema-Version (unabhängig von App-Version)
 # Ändert sich nur bei Änderungen der CSV/Excel-Export-Struktur

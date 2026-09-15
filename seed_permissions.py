@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 """Seed default permissions and assign them to roles."""
 
-from app import app, db
 import models
 
 DEFAULT_PERMISSIONS = [
@@ -51,39 +50,47 @@ ROLE_TEMPLATES = {
 }
 
 
-with app.app_context():
-    for codename, description, category in DEFAULT_PERMISSIONS:
-        existing = db.session.scalar(
-            db.select(models.Permission).where(models.Permission.codename == codename)
-        )
-        if not existing:
-            db.session.add(
-                models.Permission(codename=codename, description=description, category=category)
+def main():
+    """Legt Permissions an und weist sie den Rollen zu (idempotent)."""
+    from app import app, db
+
+    with app.app_context():
+        for codename, description, category in DEFAULT_PERMISSIONS:
+            existing = db.session.scalar(
+                db.select(models.Permission).where(models.Permission.codename == codename)
             )
-            print(f"  ✅ Permission '{codename}' erstellt")
-    db.session.commit()
-
-    for role_name, perm_codes in ROLE_TEMPLATES.items():
-        role = db.session.scalar(
-            db.select(models.Role).where(db.func.lower(models.Role.name) == role_name.lower())
-        )
-        if not role:
-            print(f"  ⚠️ Rolle '{role_name}' nicht gefunden, wird übersprungen")
-            continue
-
-        if perm_codes is None:
-            role.is_system = True
-            print(f"  ✅ Rolle '{role_name}' als System-Rolle markiert")
-        else:
-            role.is_system = False
-            role.permissions = []
-            for code in perm_codes:
-                perm = db.session.scalar(
-                    db.select(models.Permission).where(models.Permission.codename == code)
+            if not existing:
+                db.session.add(
+                    models.Permission(codename=codename, description=description, category=category)
                 )
-                if perm:
-                    role.permissions.append(perm)
-            print(f"  ✅ Rolle '{role_name}' → {len(perm_codes)} Permissions zugewiesen")
+                print(f"  ✅ Permission '{codename}' erstellt")
+        db.session.commit()
 
-    db.session.commit()
-    print("✅ Alle Permissions und Rollen-Zuordnungen erstellt!")
+        for role_name, perm_codes in ROLE_TEMPLATES.items():
+            role = db.session.scalar(
+                db.select(models.Role).where(db.func.lower(models.Role.name) == role_name.lower())
+            )
+            if not role:
+                print(f"  ⚠️ Rolle '{role_name}' nicht gefunden, wird übersprungen")
+                continue
+
+            if perm_codes is None:
+                role.is_system = True
+                print(f"  ✅ Rolle '{role_name}' als System-Rolle markiert")
+            else:
+                role.is_system = False
+                role.permissions = []
+                for code in perm_codes:
+                    perm = db.session.scalar(
+                        db.select(models.Permission).where(models.Permission.codename == code)
+                    )
+                    if perm:
+                        role.permissions.append(perm)
+                print(f"  ✅ Rolle '{role_name}' → {len(perm_codes)} Permissions zugewiesen")
+
+        db.session.commit()
+        print("✅ Alle Permissions und Rollen-Zuordnungen erstellt!")
+
+
+if __name__ == "__main__":
+    main()

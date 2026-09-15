@@ -20,7 +20,7 @@ from extensions import csrf, db
 from services.ai_client import generate_report_with_ai
 from models import ExplanationBlock, Group, Participant, Prompt, SelfAssessment
 from utils import clean_json_response, get_file_content, sanitize_html, html_to_plaintext, log_activity
-from decorators import permission_required, group_access_required, participant_access_required, filter_groups_by_access
+from decorators import permission_required, group_access_required, participant_access_required, filter_groups_by_access, filter_participants_by_group
 from validation import (
     BatchAnalysisPayload,
     KiPromptForm,

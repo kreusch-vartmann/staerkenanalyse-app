@@ -623,3 +623,21 @@ class ActivityLog(db.Model):
 
     def __repr__(self):
         return f"<ActivityLog {self.action} by user {self.user_id}>"
+
+
+class AppSetting(db.Model):
+    """App-Einstellungen (z. B. API-Keys), Werte verschlüsselt gespeichert.
+
+    Wird über die Admin-UI (/admin/settings) gepflegt und hat Vorrang
+    vor Umgebungsvariablen. Ver-/Entschlüsselung: services/crypto.py.
+    """
+
+    __tablename__ = "app_settings"
+
+    id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(100), unique=True, nullable=False)
+    value_encrypted = db.Column(db.String(500), nullable=False)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+    updated_by = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+
+    updated_by_user = db.relationship("User", backref="app_settings")

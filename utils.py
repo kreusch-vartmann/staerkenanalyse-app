@@ -15,7 +15,14 @@ from pdfminer.pdfparser import PDFSyntaxError
 from werkzeug.utils import secure_filename
 
 # Konstanten für File Upload Security
+# Dokumenten-Uploads (Beobachtungen, Selbsteinschätzungen)
 ALLOWED_EXTENSIONS = {".pdf", ".docx", ".doc", ".txt", ".odt"}
+
+# Teilnehmer-Import (Namenslisten): Tabellen- und Textformate.
+# Absichtlich getrennt von ALLOWED_EXTENSIONS – für den Import sind
+# Tabellenformate nötig, PDF dagegen nicht sinnvoll parsebar.
+ALLOWED_IMPORT_EXTENSIONS = {".txt", ".csv", ".xlsx", ".ods", ".docx"}
+
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB pro Datei
 
 # Erlaubte HTML-Tags für Rich-Text (Quill.js Output)
@@ -65,7 +72,7 @@ def sanitize_html(html_content):
     return cleaned
 
 
-def validate_upload_file(file):
+def validate_upload_file(file, allowed_extensions=None):
     """
     Validiert Upload-Dateien auf Sicherheit:
     - Prüft ob Datei vorhanden
@@ -73,12 +80,19 @@ def validate_upload_file(file):
     - Validiert Dateityp gegen Whitelist
     - Prüft Dateigröße (max 5MB)
 
+    Args:
+        file: Werkzeug-FileStorage
+        allowed_extensions: Optionale Allowlist (Default: ALLOWED_EXTENSIONS).
+            Für Namenslisten-Importe: ALLOWED_IMPORT_EXTENSIONS.
+
     Returns:
         str: Sanitisierter Dateiname
 
     Raises:
         ValueError: Bei Validierungsfehlern
     """
+    if allowed_extensions is None:
+        allowed_extensions = ALLOWED_EXTENSIONS
     if not file or file.filename == "":
         raise ValueError("Keine Datei ausgewählt")
 
@@ -90,9 +104,9 @@ def validate_upload_file(file):
 
     # Check extension
     ext = os.path.splitext(filename)[1].lower()
-    if ext not in ALLOWED_EXTENSIONS:
+    if ext not in allowed_extensions:
         raise ValueError(
-            f"Dateityp {ext} nicht erlaubt. Erlaubt: {', '.join(sorted(ALLOWED_EXTENSIONS))}"
+            f"Dateityp {ext} nicht erlaubt. Erlaubt: {', '.join(sorted(allowed_extensions))}"
         )
 
     # Check file size (read position to get size)

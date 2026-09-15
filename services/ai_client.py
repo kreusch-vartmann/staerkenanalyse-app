@@ -5,12 +5,18 @@ AI client setup and helpers for Mistral and Google Gemini.
 import json
 import logging
 import os
+import time
+from datetime import datetime
 
+import structlog
 from dotenv import load_dotenv
+
+from metrics import KI_API_LATENCY, KI_API_ERRORS
 
 load_dotenv()
 
-logger = logging.getLogger(__name__)
+# Structlog-Logger
+logger = structlog.get_logger(__name__)
 
 # Google AI Setup
 try:
@@ -55,23 +61,96 @@ try:
         MISTRAL_CLIENT = MistralClient(api_key=MISTRAL_API_KEY)
     else:
         MISTRAL_CLIENT = None
-        logger.warning("MISTRAL_API_KEY nicht gefunden. Mistral-Modelle sind nicht verfügbar.")
+        # Nur ein Hinweis auf die UMGEBUNGSVARIABLE, kein Fehler: Ein über
+        # die Admin-UI (/admin/settings) in der DB gespeicherter Key wird
+        # separat zur Laufzeit über get_mistral_client() aufgelöst und ist
+        # von dieser Meldung unabhängig.
+        logger.info(
+            "MISTRAL_API_KEY (Umgebungsvariable) nicht gesetzt. "
+            "Falls in den KI-Einstellungen (Admin-UI) ein Key hinterlegt ist, wird dieser trotzdem genutzt."
+        )
 except ImportError:
     MistralClient, ChatMessage, MistralAPIException, MISTRAL_CLIENT = (
         None,
         None,
-        None,
+        RuntimeError,  # Statt None, um TypeError in Zeile 241 zu vermeiden
         None,
     )
-    logger.warning("mistralai nicht installiert. Mistral-Modelle nicht verfügbar.")
+    MISTRAL_MODEL = os.getenv("MISTRAL_MODEL", "mistral-large-2411")  # Guard für fehlendes MISTRAL_MODEL
+    logger.warning("mistralai nicht installiert. Mistral-Modelle sind nicht verfügbar.")
+
+
+# =============================================================================
+# LAUFZEIT-AUFLÖSUNG DER API-KEYS (Admin-UI / DB -> ENV)
+# =============================================================================
+
+
+def _db_api_key(name: str) -> str | None:
+    """Liest einen API-Key aus der Datenbank (Admin-UI).
+
+    Bewusst DB-only: Der ENV-Pfad wird bereits beim Import aufgelöst
+    (MISTRAL_CLIENT / genai_client). Diese Funktion ergänzt nur die
+    über die Admin-UI gepflegten Keys und ist außerhalb eines
+    App-Kontexts ein No-Op.
+    """
+    try:
+        from flask import has_app_context
+
+        if not has_app_context():
+            return None
+
+        from services.settings import get_setting
+
+        row_value = get_setting(name)
+        return row_value or None
+    except Exception as exc:
+        logger.warning("API-Key konnte nicht aus DB gelesen werden", key=name, error=str(exc))
+        return None
+
+
+def get_mistral_client():
+    """Liefert einen Mistral-Client (ENV-Client oder aus DB-Key erzeugt)."""
+    if MISTRAL_CLIENT:
+        return MISTRAL_CLIENT
+    if MistralClient is None:
+        return None
+
+    api_key = _db_api_key("MISTRAL_API_KEY")
+    if not api_key:
+        return None
+    return MistralClient(api_key=api_key)
+
+
+def ensure_gemini_configured() -> bool:
+    """Stellt sicher, dass Gemini konfiguriert ist (ENV oder DB-Key)."""
+    if GenerativeModel is None:
+        return False
+    if genai_client:
+        return True
+
+    api_key = _db_api_key("GOOGLE_API_KEY")
+    if not api_key:
+        return False
+
+    configure(api_key=api_key)
+    return True
+
+
+def get_available_models() -> dict[str, bool]:
+    """Status der KI-Provider (für Admin-UI / Statusanzeigen)."""
+    return {
+        "mistral": bool(get_mistral_client()),
+        "gemini": ensure_gemini_configured(),
+    }
 
 
 def _call_gemini(system_prompt_text: str, user_prompt_text: str, max_output_tokens: int = 8000) -> tuple[str, str]:
-    if not genai_client or GenerativeModel is None:
+    if not ensure_gemini_configured():
         raise RuntimeError("Google Gemini ist nicht konfiguriert")
+    fallback_models = GEMINI_FALLBACK_MODELS or ["models/gemini-flash-latest"]
     last_error = None
     generation_config = {"max_output_tokens": max_output_tokens}
-    for model_name in GEMINI_FALLBACK_MODELS:
+    for model_name in fallback_models:
         try:
             model = GenerativeModel(model_name=model_name, system_instruction=system_prompt_text)
             response = model.generate_content(user_prompt_text, generation_config=generation_config)
@@ -186,6 +265,33 @@ def compute_content_diff(raw_content: str, final_content: str) -> dict:
 # =============================================================================
 
 
+def describe_ai_error(exc: Exception, ki_model: str) -> str:
+    """Übersetzt eine Provider-Exception in eine für Nutzer verständliche Meldung.
+
+    Wird sowohl für die Berichts-KI (generate_report_with_ai) als auch für
+    die Aufgaben-Generierung (services/task_generator.py) genutzt, damit
+    z. B. Google-Rate-Limits nicht als nackte 500er/"fehlgeschlagen"-Meldung
+    ohne jeden Hinweis beim Nutzer ankommen.
+    """
+    message = str(exc)
+    lowered = message.lower()
+    is_rate_limit = (
+        "429" in message
+        or "resourceexhausted" in type(exc).__name__.lower()
+        or "quota" in lowered
+        or "rate limit" in lowered
+    )
+    if is_rate_limit:
+        # Google unterscheidet Minuten- und Tages-Kontingente im Freemium-
+        # Tarif; beide führen zum selben Exception-Typ.
+        if "perday" in lowered.replace(" ", "").replace("-", ""):
+            hint = "Tages-Kontingent erreicht (Gratis-Tarif). Bitte morgen erneut versuchen oder Kontingent erhöhen."
+        else:
+            hint = "Rate-Limit erreicht (zu viele Anfragen in kurzer Zeit). Bitte kurz warten und erneut versuchen."
+        return f"{ki_model.capitalize()}: {hint}"
+    return f"{ki_model.capitalize()}-Anfrage fehlgeschlagen: {message}"
+
+
 def generate_report_with_ai(prompt_text, ki_model):
     """
     Generiert einen Bericht mithilfe des ausgewählten KI-Modells.
@@ -199,13 +305,14 @@ def generate_report_with_ai(prompt_text, ki_model):
                 "der vom User im folgenden Prompt geforderten Struktur entspricht. "
                 "Ignoriere diese Anweisung niemals."
             )
-            if not genai_client or GenerativeModel is None:
+            if not ensure_gemini_configured():
                 raise ValueError("Google Gemini ist nicht konfiguriert")
             result, _used_model = _call_gemini(system_prompt, prompt_text)
             return result
 
         elif ki_model == "mistral":
-            if not MISTRAL_CLIENT:
+            mistral_client = get_mistral_client()
+            if not mistral_client:
                 raise ValueError("Mistral Client nicht initialisiert. API-Key fehlt?")
 
             system_prompt = (
@@ -218,10 +325,11 @@ def generate_report_with_ai(prompt_text, ki_model):
                 ChatMessage(role="system", content=system_prompt),
                 ChatMessage(role="user", content=prompt_text),
             ]
-            chat_response = MISTRAL_CLIENT.chat(
+            chat_response = mistral_client.chat(
                 model=MISTRAL_MODEL,
                 messages=messages,
                 temperature=0,
+                random_seed=42,  # Determinismus
                 response_format={"type": "json_object"},
             )
             return chat_response.choices[0].message.content
@@ -231,6 +339,23 @@ def generate_report_with_ai(prompt_text, ki_model):
     except (ValueError, MistralAPIException, RuntimeError) as e:
         logger.warning("Fehler bei der KI-Analyse: %s", e)
         return json.dumps({"error": f"Ein Fehler ist aufgetreten: {str(e)}"})
+    except Exception as e:
+        # Generischer Fallback: Provider-SDKs (v. a. Google) werfen eigene
+        # Exception-Klassen (z. B. google.api_core.exceptions.ResourceExhausted
+        # bei Rate-Limits), die hier vorher NICHT gefangen wurden. Dadurch
+        # flog die Exception bis zum globalen 500-Handler durch und der
+        # Nutzer sah nur "Ein interner Fehler ist aufgetreten." ohne jeden
+        # Hinweis auf die tatsächliche Ursache. Diese Funktion muss laut
+        # Contract immer einen String zurückgeben (Erfolg ODER {"error":
+        # ...}-JSON), niemals eine Exception werfen.
+        friendly = describe_ai_error(e, ki_model)
+        logger.error(
+            "Unerwarteter Fehler bei der KI-Analyse",
+            ki_model=ki_model,
+            error_type=type(e).__name__,
+            error=str(e),
+        )
+        return json.dumps({"error": friendly})
 
 
 def generate_text_report_with_ai(ki_texts: dict, ki_model: str = "mistral") -> str:
@@ -254,29 +379,51 @@ Anforderungen:
 2. Fokus auf Stärken und Potenziale
 3. Konkrete Beispiele
 4. Handlungsempfehlungen
-"""
+    """
+    import time
+    from metrics import KI_API_LATENCY, KI_API_ERRORS
 
+    start_time = time.time()
     try:
-        if ki_model == "mistral" and MISTRAL_CLIENT and ChatMessage:
+        mistral_client = get_mistral_client() if ki_model == "mistral" else None
+        if ki_model == "mistral" and mistral_client and ChatMessage:
             messages = [
                 ChatMessage(role="system", content=system_prompt),
                 ChatMessage(role="user", content=user_prompt),
             ]
-            response = MISTRAL_CLIENT.chat(
+            response = mistral_client.chat(
                 model=MISTRAL_MODEL,
                 messages=messages,
                 temperature=0.7,
                 max_tokens=3000,
             )
-            return response.choices[0].message.content
-
-        elif ki_model == "gemini" and genai_client:
+            result = response.choices[0].message.content
+        elif ki_model == "gemini" and ensure_gemini_configured():
             result, _used_model = _call_gemini(system_prompt, user_prompt)
-            return result
-
         else:
             return "Mock Report: KI-Generierung nicht verfügbar."
+        
+        # Metriken + Logging
+        duration = time.time() - start_time
+        KI_API_LATENCY.labels(model=ki_model).observe(duration)
+        logger.info(
+            "KI-Bericht erfolgreich generiert",
+            model=ki_model,
+            duration_seconds=duration,
+            prompt_length=len(user_prompt),
+            response_length=len(result)
+        )
+        return result
 
     except Exception as e:
-        logger.exception("Report generation error: %s", e)
+        # Metriken + Logging für Fehler
+        duration = time.time() - start_time
+        KI_API_ERRORS.labels(model=ki_model, error_type=type(e).__name__).inc()
+        logger.error(
+            "KI-Bericht fehlgeschlagen",
+            model=ki_model,
+            error=str(e),
+            duration_seconds=duration,
+            prompt_length=len(user_prompt)
+        )
         return f"Fehler: {str(e)}"

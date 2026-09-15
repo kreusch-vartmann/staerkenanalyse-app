@@ -239,7 +239,7 @@ recent_activities=recent_activities,
 ## Validierung
 1. `flask db migrate -m "add_activity_log_table"` → Migration wird erstellt
 2. `flask db upgrade` → Tabelle wird angelegt
-3. Server starten: `flask run --port 5002` → Keine Fehler
+3. Server starten: `flask run --port 5001` → Keine Fehler
 4. Dashboard aufrufen → zeigt leeren Aktivitäts-Feed
 5. Beliebige Aktion durchführen (z.B. Gruppe erstellen) → Eintrag erscheint im Feed
 

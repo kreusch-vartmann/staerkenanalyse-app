@@ -19,9 +19,24 @@ Diese Anleitung erklärt, wie du die GitHub Actions Workflows für das Stärkena
    - Generiere API Key unter "API Keys"
 
 3. **Lokale Entwicklungsumgebung**
-   - Python 3.11+
+   - **Python 3.11+** (empfohlen: 3.11.7)
+   - **PostgreSQL 16** (Standard) oder SQLite (Fallback)
    - Git konfiguriert
-   - `.env`-Datei mit `MISTRAL_API_KEY`
+   - `.env`-Datei mit:
+     ```ini
+     MISTRAL_API_KEY=dein_api_key
+     DATABASE_URL=postgresql://stark:stark@localhost:5432/stark  # PostgreSQL
+     SECRET_KEY=dein_geheimes_passwort
+     # DATABASE_URL=sqlite:////pfad/zur/database.db  # SQLite (Fallback)
+     ```
+
+4. **Monitoring (optional)**
+   - **Prometheus + Grafana**: Für Metriken und Alerts.
+   - **Anleitung**: [MONITORING_SETUP.md](./MONITORING_SETUP.md)
+
+5. **CI/CD**
+   - **GitHub Actions**: Automatisierte Tests + Docker-Builds.
+   - **Pipeline**: [.github/workflows/tests.yml](.github/workflows/tests.yml)
 
 ---
 

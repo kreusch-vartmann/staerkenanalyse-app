@@ -20,7 +20,7 @@ def import_example_tasks():
     with app.app_context():
         # Get or create admin user (should exist, but be safe)
         admin_user = db.session.scalar(
-            db.select(User).where(User.email == "admin@testlocal.de")
+            db.select(User).where(User.email == "admin@local.de")
         )
         
         if not admin_user:

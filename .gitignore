@@ -63,5 +63,7 @@ Thumbs.db
 # Backup-Verzeichnis (DB-Kopien, NICHT die Prompt-Exports)
 backups/*.db
 backups/*.db.gz
+backups/*.sql
+backups/*.sql.gz
 # Prompt-Exports SOLLEN versioniert werden!
 # backups/prompts_export/ wird NICHT ignoriert
