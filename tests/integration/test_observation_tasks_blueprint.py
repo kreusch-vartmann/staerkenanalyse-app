@@ -232,3 +232,70 @@ class TestObservationTasksRoutes:
         assert response.status_code == 302
         assert db.session.get(Task, task.id) is None
         assert db.session.query(TaskVersion).filter_by(task_id=task.id).count() == 0
+
+
+@pytest.mark.integration
+class TestObservationTasksExport:
+    """PDF-/DOCX-Export einzelner Aufgaben (Teilnehmer-Ausdruck)."""
+
+    def test_export_docx_returns_valid_file(self, client, db, admin_user):
+        task = _create_task(db, admin_user, title="Exporttest")
+        response = client.get(f"/beobachtungsaufgaben/{task.id}/export/docx")
+        assert response.status_code == 200
+        assert response.content_type == (
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
+        assert response.data[:2] == b"PK"  # DOCX ist ein ZIP-Container
+        assert "attachment" in response.headers.get("Content-Disposition", "")
+
+    def test_export_docx_without_content_redirects(self, client, db, admin_user):
+        task = Task(
+            title="Ohne Inhalt",
+            observation_area="Soziale Kompetenzen",
+            is_active=True,
+            is_example=False,
+            created_by_id=admin_user.id,
+        )
+        db.session.add(task)
+        db.session.commit()
+
+        response = client.get(f"/beobachtungsaufgaben/{task.id}/export/docx", follow_redirects=False)
+        assert response.status_code == 302
+
+    def test_export_pdf_requires_content(self, client, db, admin_user):
+        task = Task(
+            title="Ohne Inhalt",
+            observation_area="Soziale Kompetenzen",
+            is_active=True,
+            is_example=False,
+            created_by_id=admin_user.id,
+        )
+        db.session.add(task)
+        db.session.commit()
+
+        response = client.get(f"/beobachtungsaufgaben/{task.id}/export/pdf", follow_redirects=False)
+        assert response.status_code == 302
+
+    def test_export_pdf_or_graceful_error(self, client, db, admin_user):
+        """WeasyPrint braucht System-Bibliotheken - auf Rechnern ohne
+        Pango/Cairo wird ein Redirect + Flash statt eines 500ers erwartet."""
+        task = _create_task(db, admin_user, title="PDF-Exporttest")
+        response = client.get(f"/beobachtungsaufgaben/{task.id}/export/pdf", follow_redirects=False)
+        assert response.status_code in (200, 302)
+        if response.status_code == 200:
+            assert response.content_type == "application/pdf"
+            assert response.data[:5] == b"%PDF-"
+
+    def test_export_requires_login(self, unauth_client, db, admin_user):
+        task = _create_task(db, admin_user)
+        response = unauth_client.get(f"/beobachtungsaufgaben/{task.id}/export/docx", follow_redirects=False)
+        assert response.status_code == 302
+        assert "/login" in response.headers.get("Location", "")
+
+    def test_export_observer_with_view_permission_allowed(self, observer_client, db, admin_user):
+        """Export erfordert nur 'observation_tasks.view' (Leserecht) - das
+        ist laut Rollen-Template Teil der Beobachter-Rolle, im Gegensatz zu
+        z. B. der Aufgabenerstellung, die 'observation_tasks.manage' braucht."""
+        task = _create_task(db, admin_user)
+        response = observer_client.get(f"/beobachtungsaufgaben/{task.id}/export/docx", follow_redirects=False)
+        assert response.status_code == 200

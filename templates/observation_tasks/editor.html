@@ -65,6 +65,17 @@
                         ✕ Version verwerfen
                     </button>
                 </form>
+                <span class="mx-1 hidden sm:inline-block border-l border-gray-300"></span>
+                <a href="{{ url_for('observation_tasks.export_pdf', task_id=task.id) }}"
+                   class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                   title="Druckfertig, schwarz auf weiß - für Teilnehmende">
+                    📄 Als PDF exportieren
+                </a>
+                <a href="{{ url_for('observation_tasks.export_docx', task_id=task.id) }}"
+                   class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                   title="Zum Weiterbearbeiten in Word/LibreOffice">
+                    📝 Als DOCX exportieren
+                </a>
             </div>
         </div>
 

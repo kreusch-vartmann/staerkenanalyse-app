@@ -6,13 +6,16 @@ Workflow: Beobachtungsbereich + Metadaten → KI generiert Aufgabenvorschlag →
 
 import json
 from datetime import datetime
+from io import BytesIO
 
-from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
+from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for, send_file
 from flask_login import login_required, current_user
+from werkzeug.utils import secure_filename
 
 from extensions import csrf, db
 from services.task_generator import generate_task
 from services.task_refinement import refine_task_content
+from services.task_export import build_task_docx, task_to_pdf_bytes, TaskExportError
 from models import Task, TaskVersion, User
 from decorators import permission_required
 from services import get_target_group_options
@@ -365,6 +368,60 @@ def versions(task_id):
         )
 
     return jsonify(payload)
+
+
+@observation_tasks_bp.route("/<int:task_id>/export/pdf", methods=["GET"])
+@login_required
+@permission_required("observation_tasks.view")
+def export_pdf(task_id):
+    """Exportiert eine Aufgabe als druckfertiges PDF (schwarz auf weiß).
+
+    Enthält bewusst NUR Titel + Aufgabe + Rahmenbedingungen - gedacht zum
+    direkten Ausdrucken/Auslegen für Teilnehmende.
+    """
+    task = db.get_or_404(Task, task_id)
+    if not task.current_version:
+        flash("Diese Aufgabe hat noch keinen Inhalt.", "warning")
+        return redirect(url_for("observation_tasks.edit", task_id=task.id))
+
+    try:
+        pdf_bytes = task_to_pdf_bytes(task)
+    except TaskExportError as e:
+        flash(str(e), "error")
+        return redirect(url_for("observation_tasks.edit", task_id=task.id))
+
+    filename = secure_filename(f"Aufgabe_{task.title}.pdf")
+    return send_file(
+        BytesIO(pdf_bytes),
+        mimetype="application/pdf",
+        as_attachment=True,
+        download_name=filename,
+    )
+
+
+@observation_tasks_bp.route("/<int:task_id>/export/docx", methods=["GET"])
+@login_required
+@permission_required("observation_tasks.view")
+def export_docx(task_id):
+    """Exportiert eine Aufgabe als .docx (Titel + Aufgabe + Rahmenbedingungen)."""
+    task = db.get_or_404(Task, task_id)
+    if not task.current_version:
+        flash("Diese Aufgabe hat noch keinen Inhalt.", "warning")
+        return redirect(url_for("observation_tasks.edit", task_id=task.id))
+
+    try:
+        docx_bytes = build_task_docx(task)
+    except TaskExportError as e:
+        flash(str(e), "error")
+        return redirect(url_for("observation_tasks.edit", task_id=task.id))
+
+    filename = secure_filename(f"Aufgabe_{task.title}.docx")
+    return send_file(
+        BytesIO(docx_bytes),
+        mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        as_attachment=True,
+        download_name=filename,
+    )
 
 
 @observation_tasks_bp.route("/<int:task_id>/speichern", methods=["POST"])
