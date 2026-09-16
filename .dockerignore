@@ -56,6 +56,11 @@ htmlcov/
 *.md
 !README.md
 
+# Prompt-Vorlagen: werden von `flask load-default-prompts` eingelesen und
+# MÜSSEN im Image enthalten sein, obwohl es .txt-Dateien sind (s. o.).
+!prompts/
+!prompts/*.txt
+
 # CI/CD
 .github/
 
