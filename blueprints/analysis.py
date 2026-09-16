@@ -835,11 +835,17 @@ def run_ki_analysis(participant_id):
 @login_required
 @permission_required("analysis.run")
 def run_single_analysis_api(participant_id):
-    """API-Endpunkt, um die KI-Analyse für die Batch-Verarbeitung auszuführen."""
+    """API-Endpunkt, um die KI-Analyse für die Batch-Verarbeitung auszuführen.
+    
+    Jeder Teilnehmer wird in einer eigenen atomaren Transaktion verarbeitet.
+    Bei Fehlern wird ein Rollback für den aktuellen Teilnehmer durchgeführt,
+    der Fehler geloggt und der Status auf 'failed' gesetzt.
+    """
     data = request.get_json()
     parsed, error = parse_json(BatchAnalysisPayload, data or {})
     if error:
         return jsonify({"status": "error", "message": format_validation_error(error)}), 400
+    
     participant = db.session.get(Participant, participant_id)
     if not participant:
         return (
@@ -892,85 +898,74 @@ def run_single_analysis_api(participant_id):
     ):
         prompt = f"{prompt}\n\n{context_block}"
 
-    response_str = generate_report_with_ai(prompt, parsed.ki_model)
-    participant.ki_raw_response = response_str
-    participant.ki_model = parsed.ki_model  # Track which KI model generated this report
-    
-    # --- KI-GYM: Save raw response ---
+    # --- Atomare Transaktion pro Teilnehmer ---
     try:
-        from services.ai_client import save_ai_raw_response
-        save_ai_raw_response(
-            response_text=response_str,
-            response_type='report',
-            context_id=participant_id,
-            ki_model=parsed.ki_model,
-            observation_area=None
-        )
-    except Exception as e:
-        print(f"   ⚠️  KI-Gym Save Error: {e}")
+        # Beginne eine neue Transaktion für diesen Teilnehmer
+        with db.session.begin_nested():
+            response_str = generate_report_with_ai(prompt, parsed.ki_model)
+            participant.ki_raw_response = response_str
+            participant.ki_model = parsed.ki_model  # Track which KI model generated this report
+            
+            # --- KI-GYM: Save raw response ---
+            try:
+                from services.ai_client import save_ai_raw_response
+                save_ai_raw_response(
+                    response_text=response_str,
+                    response_type='report',
+                    context_id=participant_id,
+                    ki_model=parsed.ki_model,
+                    observation_area=None
+                )
+            except Exception as e:
+                print(f"   ⚠️  KI-Gym Save Error: {e}")
+                # Non-critical: continue without breaking
     
-    db.session.commit()
+            # Prüfe ob die Antwort leer ist
+            if not response_str or response_str.strip() == "":
+                raise ValueError("Die KI hat keine Antwort generiert.")
 
-    # Prüfe ob die Antwort leer ist
-    if not response_str or response_str.strip() == "":
-        return jsonify(
-            {
-                "status": "error",
-                "message": "Die KI hat keine Antwort generiert. Bitte versuchen Sie es erneut.",
-            }
-        )
+            cleaned_response = clean_json_response(response_str)
+            ki_data = json.loads(cleaned_response)
+            if "error" in ki_data:
+                raise ValueError(f"KI-Fehler: {ki_data['error']}")
 
-    try:
-        cleaned_response = clean_json_response(response_str)
-
-        
-        ki_data = json.loads(cleaned_response)
-        if "error" in ki_data:
-            return jsonify(
-                {"status": "error", "message": f"KI-Fehler: {ki_data['error']}"}
+            sk_ratings, vk_ratings, ki_texts = _normalize_ki_data(ki_data)
+            has_any_text = any(
+                [
+                    ki_texts.get("social_text"),
+                    ki_texts.get("verbal_text"),
+                    ki_texts.get("summary_text"),
+                ]
             )
+            has_any_ratings = bool(sk_ratings) or bool(vk_ratings)
 
-        sk_ratings, vk_ratings, ki_texts = _normalize_ki_data(ki_data)
-        has_any_text = any(
-            [
-                ki_texts.get("social_text"),
-                ki_texts.get("verbal_text"),
-                ki_texts.get("summary_text"),
-            ]
-        )
-        has_any_ratings = bool(sk_ratings) or bool(vk_ratings)
+            if not has_any_text and not has_any_ratings:
+                raise ValueError("Die KI-Antwort enthält keine verwertbaren Daten.")
 
-        if not has_any_text and not has_any_ratings:
-            return jsonify(
-                {
-                    "status": "error",
-                    "message": "Die KI-Antwort enthält keine verwertbaren Daten. Bitte überprüfen Sie den Prompt und versuchen Sie es erneut.",
-                }
-            )
-
-        participant.sk_ratings = json.dumps(sk_ratings)
-        participant.vk_ratings = json.dumps(vk_ratings)
-        participant.ki_texts = json.dumps(ki_texts)
-        db.session.commit()
-
+            participant.sk_ratings = json.dumps(sk_ratings)
+            participant.vk_ratings = json.dumps(vk_ratings)
+            participant.ki_texts = json.dumps(ki_texts)
+            
+            # Transaktion wird hier automatisch committed, wenn kein Fehler auftritt
+            
         return jsonify({"status": "success", "message": "Analyse erfolgreich."})
-    except json.JSONDecodeError as e:
-        print(f"JSON Parse Error (Batch): {e}")
-        print(f"Raw Response (first 500 chars): {response_str[:500]}")
-        return jsonify(
-            {
-                "status": "error",
-                "message": "Die KI-Antwort hat ein ungültiges Format. Bitte versuchen Sie es erneut oder kontaktieren Sie den Administrator.",
-            }
-        )
     except Exception as e:
-        print(f"Unexpected Error in run_single_analysis_api: {e}")
-        return jsonify(
-            {
-                "status": "error",
-                "message": f"Ein unerwarteter Fehler ist aufgetreten: {str(e)}",
-            }
+        # Rollback für diesen Teilnehmer (automatisch durch begin_nested)
+        print(f"❌ Fehler bei Teilnehmer {participant_id} ({participant.name}): {str(e)}")
+        log_activity(
+            user_id=current_user.id,
+            action="ki_analysis_failed",
+            action_label="KI-Analyse fehlgeschlagen",
+            entity_type="participant",
+            entity_id=participant.id,
+            entity_label=participant.name,
+            details=str(e),
         )
+        db.session.commit()  # Stelle sicher, dass das Logging gespeichert wird
+        return jsonify({
+            "status": "failed", 
+            "message": f"Fehler bei Teilnehmer {participant.name}: {str(e)}"
+        }), 500
 
 
 # --- ROUTEN FÜR FREMDEINSCHÄTZUNG ---
