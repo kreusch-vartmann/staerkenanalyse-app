@@ -18,16 +18,17 @@
                 
                 <div class="prose prose-lg max-w-none text-gray-700">
                     <p>
-                        Willkommen bei Timo's Stärkenanalysetool, einer lokal laufenden Webanwendung, die entwickelt wurde, um den Prozess der Stärkenanalyse auf Basis von Assessment-Center-Beobachtungen zu revolutionieren. Dieses Tool automatisiert die Auswertung und ermöglicht es Ihnen, sich voll und ganz auf die Beobachtung und Interaktion mit den Teilnehmern zu konzentrieren. Vor allem reduziert die Bearbeitung der Daten den Zeitaufwand und den Kaffeeverbrauch im Nachgang der Aufgabendurchführung drastisch.
+                        Willkommen bei Timo's Stärkenanalysetool – einer webbasierten Anwendung, die entwickelt wurde, um den Prozess der Stärkenanalyse auf Basis von Assessment-Center-Beobachtungen zu revolutionieren. Dieses Tool automatisiert die Auswertung und ermöglicht es Ihnen, sich voll und ganz auf die Beobachtung und Interaktion mit den Teilnehmern zu konzentrieren. Vor allem reduziert die Bearbeitung der Daten den Zeitaufwand und den Kaffeeverbrauch im Nachgang der Aufgabendurchführung drastisch.
                     </p>
                     
                     <h3 class="font-semibold text-gray-800">Kernfunktionen</h3>
                     <ul>
                         <li><strong>Effiziente Verwaltung:</strong> Legen Sie Gruppen und Teilnehmer mit wenigen Klicks an und behalten Sie stets den Überblick.</li>
-                        <li><strong>KI-gestützte Analyse:</strong> Nutzen Sie die Kraft modernster Sprachmodelle, um qualitative Beobachtungen in strukturierte, aussagekräftige Berichte zu verwandeln. Für die Nutzung der KI-Funktionalität werden API-Schlüssel benötigt. Derzeit ist die KI-Analyse für Mistral AI (funktioniert) und Google Gemini (funktioniert mit freiem API-Schlüssel von google ai studio) implementiert.</li>
+                        <li><strong>Flexibler Import:</strong> Teilnehmerlisten lassen sich direkt aus TXT-, CSV-, Excel- (XLSX), OpenDocument- (ODS) oder Word-Dateien (DOCX) importieren – Kopfzeilen und getrennte Vor-/Nachname-Spalten werden automatisch erkannt.</li>
+                        <li><strong>KI-gestützte Analyse:</strong> Nutzen Sie die Kraft modernster Sprachmodelle, um qualitative Beobachtungen in strukturierte, aussagekräftige Berichte zu verwandeln. Unterstützt werden Mistral AI und Google Gemini. Die API-Schlüssel dafür hinterlegen Sie bequem und verschlüsselt unter „KI-Einstellungen" im Admin-Bereich – kein technischer Zugriff auf den Server nötig.</li>
                         <li><strong>Flexible Anpassung:</strong> Passen Sie die Analyse-Prompts an Ihre spezifischen Bedürfnisse an und laden Sie zusätzliche Dokumente hoch, um der KI mehr Kontext zu geben.</li>
                         <li><strong>Professionelle Berichte:</strong> Erstellen, bearbeiten und exportieren Sie standardisierte PDF-Berichte mit ansprechenden Visualisierungen – bereit für die Präsentation oder das Feedback-Gespräch.</li>
-                        <li><strong>Lokale Datensicherheit:</strong> Alle Ihre Daten werden sicher in einer lokalen SQLite-Datenbank gespeichert. Es werden keine sensiblen Informationen an externe Server gesendet, außer zur direkten Analyse durch die KI.</li>
+                        <li><strong>Sichere Datenhaltung:</strong> Alle Daten liegen in einer PostgreSQL-Datenbank auf einem eigenen, per HTTPS verschlüsselten Server. Beobachtungsdaten werden nur zur eigentlichen Analyse an den jeweils gewählten KI-Anbieter (Mistral oder Google) übermittelt.</li>
                     </ul>
 
                     <h3 class="font-semibold text-gray-800">Mitwirkung</h3>

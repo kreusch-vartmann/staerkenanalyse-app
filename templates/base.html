@@ -472,7 +472,15 @@
                     openAddGroupModal();
                     break;
                 case 'toggle-accordion':
-                    toggleAccordion(el.dataset.groupId);
+                    // Zwei Templates nutzen unterschiedliche Attribute für
+                    // dieselbe Aktion: die meisten Akkordeons gruppieren nach
+                    // Gruppen-ID (data-group-id), reports/configure.html nach
+                    // Sektions-ID (data-section-id). Ohne Fallback war
+                    // el.dataset.groupId dort immer undefined ->
+                    // toggleAccordion(undefined) -> TypeError beim Zugriff
+                    // auf ein nicht existierendes DOM-Element -> Akkordeon
+                    // reagierte gar nicht auf Klicks.
+                    toggleAccordion(el.dataset.groupId || el.dataset.sectionId);
                     break;
                 case 'remove-task-from-group':
                     removeTaskFromGroup(el.dataset.groupId, el.dataset.taskId);
