@@ -5,6 +5,7 @@ Workflow: Beobachtungsbereich + Metadaten → KI generiert Aufgabenvorschlag →
 """
 
 import json
+import os
 from datetime import datetime
 from io import BytesIO
 
@@ -16,6 +17,9 @@ from extensions import csrf, db
 from services.task_generator import generate_task
 from services.task_refinement import refine_task_content
 from services.task_export import build_task_docx, task_to_pdf_bytes, TaskExportError
+from services.task_import import extract_task_content_from_file, TaskImportError
+from services.task_normalization import _normalize_task_html, _validate_task_content
+from utils import ALLOWED_TASK_IMPORT_EXTENSIONS, validate_upload_file
 from models import Task, TaskVersion, User
 from decorators import permission_required
 from services import get_target_group_options
@@ -23,6 +27,7 @@ from validation import (
     TaskChatPayload,
     TaskCreateForm,
     TaskGenerateForm,
+    TaskImportForm,
     TaskSaveVersionPayload,
     format_validation_error,
     parse_form,
@@ -190,6 +195,95 @@ def create_task():
         observation_areas=["Soziale Kompetenzen", "Verbale Kompetenzen"],
         target_group_options=get_target_group_options(),
         example_tasks=EXAMPLE_TASKS
+    )
+
+
+@observation_tasks_bp.route("/importieren", methods=["GET", "POST"])
+@login_required
+@permission_required("observation_tasks.manage")
+def import_task():
+    """
+    Einzelimport: 1 Datei (TXT/DOCX) = 1 Aufgabe. Gedacht v. a. als
+    Round-Trip zum PDF-/DOCX-Export (siehe export_pdf/export_docx) -
+    Formatvorlagen ("Heading 1/2", "List Number/Bullet") werden erkannt
+    und auf dieselbe Aufgabe/Rahmenbedingungen-Struktur normalisiert wie
+    bei der KI-Generierung.
+    """
+    if request.method == "POST":
+        form_data = request.form.to_dict()
+        parsed, error = parse_form(TaskImportForm, form_data)
+        if error:
+            flash(format_validation_error(error), "error")
+            return redirect(url_for("observation_tasks.import_task"))
+
+        file = request.files.get("task_file")
+        if not file or file.filename == "":
+            flash("Bitte eine Datei auswählen.", "warning")
+            return redirect(url_for("observation_tasks.import_task"))
+
+        try:
+            validate_upload_file(file, allowed_extensions=ALLOWED_TASK_IMPORT_EXTENSIONS)
+        except ValueError as e:
+            flash(f"Datei-Validierung fehlgeschlagen: {e}", "error")
+            return redirect(url_for("observation_tasks.import_task"))
+
+        try:
+            raw_html = extract_task_content_from_file(file)
+        except TaskImportError as e:
+            flash(str(e), "error")
+            return redirect(url_for("observation_tasks.import_task"))
+
+        title = (parsed.title or "").strip() or os.path.splitext(secure_filename(file.filename))[0].replace("_", " ").strip() or "Importierte Aufgabe"
+        content = _normalize_task_html(raw_html, title=title)
+        is_valid, reason = _validate_task_content(content)
+        if not is_valid:
+            flash(
+                f"Die importierte Datei ergibt keine ausreichend vollständige Aufgabe ({reason}). "
+                "Bitte Datei prüfen oder Inhalt danach im Editor ergänzen.",
+                "warning",
+            )
+            # Trotzdem anlegen - der Editor erlaubt Nachbearbeitung, statt
+            # den Import komplett zu verwerfen.
+
+        task = Task(
+            title=title,
+            observation_area=parsed.observation_area,
+            participant_count=parsed.participant_count,
+            duration_minutes=parsed.duration_minutes,
+            is_active=True,
+            is_example=False,
+            ki_model=None,  # importiert, nicht KI-generiert
+            created_by_id=current_user.id,
+        )
+        db.session.add(task)
+        db.session.flush()
+
+        version = TaskVersion(
+            task_id=task.id,
+            version_number=1.0,
+            content=content,
+            context_data=json.dumps(
+                {
+                    "observation_area": parsed.observation_area,
+                    "participant_count": parsed.participant_count,
+                    "duration_minutes": parsed.duration_minutes,
+                    "imported_from": secure_filename(file.filename),
+                }
+            ),
+            change_notes=f"Importiert aus {secure_filename(file.filename)}",
+            created_by_id=current_user.id,
+        )
+        db.session.add(version)
+        db.session.flush()
+        task.current_version_id = version.id
+        db.session.commit()
+
+        flash(f"Aufgabe '{title}' erfolgreich importiert.", "success")
+        return redirect(url_for("observation_tasks.edit", task_id=task.id))
+
+    return render_template(
+        "observation_tasks/import.html",
+        observation_areas=["Soziale Kompetenzen", "Verbale Kompetenzen"],
     )
 
 

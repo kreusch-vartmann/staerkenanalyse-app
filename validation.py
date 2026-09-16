@@ -56,6 +56,32 @@ class AdminUserUpdateForm(BaseSchema):
     new_password: Optional[str] = Field(default=None, max_length=256)
 
 
+class TaskImportForm(BaseSchema):
+    observation_area: str = Field(min_length=3, max_length=80)
+    title: Optional[str] = Field(default=None, max_length=200)
+    participant_count: int = Field(ge=1, le=10)
+    duration_minutes: int = Field(ge=5, le=120)
+
+    @field_validator("observation_area")
+    @classmethod
+    def validate_observation_area_import(cls, value: str) -> str:
+        if value not in ALLOWED_OBSERVATION_AREAS:
+            raise ValueError("Ungültiger Beobachtungsbereich")
+        return value
+
+    @field_validator("participant_count", "duration_minutes", mode="before")
+    @classmethod
+    def to_int_import(cls, value: Any) -> Any:
+        if value is None or value == "":
+            return None
+        if isinstance(value, int):
+            return value
+        try:
+            return int(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("Ungültige Zahl") from exc
+
+
 class TaskCreateForm(BaseSchema):
     observation_area: str = Field(min_length=3, max_length=80)
     participant_count: int = Field(ge=1, le=10)

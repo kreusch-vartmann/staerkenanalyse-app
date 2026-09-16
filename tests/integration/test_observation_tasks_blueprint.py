@@ -2,6 +2,7 @@
 Integration-Tests für observation_tasks Blueprint.
 """
 
+import io
 import json
 from unittest.mock import patch
 
@@ -299,3 +300,154 @@ class TestObservationTasksExport:
         task = _create_task(db, admin_user)
         response = observer_client.get(f"/beobachtungsaufgaben/{task.id}/export/docx", follow_redirects=False)
         assert response.status_code == 200
+
+
+@pytest.mark.integration
+class TestObservationTasksImport:
+    """Einzelimport: 1 Datei (TXT/DOCX) = 1 Aufgabe."""
+
+    def test_import_form_loads(self, client):
+        response = client.get("/beobachtungsaufgaben/importieren")
+        assert response.status_code == 200
+
+    def test_import_txt_creates_task(self, client, db):
+        content = b"Meine Testaufgabe\n\nErster Absatz.\n\nZweiter Absatz."
+        response = client.post(
+            "/beobachtungsaufgaben/importieren",
+            data={
+                "observation_area": "Soziale Kompetenzen",
+                "title": "TXT Import Test",
+                "participant_count": "4",
+                "duration_minutes": "30",
+                "task_file": (io.BytesIO(content), "aufgabe.txt"),
+            },
+            content_type="multipart/form-data",
+            follow_redirects=False,
+        )
+        assert response.status_code == 302
+        assert "/bearbeiten" in response.headers["Location"]
+
+        task = db.session.query(Task).filter_by(title="TXT Import Test").first()
+        assert task is not None
+        assert task.observation_area == "Soziale Kompetenzen"
+        assert "Erster Absatz" in task.current_version.content
+
+    def test_import_docx_roundtrip_from_export(self, client, db, admin_user):
+        """Export einer Aufgabe -> Re-Import muss dieselbe 2-Sektionen-
+        Struktur (Aufgabe/Rahmenbedingungen) ergeben."""
+        task = _create_task(
+            db,
+            admin_user,
+            title="Round-Trip-Quelle",
+            content=(
+                "<h2>Round-Trip-Quelle</h2>"
+                "<h3>Aufgabe</h3><p>Ausgangssituation.</p><p>Konkreter Auftrag.</p>"
+                "<h3>Rahmenbedingungen</h3>"
+                "<p><strong>Ablauf:</strong></p><ol><li>Phase 1</li><li>Phase 2</li><li>Phase 3</li></ol>"
+                "<p><strong>Materialien:</strong></p><ul><li>Stifte</li><li>Papier</li></ul>"
+            ),
+        )
+
+        from services.task_export import build_task_docx
+
+        docx_bytes = build_task_docx(task)
+
+        response = client.post(
+            "/beobachtungsaufgaben/importieren",
+            data={
+                "observation_area": "Verbale Kompetenzen",
+                "title": "Round-Trip-Ziel",
+                "participant_count": "4",
+                "duration_minutes": "30",
+                "task_file": (io.BytesIO(docx_bytes), "export.docx"),
+            },
+            content_type="multipart/form-data",
+            follow_redirects=False,
+        )
+        assert response.status_code == 302
+
+        imported = db.session.query(Task).filter_by(title="Round-Trip-Ziel").first()
+        assert imported is not None
+        from services.task_normalization import _extract_sections, _validate_task_content
+
+        sections = _extract_sections(imported.current_version.content)
+        assert "Aufgabe" in sections
+        assert "Rahmenbedingungen" in sections
+        valid, reason = _validate_task_content(imported.current_version.content)
+        assert valid, reason
+
+    def test_import_without_file_redirects_with_warning(self, client, db):
+        response = client.post(
+            "/beobachtungsaufgaben/importieren",
+            data={
+                "observation_area": "Soziale Kompetenzen",
+                "participant_count": "4",
+                "duration_minutes": "30",
+            },
+            content_type="multipart/form-data",
+            follow_redirects=False,
+        )
+        assert response.status_code == 302
+
+    def test_import_unsupported_extension_rejected(self, client, db):
+        response = client.post(
+            "/beobachtungsaufgaben/importieren",
+            data={
+                "observation_area": "Soziale Kompetenzen",
+                "participant_count": "4",
+                "duration_minutes": "30",
+                "task_file": (io.BytesIO(b"%PDF-1.4"), "aufgabe.pdf"),
+            },
+            content_type="multipart/form-data",
+            follow_redirects=False,
+        )
+        assert response.status_code == 302
+        assert db.session.query(Task).filter_by(observation_area="Soziale Kompetenzen").count() == 0
+
+    def test_import_invalid_observation_area_rejected(self, client, db):
+        response = client.post(
+            "/beobachtungsaufgaben/importieren",
+            data={
+                "observation_area": "Unsinn",
+                "participant_count": "4",
+                "duration_minutes": "30",
+                "task_file": (io.BytesIO(b"Titel\n\nText"), "aufgabe.txt"),
+            },
+            content_type="multipart/form-data",
+            follow_redirects=False,
+        )
+        assert response.status_code == 302
+        assert db.session.query(Task).count() == 0
+
+    def test_import_requires_manage_permission(self, observer_client, db):
+        """Anders als Export (view reicht) braucht Import 'manage', analog
+        zur Aufgabenerstellung."""
+        response = observer_client.post(
+            "/beobachtungsaufgaben/importieren",
+            data={
+                "observation_area": "Soziale Kompetenzen",
+                "participant_count": "4",
+                "duration_minutes": "30",
+                "task_file": (io.BytesIO(b"Titel\n\nText"), "aufgabe.txt"),
+            },
+            content_type="multipart/form-data",
+            follow_redirects=False,
+        )
+        assert response.status_code == 302
+        assert db.session.query(Task).count() == 0
+
+    def test_import_title_falls_back_to_filename(self, client, db):
+        response = client.post(
+            "/beobachtungsaufgaben/importieren",
+            data={
+                "observation_area": "Soziale Kompetenzen",
+                "participant_count": "4",
+                "duration_minutes": "30",
+                "task_file": (io.BytesIO(b"Nur Text ohne kurze erste Zeile als moeglichen Titel, dies ist absichtlich sehr lang und ueberschreitet die 80-Zeichen-Grenze klar."), "meine_aufgabe.txt"),
+            },
+            content_type="multipart/form-data",
+            follow_redirects=False,
+        )
+        assert response.status_code == 302
+        task = db.session.query(Task).filter(Task.title.like("%meine aufgabe%")).first()
+        assert task is not None

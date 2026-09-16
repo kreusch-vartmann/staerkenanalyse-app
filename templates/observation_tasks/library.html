@@ -10,9 +10,14 @@
             <h1 class="text-3xl font-bold text-gray-900">📚 Beobachtungsaufgaben</h1>
             <p class="text-sm text-gray-600">Verwalte und erstelle Assessment-Center Aufgaben</p>
         </div>
-        <a href="{{ url_for('observation_tasks.create_task') }}" class="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
-            ➕ Neue Aufgabe
-        </a>
+        <div class="flex gap-3">
+            <a href="{{ url_for('observation_tasks.import_task') }}" class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                📥 Aufgabe importieren
+            </a>
+            <a href="{{ url_for('observation_tasks.create_task') }}" class="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
+                ➕ Neue Aufgabe
+            </a>
+        </div>
     </div>
     
     <!-- Beispiel-Aufgaben -->

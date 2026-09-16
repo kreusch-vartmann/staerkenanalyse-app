@@ -85,10 +85,15 @@ def _extract_sections(html_content: str) -> dict:
     h3_pattern = re.compile(r'<h3[^>]*>(.*?)</h3>', re.DOTALL)
     h3_matches = list(h3_pattern.finditer(html_content))
 
-    if h3_matches:
-        header = html_content[:h3_matches[0].start()].strip()
-        if header:
-            sections['_header'] = header
+    # Bug (gefunden beim TXT-Aufgaben-Import): war vorher `if h3_matches:`
+    # gated - bei Content OHNE jede <h3> (z. B. unstrukturierter Text ohne
+    # Überschriften) wurde der GESAMTE Inhalt kommentarlos verworfen statt
+    # als '_header' erfasst zu werden. Jetzt: Header = alles vor der ersten
+    # <h3>, oder der GESAMTE Content, falls keine <h3> existiert.
+    header_end = h3_matches[0].start() if h3_matches else len(html_content)
+    header = html_content[:header_end].strip()
+    if header:
+        sections['_header'] = header
 
     for i, match in enumerate(h3_matches):
         section_name = re.sub(r'<[^>]+>', '', match.group(1)).strip().rstrip(':')
@@ -203,6 +208,24 @@ def _normalize_task_html(html_content: str, title: str | None = None) -> str:
     sections = _extract_sections(html_content)
 
     header = sections.pop('_header', '')
+
+    # Titel (<h2>) aus dem Header herauslösen. Der Header kann - seit dem
+    # _extract_sections()-Fix - auch echten Fließtext enthalten, wenn der
+    # Quell-Content GAR KEINE <h3> hat (z. B. einfacher TXT-Import ohne
+    # Überschriften). Dieser Fließtext darf nicht verloren gehen oder als
+    # isolierter Block VOR den Pflicht-Sektionen "schweben" - er landet
+    # stattdessen in der Sektion "Aufgabe" (sinnvollster Ort für
+    # unstrukturierten Text, den der Nutzer importiert hat).
+    h2_match = re.search(r'<h2[^>]*>.*?</h2>', header, re.DOTALL)
+    leftover_header_text = ''
+    if h2_match:
+        header_title = h2_match.group(0)
+        leftover_header_text = (header[: h2_match.start()] + header[h2_match.end() :]).strip()
+        header = header_title
+    else:
+        leftover_header_text = header
+        header = ''
+
     if not header and title:
         header = f'<h2>{title}</h2>'
     elif not header:
@@ -217,6 +240,12 @@ def _normalize_task_html(html_content: str, title: str | None = None) -> str:
             standard_sections[mapped] += '\n' + content
         else:
             standard_sections[mapped] = content
+
+    if leftover_header_text and not _is_section_empty(leftover_header_text):
+        existing = standard_sections.get('Aufgabe', '')
+        standard_sections['Aufgabe'] = (
+            leftover_header_text + '\n' + existing if existing else leftover_header_text
+        )
 
     required_sections = ['Aufgabe', 'Rahmenbedingungen']
 

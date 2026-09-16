@@ -23,6 +23,10 @@ ALLOWED_EXTENSIONS = {".pdf", ".docx", ".doc", ".txt", ".odt"}
 # Tabellenformate nötig, PDF dagegen nicht sinnvoll parsebar.
 ALLOWED_IMPORT_EXTENSIONS = {".txt", ".csv", ".xlsx", ".ods", ".docx"}
 
+# Aufgaben-Import (services/task_import.py): Rich-Text-Inhalt statt
+# Namenslisten - PDF/Tabellenformate ergeben hier keinen Sinn.
+ALLOWED_TASK_IMPORT_EXTENSIONS = {".txt", ".docx"}
+
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB pro Datei
 
 # Erlaubte HTML-Tags für Rich-Text (Quill.js Output)
