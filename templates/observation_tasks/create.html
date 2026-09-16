@@ -82,7 +82,20 @@
                                    name="duration_minutes" value="30" min="5" max="120" required>
                             <p class="mt-2 text-xs text-gray-500">Typisch: 30-45 Minuten</p>
                         </div>
-                        
+
+                        <!-- Zusätzliche Hinweise für die KI -->
+                        <div>
+                            <label for="additional_hints" class="block text-sm font-medium text-gray-700">
+                                Zusätzliche Hinweise für die KI (Optional)
+                            </label>
+                            <textarea class="mt-1 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+                                      id="additional_hints" name="additional_hints" rows="3" maxlength="2000"
+                                      placeholder="z. B. Bezug zu einem konkreten Thema, gewünschtes Szenario, besondere Rahmenbedingungen, was vermieden werden soll ..."></textarea>
+                            <p class="mt-2 text-xs text-gray-500">
+                                Wird direkt in den Prompt an die KI übernommen – nutzen Sie das für Wünsche, die über Bereich/Teilnehmerzahl/Dauer hinausgehen.
+                            </p>
+                        </div>
+
                         <!-- KI-Optionen -->
                         <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
                             <label class="flex items-start gap-3">

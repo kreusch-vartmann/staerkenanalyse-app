@@ -352,11 +352,13 @@ def health():
 # --- CLI COMMANDS ---
 from generate_test_data import register_commands
 from load_default_prompts import register_command as register_prompt_command
+from import_example_tasks import register_command as register_example_tasks_command
 from backup_database import register_backup_commands, startup_backup
 from cli_commands import register_auth_commands
 
 register_commands(app)
 register_prompt_command(app)
+register_example_tasks_command(app)
 register_backup_commands(app)
 register_auth_commands(app)
 

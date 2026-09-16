@@ -62,6 +62,7 @@ class TaskCreateForm(BaseSchema):
     duration_minutes: int = Field(ge=5, le=120)
     target_group: Optional[str] = Field(default=None, max_length=120)
     use_example: bool = Field(default=False)
+    additional_hints: Optional[str] = Field(default=None, max_length=2000)
 
     @field_validator("observation_area")
     @classmethod

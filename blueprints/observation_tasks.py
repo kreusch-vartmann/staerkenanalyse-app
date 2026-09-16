@@ -136,6 +136,7 @@ def create_task():
         duration_minutes = parsed.duration_minutes
         target_group = parsed.target_group or None
         use_example = parsed.use_example
+        additional_hints = (parsed.additional_hints or "").strip() or None
         
         # Neue Task erstellen
         task = Task(
@@ -156,7 +157,8 @@ def create_task():
             "participant_count": participant_count,
             "duration_minutes": duration_minutes,
             "target_group": target_group,
-            "use_example": use_example
+            "use_example": use_example,
+            "additional_hints": additional_hints,
         }
         
         version = TaskVersion(

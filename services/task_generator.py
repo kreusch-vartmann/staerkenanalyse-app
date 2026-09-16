@@ -139,6 +139,8 @@ def generate_task(
     if not target_group and context_data:
         target_group = context_data.get('target_group')
 
+    additional_hints = (context_data.get('additional_hints') or '').strip()
+
     area_info = {
         "Soziale Kompetenzen": {
             "definition": "Fähigkeit zur Zusammenarbeit, Teamfähigkeit, Eigenverantwortung, Empathie, Konfliktbewältigung",
@@ -243,6 +245,7 @@ Teilnehmerzahl: {participant_count}
 Dauer: {duration_minutes} Minuten
 Bereich: {observation_area}
 {f"Zielgruppe: {target_group}" if target_group else ""}
+{f"Zusätzliche Hinweise (unbedingt berücksichtigen): {additional_hints}" if additional_hints else ""}
 
 {f"Ähnliche Aufgaben: {examples_text}" if examples_text else ''}
 

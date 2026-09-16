@@ -22,6 +22,12 @@ flask db upgrade
 # Terminal-Schritt nach einem Deploy vergessen wurde.)
 flask load-default-prompts || echo "⚠️  load-default-prompts fehlgeschlagen (nicht kritisch, App startet trotzdem)"
 
+# Referenzaufgaben synchronisieren (ebenfalls rein additiv, siehe oben).
+# Setzt einen bestehenden Admin-Benutzer voraus (created_by_id) - falls
+# noch keiner existiert, überspringt der Command sich selbst mit einer
+# Meldung, statt den Start zu blockieren.
+flask import-example-tasks || echo "⚠️  import-example-tasks fehlgeschlagen (nicht kritisch, App startet trotzdem)"
+
 # HINWEIS: seed_permissions.py wird bewusst NICHT automatisch ausgeführt -
 # es überschreibt Rollen-Berechtigungen unbedingt neu und würde manuelle
 # Anpassungen über die Admin-UI bei jedem Neustart zerstören. Einmalig
