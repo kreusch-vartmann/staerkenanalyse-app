@@ -194,18 +194,28 @@ BEISPIEL 2 (Plakat):
 - Ablauf: 3 Phasen (Planung 10 Min, Gestaltung 30 Min, Präsentation 5 Min)
 - Materialien: Flipchart-Papier, Stifte, Kleber, Schere
 
-STRUKTUR DER AUFGABE:
-1. Szenario: 3-5 Sätze, die die Ausgangssituation beschreiben (kurz und verständlich!)
-2. Aufgabe: 1-2 Sätze, was die Gruppe konkret tun soll (KEIN Aufzählungsliste mit Unterpunkten!)
-3. Ablauf: 3 Phasen mit Zeitangaben als nummerierte Liste
-4. Zusatzinfos: Materialien ODER Rollenvorschläge ODER Szenarien-Details als einfache Liste
+STRUKTUR DER AUFGABE (GENAU 2 HAUPTSEKTIONEN):
+1. Aufgabe: Ausgangssituation (3-5 Sätze, kurz und verständlich!) UND direkt
+   danach der konkrete Auftrag (1-2 Sätze, was die Gruppe tun soll - KEINE
+   Aufzählungsliste mit Unterpunkten!). Das ist der Text, den die
+   Teilnehmenden zuerst lesen.
+2. Rahmenbedingungen: Enthält ZWEI mit <strong> hervorgehobene Unterteile
+   im selben Abschnitt - "Ablauf:" (3 Phasen mit Zeitangaben, als
+   nummerierte Liste) und "Materialien:" (oder Rollenvorschläge/
+   Szenarien-Details, als einfache Liste).
+
+Diese 2-Sektionen-Struktur ist WICHTIG, weil der Teilnehmer-Ausdruck später
+NUR "Aufgabe" und "Rahmenbedingungen" zeigt (schwarz auf weiß, zum
+Ausdrucken) - Beobachtungsfokus und Moderations-Hinweise stehen bewusst
+NICHT im content, sondern in den separaten JSON-Feldern observation_focus/
+facilitator_notes (nur für Beobachtende sichtbar).
 
 FORMATIERUNG - NUR HTML:
-- <h2> für Titel, <h3> für Sektionsüberschriften
+- <h2> für Titel, <h3> für die 2 Sektionsüberschriften ("Aufgabe", "Rahmenbedingungen")
 - <p> für Textabsätze
-- <ol><li> für Ablauf-Phasen
-- <ul><li> für Materialien/Listen
-- <strong> für Hervorhebungen innerhalb von HTML-Tags
+- <p><strong>Ablauf:</strong></p> gefolgt von <ol><li> für die Ablauf-Phasen
+- <p><strong>Materialien:</strong></p> gefolgt von <ul><li> für Materialien/Listen
+- <strong> für weitere Hervorhebungen innerhalb von HTML-Tags
 
 ABSOLUT VERBOTEN:
 - Markdown-Formatierung: NIEMALS ** oder __ oder # verwenden!
@@ -213,11 +223,12 @@ ABSOLUT VERBOTEN:
 - Leere Sektionen ohne Inhalt
 - Übermäßig komplexe Aufgaben mit mehr als 3 Diskussionspunkten
 - Zu lange Szenarien (max 5 Sätze!)
+- Mehr als die 2 Hauptsektionen "Aufgabe" und "Rahmenbedingungen"
 
 JSON-FORMAT:
 {{
   "title": "Kurzer Titel (3-6 Wörter)",
-  "content": "<h2>Titel</h2><h3>Szenario</h3><p>Kurze Beschreibung...</p><h3>Eure Aufgabe</h3><p>Was ist zu tun...</p><h3>Ablauf</h3><ol><li>Phase 1...</li></ol><h3>Materialien</h3><ul><li>Item</li></ul>",
+  "content": "<h2>Titel</h2><h3>Aufgabe</h3><p>Ausgangssituation...</p><p>Konkreter Auftrag...</p><h3>Rahmenbedingungen</h3><p><strong>Ablauf:</strong></p><ol><li>Phase 1...</li></ol><p><strong>Materialien:</strong></p><ul><li>Item</li></ul>",
   "observation_focus": "Was wird beobachtet",
   "facilitator_notes": "Tipps für Moderatoren"
 }}
@@ -386,7 +397,13 @@ Gib SOFORT NUR das JSON zurück - keine Erklärungen."""
             # als sichtbarer Text im Editor statt echtem Inhalt).
             parsed_result = {
                 "title": f"Assessment-Aufgabe: {observation_area}",
-                "content": f"<h2>{observation_area}</h2><h3>Ablauf</h3><ol><li>Vorbereitung (10 Min)</li><li>Durchführung ({duration_minutes-10} Min)</li></ol>",
+                "content": (
+                    f"<h2>{observation_area}</h2>"
+                    f"<h3>Aufgabe</h3><p>Die Gruppe bearbeitet gemeinsam eine praxisnahe Aufgabe im Bereich {observation_area}.</p>"
+                    f"<h3>Rahmenbedingungen</h3><p><strong>Ablauf:</strong></p>"
+                    f"<ol><li>Vorbereitung (10 Min)</li><li>Durchführung ({duration_minutes-10} Min)</li></ol>"
+                    f"<p><strong>Materialien:</strong></p><ul><li>Flipchart-Papier</li><li>Stifte</li></ul>"
+                ),
                 "observation_focus": area_spec['focus'],
                 "facilitator_notes": "Kein KI-Provider konfiguriert – dies ist eine Platzhalter-Aufgabe. Bitte API-Key in den KI-Einstellungen hinterlegen.",
             }

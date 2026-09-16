@@ -40,8 +40,11 @@ REGELN:
 1. Gib die KOMPLETTE Aufgabe mit ALLEN Sektionen zurück (nicht nur die Änderung!)
 2. Alle bestehenden Sektionen müssen erhalten bleiben und gefüllt sein
 3. Halte die Aufgabe EINFACH - Assessment-Center-Übungen sind kurz und klar
-4. Das Szenario soll 3-5 Sätze haben (nicht länger!)
-5. Die Aufgabenstellung soll 1-2 Sätze sein (KEINE nummerierten Unterpunkte!)
+4. Die Aufgabe besteht aus GENAU 2 Hauptsektionen: "Aufgabe" (Ausgangssituation
+   in 3-5 Sätzen + konkreter Auftrag in 1-2 Sätzen, KEINE Unterpunkte!) und
+   "Rahmenbedingungen" (mit <strong>Ablauf:</strong> als nummerierte Liste und
+   <strong>Materialien:</strong> als einfache Liste)
+5. Erfinde KEINE zusätzlichen Hauptsektionen
 
 FORMATIERUNG - NUR HTML:
 - <h2> für Titel, <h3> für Sektionsüberschriften

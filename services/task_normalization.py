@@ -156,10 +156,17 @@ def _ensure_all_sections_filled(new_html: str, original_html: str) -> str:
 
 
 _SECTION_ALIASES = {
-    'Szenario': ['szenario', 'situation', 'ausgangslage', 'hintergrund', 'kontext', 'ausgangssituation'],
-    'Eure Aufgabe': ['eure aufgabe', 'aufgabe', 'aufgabenstellung', 'die aufgabe', 'gruppenaufgabe', 'aufgabenbeschreibung', 'your task'],
-    'Ablauf': ['ablauf', 'ablauf der übung', 'zeitplan', 'phasen', 'vorgehen', 'durchführung', 'ablaufplan'],
-    'Materialien': ['materialien', 'material', 'benötigte materialien', 'hilfsmittel', 'arbeitsmaterialien', 'zusatzinfos', 'zusatzinformationen', 'rollenverteilung', 'rollen', 'rollenbeschreibungen'],
+    'Aufgabe': [
+        'aufgabe', 'szenario', 'situation', 'ausgangslage', 'hintergrund', 'kontext',
+        'ausgangssituation', 'eure aufgabe', 'aufgabenstellung', 'die aufgabe',
+        'gruppenaufgabe', 'aufgabenbeschreibung', 'your task', 'auftrag',
+    ],
+    'Rahmenbedingungen': [
+        'rahmenbedingungen', 'ablauf', 'ablauf der übung', 'zeitplan', 'phasen',
+        'vorgehen', 'durchführung', 'ablaufplan', 'materialien', 'material',
+        'benötigte materialien', 'hilfsmittel', 'arbeitsmaterialien', 'zusatzinfos',
+        'zusatzinformationen', 'rollenverteilung', 'rollen', 'rollenbeschreibungen',
+    ],
 }
 
 
@@ -182,7 +189,13 @@ def _map_section_name(raw_name: str) -> str:
 
 def _normalize_task_html(html_content: str, title: str | None = None) -> str:
     """
-    Zwingt AI-Output in eine feste 4-Sektionen-Struktur.
+    Zwingt AI-Output in eine feste 2-Sektionen-Struktur (Aufgabe,
+    Rahmenbedingungen). Absichtlich reduziert von vormals 4 Sektionen:
+    Diese zwei Abschnitte bilden den TEILNEHMER-Ausdruck (Punkt 4 der
+    Aufgaben-Feature-Anfrage - schwarz auf weiß, wird ausgedruckt).
+    Beobachtungsfokus/Facilitator-Hinweise ("Weitere Infos") bleiben
+    bewusst als SEPARATE Task-Felder (observation_focus/facilitator_notes,
+    nicht Teil von content) - die landen nie auf dem Teilnehmer-Blatt.
     """
     if not html_content:
         return html_content
@@ -205,7 +218,7 @@ def _normalize_task_html(html_content: str, title: str | None = None) -> str:
         else:
             standard_sections[mapped] = content
 
-    required_sections = ['Szenario', 'Eure Aufgabe', 'Ablauf', 'Materialien']
+    required_sections = ['Aufgabe', 'Rahmenbedingungen']
 
     result_parts = []
     if header:
@@ -217,17 +230,22 @@ def _normalize_task_html(html_content: str, title: str | None = None) -> str:
         used_sections.add(section_name)
 
         if _is_section_empty(content):
-            if section_name == 'Ablauf':
-                content = '<ol><li>Phase 1: Vorbereitung (10 Min)</li><li>Phase 2: Durchführung (25 Min)</li><li>Phase 3: Präsentation (5 Min)</li></ol>'
-                logger.info("Sektion '%s' war leer → Standard-Ablauf eingefügt", section_name)
-            elif section_name == 'Materialien':
-                content = '<ul><li>Flipchart-Papier</li><li>Stifte (verschiedene Farben)</li><li>Moderationskarten</li></ul>'
-                logger.info("Sektion '%s' war leer → Standard-Materialien eingefügt", section_name)
-            elif section_name == 'Szenario':
-                content = '<p>Die Gruppe bearbeitet gemeinsam eine praxisnahe Aufgabe.</p>'
-                logger.info("Sektion '%s' war leer → Platzhalter eingefügt", section_name)
-            elif section_name == 'Eure Aufgabe':
-                content = '<p>Erarbeitet gemeinsam eine Lösung und einigt euch auf einen Plan.</p>'
+            if section_name == 'Rahmenbedingungen':
+                content = (
+                    '<p><strong>Ablauf:</strong></p>'
+                    '<ol><li>Phase 1: Vorbereitung (10 Min)</li>'
+                    '<li>Phase 2: Durchführung (25 Min)</li>'
+                    '<li>Phase 3: Präsentation (5 Min)</li></ol>'
+                    '<p><strong>Materialien:</strong></p>'
+                    '<ul><li>Flipchart-Papier</li><li>Stifte (verschiedene Farben)</li>'
+                    '<li>Moderationskarten</li></ul>'
+                )
+                logger.info("Sektion '%s' war leer → Standard-Rahmenbedingungen eingefügt", section_name)
+            elif section_name == 'Aufgabe':
+                content = (
+                    '<p>Die Gruppe bearbeitet gemeinsam eine praxisnahe Aufgabe.</p>'
+                    '<p>Erarbeitet gemeinsam eine Lösung und einigt euch auf einen Plan.</p>'
+                )
                 logger.info("Sektion '%s' war leer → Platzhalter eingefügt", section_name)
 
         result_parts.append(f'<h3>{section_name}</h3>')

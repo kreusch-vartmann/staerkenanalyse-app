@@ -41,18 +41,18 @@ EXAMPLE_TASKS = {
         "duration_minutes": 40,
         "task_description": """
             <h2>Auftrag: Diskussion Erbengemeinschaft</h2>
-            <h3>Eure Aufgabe</h3>
+            <h3>Aufgabe</h3>
             <p>Ihr seid eine Erbengemeinschaft und habt ein Haus geerbt. Darin soll nun eine Wohnung neu vermietet werden.</p>
             <p><strong>Einigt euch in der Gruppe auf eine Mietpartei!</strong></p>
-            
-            <h3>Ablauf</h3>
+
+            <h3>Rahmenbedingungen</h3>
+            <p><strong>Ablauf:</strong></p>
             <ol>
                 <li><strong>Vorbereitungsphase (10 Min):</strong> Jedes Gruppenmitglied legt für sich selbst eine Reihenfolge fest und notiert die Begründungen.</li>
                 <li><strong>Diskussionsphase (30 Min):</strong> Jeder stellt seine Liste vor und begründet, warum er/sie der Mietpartei seiner/ihrer Wahl den Vorzug geben möchte. Diskutiert in der Gruppe alle Argumente, um zu einer einstimmigen Entscheidung zu kommen.</li>
                 <li><strong>Abstimmungsphase:</strong> Führt eine Abstimmung durch. Wer abweichend von der ursprünglichen Position abstimmt, muss dies begründen.</li>
             </ol>
-            
-            <h3>Interessenten</h3>
+            <p><strong>Interessenten:</strong></p>
             <ul>
                 <li>Ein Künstlerehepaar aus Italien mit kleinem Hund</li>
                 <li>Ein freiberuflich tätiger Journalist (6 Monate präsent)</li>
@@ -72,20 +72,24 @@ EXAMPLE_TASKS = {
         "duration_minutes": 45,
         "task_description": """
             <h2>Auftrag: Plakat zur Gemeinde-Veranstaltung</h2>
-            <h3>Aufgabenstellung</h3>
+            <h3>Aufgabe</h3>
             <p>Das nächste Sommerfest eurer Gemeinde naht und ihr möchtet eure Gruppe und ihre Aktivitäten gut präsentieren. Zu diesem Zweck erstellt ihr ein Plakat.</p>
             <p>Um das Plakat zu erstellen, werden euch verschiedene Materialien und Werkzeuge zur Verfügung gestellt. Ein Flipchart-Papierbogen dient als Grundlage.</p>
             <p><strong>Das fertige Plakat wird zum Abschluss vorgestellt.</strong></p>
-            
-            <h3>Arbeitsanweisungen</h3>
+
+            <h3>Rahmenbedingungen</h3>
+            <p><strong>Ablauf:</strong></p>
             <ol>
                 <li><strong>Planung (10 Min):</strong> Besprecht, was genau ihr auf dem Plakat präsentieren möchtet und wie ihr es grob umsetzen wollt.</li>
                 <li><strong>Gestaltung (30 Min):</strong> Gestaltet das Plakat mit den zur Verfügung stehenden Materialien. Lasst eurer Phantasie gern freien Lauf.</li>
                 <li><strong>Präsentation (5 Min):</strong> Stellt das fertige Plakat vor.</li>
             </ol>
-            
-            <h3>Verfügbare Materialien</h3>
-            <p>Flipchart-Papier, Stifte, Kleber, Schere, bunte Papiere, Bilder, und weitere Gestaltungsmaterialien nach Verfügbarkeit.</p>
+            <p><strong>Materialien:</strong></p>
+            <ul>
+                <li>Flipchart-Papier</li>
+                <li>Stifte, Kleber, Schere</li>
+                <li>Bunte Papiere, Bilder und weitere Gestaltungsmaterialien nach Verfügbarkeit</li>
+            </ul>
         """,
         "observation_focus": "Teamfähigkeit, Kreativität, Entscheidungsfähigkeit, Umsetzungs- und Zeiteinteilung, Kooperationsfähigkeit",
         "is_example": True
