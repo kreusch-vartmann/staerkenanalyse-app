@@ -16,13 +16,20 @@ RUN pip install --no-cache-dir --no-index --find-links=/wheels /wheels/* && rm -
 RUN useradd -m -u 1000 appuser
 WORKDIR /app
 COPY --chown=appuser:appuser . .
+
+# Verzeichnisse für persistente Volumes (Coolify: Storages-Tab) müssen VOR
+# dem USER-Wechsel angelegt/chown't werden: appuser darf sonst nicht in
+# /app schreiben, da WORKDIR das Verzeichnis noch als root:root erstellt
+# hat (Ursache eines "Permission denied" beim Build).
+RUN mkdir -p /app/instance /app/uploads && chown -R appuser:appuser /app/instance /app/uploads
+
 USER appuser
 ENV FLASK_APP=app.py PYTHONUNBUFFERED=1
 EXPOSE 5000
 
-# Read-Only Filesystem (außer /tmp und /app/instance)
+# Read-Only Filesystem (außer /tmp, /app/instance, /app/uploads)
 VOLUME /app/instance
-RUN mkdir -p /app/instance && chown appuser:appuser /app/instance
+VOLUME /app/uploads
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD python -c "import requests,sys; sys.exit(0 if requests.get('http://localhost:5000/health',timeout=5).ok else 1)"
