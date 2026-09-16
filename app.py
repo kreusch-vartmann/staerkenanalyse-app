@@ -49,6 +49,19 @@ elif env == "testing":
 else:
     app.config.from_object(DevelopmentConfig)
 
+# In Produktion läuft die App hinter genau einem Reverse-Proxy (Coolifys
+# Traefik). Ohne ProxyFix sieht Flask für JEDEN Request Traefiks interne
+# Container-IP statt der echten Client-IP - Rate-Limiting (das nach IP
+# unterscheidet, siehe extensions.py) würde dann ALLE Nutzer in denselben
+# Topf werfen: Ein einzelner aktiver Nutzer könnte alle anderen aussperren.
+# x_for=1 vertraut genau einem Hop (Traefik); in Development/Testing ohne
+# Proxy bewusst NICHT aktiv, da dort kein Hop vorhanden ist, dem vertraut
+# werden könnte.
+if env == "production":
+    from werkzeug.middleware.proxy_fix import ProxyFix
+
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
+
 # Erweiterungen initialisieren
 db.init_app(app)
 migrate.init_app(app, db)
@@ -316,8 +329,17 @@ def handle_unhandled_exception(error):
 
 
 @app.route("/health")
+@limiter.exempt
 def health():
-    """Health Check für Monitoring und Docker."""
+    """Health Check für Monitoring und Docker.
+
+    Bewusst von RATELIMIT_DEFAULT ausgenommen: Sowohl der Docker-native
+    HEALTHCHECK als auch Coolifys eigener Health-Check-Mechanismus rufen
+    diese Route alle 30s auf, dauerhaft, für die gesamte Laufzeit des
+    Containers - das overschreitet "200 per day" binnen Stunden und
+    führte zu 429-Antworten, wodurch Coolify den Container fälschlich
+    als "unhealthy" einstufte und das Deployment zurückrollte.
+    """
     try:
         # Teste DB-Verbindung
         db.session.execute(db.select(db.func.count(models.Group.id)))
