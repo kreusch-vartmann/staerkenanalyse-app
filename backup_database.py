@@ -28,6 +28,7 @@ from flask.cli import with_appcontext
 
 from extensions import db
 from models import Prompt
+from config import _normalize_database_url
 
 
 # --- KONFIGURATION ---
@@ -38,7 +39,12 @@ MAX_BACKUPS = 50  # Maximale Anzahl aufbewahrter Backups
 
 def get_db_path():
     """Gibt den Pfad zur Datenbank zurück oder None für PostgreSQL."""
-    db_url = os.getenv("DATABASE_URL", "sqlite:///instance/database.db")
+    # Normalisieren wie in config.py: einige Hosting-Plattformen (u. a.
+    # Coolify) liefern "postgres://" statt "postgresql://". Ohne diese
+    # Normalisierung würde das automatische Backup beim App-Start dauerhaft
+    # mit "Unbekanntes DATABASE_URL-Schema" fehlschlagen (abgefangen, aber
+    # sinnlos rauschend in den Logs).
+    db_url = _normalize_database_url(os.getenv("DATABASE_URL", "sqlite:///instance/database.db"))
     if db_url.startswith("sqlite:///"):
         return Path(db_url.replace("sqlite:///", ""))
     elif db_url.startswith("postgresql://"):
