@@ -9,6 +9,19 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+def _normalize_database_url(url: str | None) -> str | None:
+    """Normalisiert das URL-Schema für PostgreSQL.
+
+    Viele Hosting-Plattformen (u. a. Coolify, früher Heroku) liefern
+    Connection-Strings mit dem Schema "postgres://". SQLAlchemy 1.4+/2.x
+    kennt nur noch den Dialekt-Namen "postgresql://" und bricht sonst mit
+    "Could not parse SQLAlchemy URL" ab.
+    """
+    if url and url.startswith("postgres://"):
+        return url.replace("postgres://", "postgresql://", 1)
+    return url
+
+
 class Config:
     """Basis-Konfiguration (gemeinsame Settings)."""
 
@@ -16,7 +29,7 @@ class Config:
     SECRET_KEY = os.getenv("SECRET_KEY")  # Pflicht: muss in .env/Umgebung gesetzt sein
 
     # SQLAlchemy
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
+    SQLALCHEMY_DATABASE_URI = _normalize_database_url(os.getenv("DATABASE_URL"))
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         "pool_pre_ping": True,  # Prüft Verbindungen vor Nutzung
