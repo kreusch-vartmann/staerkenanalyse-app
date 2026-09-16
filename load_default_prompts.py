@@ -50,6 +50,12 @@ PROMPT_FILES = {
         "name": "MistralSozVerb4",
         "description": "Rekonstruiertes Prompt-Template für soz./verb. Stärkenanalyse (JSON-Output)",
     },
+    "copilotsozverbv2.txt": {
+        "name": "CopilotSozVerbv2",
+        "description": "Optimierte Version mit verstärktem Polaritäts-Enforcement, Soft-Damping, "
+                        "persönlicheren Texten und reiner Stärkenorientierung",
+        "is_default": True,
+    },
 }
 
 
@@ -111,11 +117,16 @@ def load_default_prompts(clear):
             with open(filepath, "r", encoding="utf-8") as f:
                 content = f.read()
 
+            # Nur EIN Prompt darf is_default=True haben (siehe blueprints/prompts.py)
+            if metadata.get("is_default"):
+                Prompt.query.update({Prompt.is_default: False}, synchronize_session=False)
+
             # Erstelle Prompt
             new_prompt = Prompt(
                 name=metadata["name"],
                 description=metadata["description"],
                 content=content,
+                is_default=metadata.get("is_default", False),
             )
             db.session.add(new_prompt)
             db.session.commit()
