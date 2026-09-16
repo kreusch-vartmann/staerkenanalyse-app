@@ -16,7 +16,7 @@ from werkzeug.utils import secure_filename
 from extensions import csrf, db
 from services.task_generator import generate_task
 from services.task_refinement import refine_task_content
-from services.task_export import build_task_docx, task_to_pdf_bytes, TaskExportError
+from services.task_export import build_task_docx, task_to_pdf_bytes, build_blank_task_template_docx, TaskExportError
 from services.task_import import extract_task_content_from_file, TaskImportError
 from services.task_normalization import _normalize_task_html, _validate_task_content
 from utils import ALLOWED_TASK_IMPORT_EXTENSIONS, validate_upload_file
@@ -195,6 +195,29 @@ def create_task():
         observation_areas=["Soziale Kompetenzen", "Verbale Kompetenzen"],
         target_group_options=get_target_group_options(),
         example_tasks=EXAMPLE_TASKS
+    )
+
+
+@observation_tasks_bp.route("/importieren/vorlage.docx", methods=["GET"])
+@login_required
+@permission_required("observation_tasks.manage")
+def import_template():
+    """Lädt eine leere .docx-Vorlage zum externen Ausfüllen herunter.
+
+    Nutzt exakt die Word-Formatvorlagen, die parse_task_docx() beim
+    Re-Import erkennt (siehe services/task_export.build_blank_task_template_docx).
+    """
+    try:
+        template_bytes = build_blank_task_template_docx()
+    except TaskExportError as e:
+        flash(str(e), "error")
+        return redirect(url_for("observation_tasks.import_task"))
+
+    return send_file(
+        BytesIO(template_bytes),
+        mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        as_attachment=True,
+        download_name="Aufgaben-Vorlage.docx",
     )
 
 

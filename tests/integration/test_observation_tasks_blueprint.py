@@ -451,3 +451,53 @@ class TestObservationTasksImport:
         assert response.status_code == 302
         task = db.session.query(Task).filter(Task.title.like("%meine aufgabe%")).first()
         assert task is not None
+
+
+@pytest.mark.integration
+class TestObservationTasksImportTemplate:
+    """Download der leeren Vorlage für den Aufgaben-Import."""
+
+    def test_template_download_returns_valid_docx(self, client):
+        response = client.get("/beobachtungsaufgaben/importieren/vorlage.docx")
+        assert response.status_code == 200
+        assert response.content_type == (
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
+        assert response.data[:2] == b"PK"
+        assert "attachment" in response.headers.get("Content-Disposition", "")
+
+    def test_template_requires_login(self, unauth_client):
+        response = unauth_client.get("/beobachtungsaufgaben/importieren/vorlage.docx", follow_redirects=False)
+        assert response.status_code == 302
+        assert "/login" in response.headers.get("Location", "")
+
+    def test_downloaded_template_can_be_reimported(self, client, db):
+        """End-to-End: Vorlage herunterladen -> unverändert hochladen -> muss
+        eine valide Aufgabe ergeben."""
+        template_response = client.get("/beobachtungsaufgaben/importieren/vorlage.docx")
+        assert template_response.status_code == 200
+
+        import io
+
+        response = client.post(
+            "/beobachtungsaufgaben/importieren",
+            data={
+                "observation_area": "Soziale Kompetenzen",
+                "title": "Aus Vorlage",
+                "participant_count": "4",
+                "duration_minutes": "30",
+                "task_file": (io.BytesIO(template_response.data), "vorlage.docx"),
+            },
+            content_type="multipart/form-data",
+            follow_redirects=False,
+        )
+        assert response.status_code == 302
+
+        from models import Task
+
+        task = db.session.query(Task).filter_by(title="Aus Vorlage").first()
+        assert task is not None
+        from services.task_normalization import _validate_task_content
+
+        valid, reason = _validate_task_content(task.current_version.content)
+        assert valid, reason

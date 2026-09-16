@@ -10,6 +10,20 @@
         </div>
 
         <div class="px-6 py-6">
+            <div class="mb-6 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-4">
+                <p class="text-sm text-indigo-900">
+                    <i class="fas fa-file-word mr-1"></i>
+                    <strong>Neue Aufgabe von Grund auf in Word/LibreOffice schreiben?</strong>
+                    Lade dir zuerst die passende Vorlage herunter – sie enthält die
+                    Formatvorlagen („Titel", „Überschrift 2", „Liste nummeriert"/„Liste mit
+                    Aufzählungszeichen"), die der Import unten erkennt.
+                </p>
+                <a href="{{ url_for('observation_tasks.import_template') }}"
+                   class="mt-3 inline-flex items-center gap-2 rounded-md border border-indigo-300 bg-white px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100">
+                    📄 Leere Vorlage herunterladen (.docx)
+                </a>
+            </div>
+
             <p class="mb-6 text-sm text-gray-600">
                 Lädt eine bereits geschriebene Aufgabe aus einer <strong>DOCX</strong>- oder
                 <strong>TXT</strong>-Datei hoch. Besonders praktisch im Zusammenspiel mit dem

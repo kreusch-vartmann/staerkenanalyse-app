@@ -197,3 +197,64 @@ def build_task_docx(task) -> bytes:
     buffer = BytesIO()
     document.save(buffer)
     return buffer.getvalue()
+
+
+def build_blank_task_template_docx() -> bytes:
+    """Erzeugt eine leere .docx-Vorlage zum externen Ausfüllen und späteren
+    Re-Import über /beobachtungsaufgaben/importieren.
+
+    Nutzt exakt dieselben Word-Formatvorlagen, die parse_task_docx()
+    (services/task_import.py) erkennt: "Title" für den Aufgaben-Titel,
+    "Heading 2" für die beiden Pflicht-Sektionen, "List Number"/
+    "List Bullet" für Ablauf/Materialien. Wer diese Vorlage 1:1 mit den
+    Formatvorlagen aus der Word-Werkzeugleiste befüllt (nicht nur Text
+    fett/größer machen!), bekommt beim Import automatisch die korrekte
+    Aufgabe/Rahmenbedingungen-Struktur.
+    """
+    try:
+        import docx
+    except Exception as e:
+        raise TaskExportError(f"python-docx konnte nicht geladen werden: {e}") from e
+
+    document = docx.Document()
+
+    hint = document.add_paragraph()
+    hint_run = hint.add_run(
+        "ANLEITUNG (diesen Absatz vor dem Import löschen): Ersetzen Sie die "
+        "Platzhalter-Texte unten durch Ihre eigene Aufgabe. Wichtig: Nutzen "
+        "Sie dabei WEITERHIN die vorgegebenen Formatvorlagen (\u201eTitel\u201c, "
+        "\u201eÜberschrift 2\u201c, \u201eListe nummeriert\u201c, \u201eListe mit "
+        "Aufzählungszeichen\u201c aus der Word-Werkzeugleiste) - nicht nur Text "
+        "manuell fett/größer machen. Nur so erkennt der Import beim erneuten "
+        "Hochladen (Beobachtungsaufgaben → Aufgabe importieren) die Struktur "
+        "korrekt."
+    )
+    hint_run.italic = True
+    hint_run.bold = True
+
+    document.add_heading("Titel der Aufgabe (hier ersetzen)", level=0)
+
+    document.add_heading("Aufgabe", level=2)
+    document.add_paragraph(
+        "Hier die Ausgangssituation beschreiben (3-5 Sätze, kurz und "
+        "verständlich) und direkt danach den konkreten Auftrag (1-2 Sätze). "
+        "Dieser Text wird den Teilnehmenden später direkt vorgelegt - keine "
+        "Beobachtungshinweise hier hineinschreiben."
+    )
+
+    document.add_heading("Rahmenbedingungen", level=2)
+
+    ablauf_label = document.add_paragraph()
+    ablauf_label.add_run("Ablauf:").bold = True
+    document.add_paragraph("Phase 1 - Beschreibung (Zeitangabe, z. B. 10 Min)", style="List Number")
+    document.add_paragraph("Phase 2 - Beschreibung (Zeitangabe, z. B. 20 Min)", style="List Number")
+    document.add_paragraph("Phase 3 - Beschreibung (Zeitangabe, z. B. 10 Min)", style="List Number")
+
+    material_label = document.add_paragraph()
+    material_label.add_run("Materialien:").bold = True
+    document.add_paragraph("Material oder Hilfsmittel 1", style="List Bullet")
+    document.add_paragraph("Material oder Hilfsmittel 2", style="List Bullet")
+
+    buffer = BytesIO()
+    document.save(buffer)
+    return buffer.getvalue()

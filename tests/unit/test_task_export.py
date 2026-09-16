@@ -8,6 +8,7 @@ import pytest
 
 from services.task_export import (
     TaskExportError,
+    build_blank_task_template_docx,
     build_task_docx,
     build_task_pdf_html,
     task_to_pdf_bytes,
@@ -136,3 +137,43 @@ class TestBuildTaskDocx:
         monkeypatch.setattr(builtins, "__import__", fake_import)
         with pytest.raises(TaskExportError):
             task_export_module.build_task_docx(_FakeTask())
+
+
+@pytest.mark.unit
+class TestBuildBlankTaskTemplateDocx:
+    """Downloadbare Leer-Vorlage für externes Ausfüllen + Re-Import."""
+
+    def test_generates_valid_docx_with_correct_styles(self):
+        import docx
+
+        template_bytes = build_blank_task_template_docx()
+        document = docx.Document(io.BytesIO(template_bytes))
+
+        styles = {p.style.name for p in document.paragraphs if p.text.strip()}
+        assert "Title" in styles
+        assert "Heading 2" in styles
+        assert "List Number" in styles
+        assert "List Bullet" in styles
+
+    def test_roundtrips_through_parser_into_valid_task(self):
+        """Die Vorlage selbst muss - unverändert hochgeladen - bereits eine
+        valide (wenn auch mit Platzhaltern gefüllte) Aufgabe ergeben."""
+        from services.task_import import parse_task_docx
+        from services.task_normalization import _normalize_task_html, _validate_task_content
+
+        template_bytes = build_blank_task_template_docx()
+
+        class _FS:
+            def __init__(self, stream, filename):
+                self.stream = stream
+                self.filename = filename
+
+            def read(self):
+                return self.stream.read()
+
+        html = parse_task_docx(_FS(io.BytesIO(template_bytes), "vorlage.docx"))
+        normalized = _normalize_task_html(html, title="Titel der Aufgabe (hier ersetzen)")
+        valid, reason = _validate_task_content(normalized)
+        assert valid, reason
+        assert "<h3>Aufgabe</h3>" in normalized
+        assert "<h3>Rahmenbedingungen</h3>" in normalized
