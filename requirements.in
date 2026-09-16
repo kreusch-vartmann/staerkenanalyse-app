@@ -28,3 +28,7 @@ structlog
 prometheus-client
 # ODS-Import für Teilnehmer-Namenslisten (services/import_service.py)
 odfpy
+# Redis-Client für RATELIMIT_STORAGE_URI=redis://... in Produktion
+# (flask-limiter/limits brechen ohne dieses Paket beim App-Start ab,
+# sobald RATELIMIT_STORAGE_URI auf redis:// zeigt)
+redis
