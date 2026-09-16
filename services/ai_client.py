@@ -292,70 +292,109 @@ def describe_ai_error(exc: Exception, ki_model: str) -> str:
     return f"{ki_model.capitalize()}-Anfrage fehlgeschlagen: {message}"
 
 
-def generate_report_with_ai(prompt_text, ki_model):
+def generate_report_with_ai(prompt_text, ki_model, max_retries=3, initial_delay=1):
     """
     Generiert einen Bericht mithilfe des ausgewählten KI-Modells.
+    
+    Args:
+        prompt_text: Der Prompt für die KI.
+        ki_model: Das zu verwendende KI-Modell ("gemini" oder "mistral").
+        max_retries: Maximale Anzahl an Wiederholungsversuchen bei Netzwerkfehlern.
+        initial_delay: Initiale Wartezeit in Sekunden für exponentielles Backoff.
     """
     logger.debug("Das übergebene 'ki_model' ist: '%s'", ki_model)
-    try:
-        if ki_model == "gemini":
-            system_prompt = (
-                "Du bist ein Experte für die Auswertung von Assessment-Center-Beobachtungen. "
-                "Antworte IMMER und AUSSCHLIESSLICH mit einem JSON-Objekt, das exakt "
-                "der vom User im folgenden Prompt geforderten Struktur entspricht. "
-                "Ignoriere diese Anweisung niemals."
+    
+    # Zwischenspeicherung der Rohdaten für Retry
+    last_exception = None
+    retry_delay = initial_delay
+    
+    for attempt in range(max_retries):
+        try:
+            if ki_model == "gemini":
+                system_prompt = (
+                    "Du bist ein Experte für die Auswertung von Assessment-Center-Beobachtungen. "
+                    "Antworte IMMER und AUSSCHLIESSLICH mit einem JSON-Objekt, das exakt "
+                    "der vom User im folgenden Prompt geforderten Struktur entspricht. "
+                    "Ignoriere diese Anweisung niemals."
+                )
+                if not ensure_gemini_configured():
+                    raise ValueError("Google Gemini ist nicht konfiguriert")
+                result, _used_model = _call_gemini(system_prompt, prompt_text)
+                return result
+
+            elif ki_model == "mistral":
+                mistral_client = get_mistral_client()
+                if not mistral_client:
+                    raise ValueError("Mistral Client nicht initialisiert. API-Key fehlt?")
+
+                system_prompt = (
+                    "Du bist ein Experte für die Auswertung von Assessment-Center-Beobachtungen. "
+                    "Antworte IMMER und AUSSCHLIESSLICH mit einem JSON-Objekt, das exakt "
+                    "der vom User im folgenden Prompt geforderten Struktur entspricht. "
+                    "Ignoriere diese Anweisung niemals."
+                )
+                messages = [
+                    ChatMessage(role="system", content=system_prompt),
+                    ChatMessage(role="user", content=prompt_text),
+                ]
+                chat_response = mistral_client.chat(
+                    model=MISTRAL_MODEL,
+                    messages=messages,
+                    temperature=0,
+                    random_seed=42,  # Determinismus
+                    response_format={"type": "json_object"},
+                    timeout=120,  # Timeout von 120 Sekunden
+                )
+                return chat_response.choices[0].message.content
+
+            else:
+                raise ValueError(f"Ungültiges KI-Modell ausgewählt: {ki_model}")
+
+        except (ValueError, MistralAPIException) as e:
+            logger.warning("Fehler bei der KI-Analyse (nicht wiederholbar): %s", e)
+            return json.dumps({"error": f"Ein Fehler ist aufgetreten: {str(e)}"})
+        except Exception as e:
+            # Klassifiziere den Fehler für Retry-Entscheidung
+            error_type = type(e).__name__
+            error_message = str(e).lower()
+            
+            # Retry nur bei Netzwerkfehlern oder Rate-Limits
+            if ("timeout" in error_message or 
+                "connection" in error_message or 
+                "429" in error_message or 
+                "resourceexhausted" in error_type.lower() or
+                "rate limit" in error_message):
+                
+                last_exception = e
+                if attempt < max_retries - 1:
+                    logger.warning(
+                        "Retry %s/%s für KI-Aufruf (%s): %s. Warte %s Sekunden...",
+                        attempt + 1, max_retries, ki_model, error_message, retry_delay
+                    )
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # Exponentielles Backoff
+                    continue
+            
+            # Kein Retry: Fehler melden
+            friendly = describe_ai_error(e, ki_model)
+            logger.error(
+                "Unerwarteter Fehler bei der KI-Analyse",
+                ki_model=ki_model,
+                error_type=error_type,
+                error=str(e),
+                attempt=attempt + 1,
             )
-            if not ensure_gemini_configured():
-                raise ValueError("Google Gemini ist nicht konfiguriert")
-            result, _used_model = _call_gemini(system_prompt, prompt_text)
-            return result
-
-        elif ki_model == "mistral":
-            mistral_client = get_mistral_client()
-            if not mistral_client:
-                raise ValueError("Mistral Client nicht initialisiert. API-Key fehlt?")
-
-            system_prompt = (
-                "Du bist ein Experte für die Auswertung von Assessment-Center-Beobachtungen. "
-                "Antworte IMMER und AUSSCHLIESSLICH mit einem JSON-Objekt, das exakt "
-                "der vom User im folgenden Prompt geforderten Struktur entspricht. "
-                "Ignoriere diese Anweisung niemals."
-            )
-            messages = [
-                ChatMessage(role="system", content=system_prompt),
-                ChatMessage(role="user", content=prompt_text),
-            ]
-            chat_response = mistral_client.chat(
-                model=MISTRAL_MODEL,
-                messages=messages,
-                temperature=0,
-                random_seed=42,  # Determinismus
-                response_format={"type": "json_object"},
-            )
-            return chat_response.choices[0].message.content
-
-        raise ValueError(f"Ungültiges KI-Modell ausgewählt: {ki_model}")
-
-    except (ValueError, MistralAPIException, RuntimeError) as e:
-        logger.warning("Fehler bei der KI-Analyse: %s", e)
-        return json.dumps({"error": f"Ein Fehler ist aufgetreten: {str(e)}"})
-    except Exception as e:
-        # Generischer Fallback: Provider-SDKs (v. a. Google) werfen eigene
-        # Exception-Klassen (z. B. google.api_core.exceptions.ResourceExhausted
-        # bei Rate-Limits), die hier vorher NICHT gefangen wurden. Dadurch
-        # flog die Exception bis zum globalen 500-Handler durch und der
-        # Nutzer sah nur "Ein interner Fehler ist aufgetreten." ohne jeden
-        # Hinweis auf die tatsächliche Ursache. Diese Funktion muss laut
-        # Contract immer einen String zurückgeben (Erfolg ODER {"error":
-        # ...}-JSON), niemals eine Exception werfen.
-        friendly = describe_ai_error(e, ki_model)
-        logger.error(
-            "Unerwarteter Fehler bei der KI-Analyse",
-            ki_model=ki_model,
-            error_type=type(e).__name__,
-            error=str(e),
-        )
-        return json.dumps({"error": friendly})
+            return json.dumps({"error": friendly})
+    
+    # Falls alle Retries fehlschlagen
+    friendly = describe_ai_error(last_exception, ki_model)
+    logger.error(
+        "Alle Retry-Versuche fehlgeschlagen",
+        ki_model=ki_model,
+        error_type=type(last_exception).__name__,
+        error=str(last_exception),
+    )
+    return json.dumps({"error": friendly})
 
 
 def generate_text_report_with_ai(ki_texts: dict, ki_model: str = "mistral") -> str:
