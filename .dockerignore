@@ -26,8 +26,11 @@ backups/
 Dist/
 tests/
 *.md
-*.txt
 *.bak
+# Test-Requirements (nur für CI/lokale Tests, nicht im Image nötig)
+requirements-test.txt
+# Editor-generierte Prompt-Vorlagen für GitHub-Workflows (kein App-Code)
+.github/prompts/
 
 # Environment
 .env
@@ -55,11 +58,6 @@ htmlcov/
 # Documentation
 *.md
 !README.md
-
-# Prompt-Vorlagen: werden von `flask load-default-prompts` eingelesen und
-# MÜSSEN im Image enthalten sein, obwohl es .txt-Dateien sind (s. o.).
-!prompts/
-!prompts/*.txt
 
 # CI/CD
 .github/
