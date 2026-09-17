@@ -8,7 +8,9 @@ Testet:
 
 import json
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, create_autospec, patch
+
+from mistralai.client import MistralClient
 
 from services.ai_client import generate_report_with_ai
 
@@ -81,3 +83,33 @@ class TestGenerateReportWithAI:
         parsed = json.loads(result)
         assert "error" in parsed
         assert "Boom" in parsed["error"]
+
+    @patch("services.ai_client.MISTRAL_CLIENT")
+    def test_mistral_call_matches_real_sdk_signature(self, mock_client):
+        """Regression-Test: `chat()` darf nur Kwargs nutzen, die die
+        tatsächlich installierte mistralai-SDK-Version unterstützt.
+
+        Vorher wurde `timeout=120` an `MistralClient.chat()` übergeben -
+        ein Kwarg, das es in mistralai==0.4.2 gar nicht gibt. Das führte zu
+        einem TypeError bei JEDEM Mistral-Aufruf, unabhängig vom API-Key.
+        Mit `create_autospec` wird die reale Methodensignatur geprüft statt
+        eines zu nachsichtigen MagicMocks, das beliebige Kwargs akzeptiert.
+        """
+        autospec_client = create_autospec(MistralClient, instance=True)
+        mock_message = MagicMock()
+        mock_message.content = "{\"ok\": true}"
+        mock_choice = MagicMock()
+        mock_choice.message = mock_message
+        mock_response = MagicMock()
+        mock_response.choices = [mock_choice]
+        autospec_client.chat.return_value = mock_response
+
+        with patch("services.ai_client.MISTRAL_CLIENT", autospec_client):
+            result = generate_report_with_ai("Prompt", "mistral")
+
+        parsed_or_raw = result
+        assert parsed_or_raw == "{\"ok\": true}", (
+            f"Erwartete erfolgreiche Antwort, bekam: {result!r} "
+            "(deutet auf einen Kwarg-Mismatch mit der echten SDK-Signatur hin)"
+        )
+        autospec_client.chat.assert_called_once()

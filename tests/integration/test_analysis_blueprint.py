@@ -76,6 +76,49 @@ class TestAnalysisRoutes:
         data = response.get_json()
         assert data["status"] in ["success", "error"]
 
+    @patch('blueprints.analysis.generate_report_with_ai')
+    def test_run_single_analysis_api_error_path_reports_real_message(
+        self, mock_generate, client, db, sample_participant, sample_observations_payload
+    ):
+        """Regression-Test für zwei kombinierte Bugs:
+
+        1. generate_report_with_ai() liefert bei einem KI-Fehler ein
+           `{"error": "..."}`-JSON (statt eine Exception zu werfen) - die
+           Route wandelt das intern in einen ValueError um.
+        2. Der except-Block rief zuvor `log_activity(..., details=str(e))`
+           auf - `details` ist kein gültiger Parameter von log_activity()
+           und löste dort einen zusätzlichen TypeError aus, der unbehandelt
+           entkam und vom globalen 500-Handler mit einer generischen
+           "Ein interner Fehler ist aufgetreten"-Meldung überdeckt wurde.
+
+        Dieser Test stellt sicher, dass die *tatsächliche* KI-Fehlermeldung
+        beim Client ankommt, statt durch einen Folgefehler verschluckt zu
+        werden.
+        """
+        mock_generate.return_value = json.dumps(
+            {"error": "Mistral: Rate-Limit erreicht (zu viele Anfragen in kurzer Zeit)."}
+        )
+
+        sample_participant.observations = json.dumps(sample_observations_payload)
+        db.session.commit()
+
+        response = client.post(
+            f'/api/run_single_analysis/{sample_participant.id}',
+            json={"prompt_template": "{{context}}", "ki_model": "mistral"},
+        )
+
+        data = response.get_json()
+        assert data is not None, (
+            "Response war kein valides JSON - vermutlich ist eine Exception "
+            "aus der Route entkommen und der globale 500-Handler hat eine "
+            "leere/HTML-Antwort erzeugt."
+        )
+        assert data["status"] == "failed"
+        # Die echte Fehlermeldung muss ankommen, nicht die generische
+        # Handler-Meldung "Ein interner Fehler ist aufgetreten".
+        assert "Rate-Limit" in data["message"]
+        assert "interner Fehler" not in data["message"]
+
     @patch('blueprints.analysis.HTML')
     def test_report_pdf_export(self, mock_html, client, sample_participant):
         mock_writer = MagicMock()

@@ -207,8 +207,19 @@ def _normalize_ki_data(ki_data):
 
         summary_parts = [
             _stringify_summary_part(summary_block.get("key_strengths")),
-            _stringify_summary_part(summary_block.get("development_areas")),
-            _stringify_summary_part(summary_block.get("task_alignment")),
+            # "assessment_focus"/"development_note" sind die tatsächlichen
+            # Feldnamen im aktiven Prompt-Schema (copilotsozverbv2.txt).
+            # "development_areas"/"task_alignment" existieren dort nicht
+            # (Alt-Schema anderer Prompts) - beide Varianten werden daher
+            # unterstützt, damit kein Prompt-Wechsel erneut Daten verliert.
+            _stringify_summary_part(
+                summary_block.get("assessment_focus")
+                or summary_block.get("task_alignment")
+            ),
+            _stringify_summary_part(
+                summary_block.get("development_note")
+                or summary_block.get("development_areas")
+            ),
         ]
         summary_text = "\n".join([part for part in summary_parts if part])
 
@@ -946,8 +957,13 @@ def run_single_analysis_api(participant_id):
             participant.vk_ratings = json.dumps(vk_ratings)
             participant.ki_texts = json.dumps(ki_texts)
             
-            # Transaktion wird hier automatisch committed, wenn kein Fehler auftritt
-            
+            # Der `with`-Block released hier nur den SAVEPOINT der inneren
+            # Transaktion (begin_nested). Ohne expliziten commit() der
+            # äußeren Transaktion werden die Änderungen beim Schließen der
+            # Session am Request-Ende verworfen (impliziter Rollback) -
+            # der Endpoint hätte dann "success" zurückgegeben, ohne dass
+            # irgendetwas in der DB gelandet ist.
+        db.session.commit()
         return jsonify({"status": "success", "message": "Analyse erfolgreich."})
     except Exception as e:
         # Rollback für diesen Teilnehmer (automatisch durch begin_nested)
@@ -955,11 +971,10 @@ def run_single_analysis_api(participant_id):
         log_activity(
             user_id=current_user.id,
             action="ki_analysis_failed",
-            action_label="KI-Analyse fehlgeschlagen",
+            action_label=f"KI-Analyse fehlgeschlagen: {str(e)[:150]}",
             entity_type="participant",
             entity_id=participant.id,
             entity_label=participant.name,
-            details=str(e),
         )
         db.session.commit()  # Stelle sicher, dass das Logging gespeichert wird
         return jsonify({

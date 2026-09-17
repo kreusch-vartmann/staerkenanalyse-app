@@ -337,13 +337,16 @@ def generate_report_with_ai(prompt_text, ki_model, max_retries=3, initial_delay=
                     ChatMessage(role="system", content=system_prompt),
                     ChatMessage(role="user", content=prompt_text),
                 ]
+                # Hinweis: mistralai==0.4.2s `MistralClient.chat()` kennt KEIN
+                # `timeout`-Kwarg (nur der Client-Konstruktor). Ein zuvor hier
+                # übergebenes `timeout=120` führte zu einem TypeError bei
+                # JEDEM Mistral-Aufruf.
                 chat_response = mistral_client.chat(
                     model=MISTRAL_MODEL,
                     messages=messages,
                     temperature=0,
                     random_seed=42,  # Determinismus
                     response_format={"type": "json_object"},
-                    timeout=120,  # Timeout von 120 Sekunden
                 )
                 return chat_response.choices[0].message.content
 
