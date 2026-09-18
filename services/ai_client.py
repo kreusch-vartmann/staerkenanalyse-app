@@ -150,6 +150,7 @@ def _call_gemini(
     max_output_tokens: int = 8000,
     deterministic: bool = False,
     json_mode: bool = False,
+    timeout_seconds: float = 20,
 ) -> tuple[str, str]:
     """Ruft Gemini auf.
 
@@ -166,6 +167,16 @@ def _call_gemini(
             (analog zu Mistrals `response_format={"type": "json_object"}`),
             statt sich nur auf die Text-Anweisung im Prompt zu verlassen.
             NICHT für generate_text_report_with_ai (freier Fließtext) nutzen.
+        timeout_seconds: Harte Obergrenze pro Modell-Versuch (siehe
+            `request_options`). OHNE dies kann `generate_content()` bei
+            Netzwerkstörungen unbegrenzt hängen (reproduziert am 2026-09-18:
+            kein Timeout -> Hang -> in Produktion killt Gunicorns
+            `--timeout 120` den Worker -> rohe Verbindungstrennung ->
+            Frontend zeigt "Netzwerkfehler", statt dass generate_report_with_ai
+            den Fehler geordnet abfangen und melden kann). 20s je Modell ist
+            bewusst klein gewählt, weil GEMINI_FALLBACK_MODELS bis zu 7
+            Modelle enthält und die Summe deutlich unter Gunicorns
+            Worker-Timeout bleiben muss.
     """
     if not ensure_gemini_configured():
         raise RuntimeError("Google Gemini ist nicht konfiguriert")
@@ -181,7 +192,11 @@ def _call_gemini(
     for model_name in fallback_models:
         try:
             model = GenerativeModel(model_name=model_name, system_instruction=system_prompt_text)
-            response = model.generate_content(user_prompt_text, generation_config=generation_config)
+            response = model.generate_content(
+                user_prompt_text,
+                generation_config=generation_config,
+                request_options={"timeout": timeout_seconds},
+            )
             return response.text, model_name
         except Exception as e:
             message = str(e).lower()
@@ -317,6 +332,20 @@ def describe_ai_error(exc: Exception, ki_model: str) -> str:
         else:
             hint = "Rate-Limit erreicht (zu viele Anfragen in kurzer Zeit). Bitte kurz warten und erneut versuchen."
         return f"{ki_model.capitalize()}: {hint}"
+
+    is_timeout = (
+        "deadline" in lowered
+        or "deadlineexceeded" in type(exc).__name__.lower()
+        or "timeout" in lowered
+        or "timed out" in lowered
+    )
+    if is_timeout:
+        return (
+            f"{ki_model.capitalize()}: Zeitüberschreitung bei der Verbindung. "
+            "Das ist meist ein vorübergehendes Netzwerkproblem - bitte kurz warten "
+            "und erneut versuchen."
+        )
+
     return f"{ki_model.capitalize()}-Anfrage fehlgeschlagen: {message}"
 
 
@@ -396,9 +425,16 @@ def generate_report_with_ai(prompt_text, ki_model, max_retries=3, initial_delay=
             error_message = str(e).lower()
             
             # Retry nur bei Netzwerkfehlern oder Rate-Limits
-            if ("timeout" in error_message or 
-                "connection" in error_message or 
-                "429" in error_message or 
+            # "deadline"/"deadlineexceeded"/"504": Gemini wirft bei
+            # `request_options={"timeout": ...}`-Überschreitung eine
+            # DeadlineExceeded-Exception ("504 Deadline expired..."),
+            # die weder "timeout" noch "connection" im Text enthält.
+            if ("timeout" in error_message or
+                "connection" in error_message or
+                "429" in error_message or
+                "deadline" in error_message or
+                "deadlineexceeded" in error_type.lower() or
+                "504" in error_message or
                 "resourceexhausted" in error_type.lower() or
                 "rate limit" in error_message):
                 
