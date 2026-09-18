@@ -61,9 +61,15 @@ Thumbs.db
 *~
 
 # Backup-Verzeichnis (DB-Kopien, NICHT die Prompt-Exports)
-backups/*.db
-backups/*.db.gz
-backups/*.sql
-backups/*.sql.gz
+# WICHTIG: "backups/*.db" (ohne **) griff NUR fuer Dateien direkt in
+# backups/, NICHT fuer Unterordner wie backups/manual/ - dadurch landete
+# am 2026-09-13 eine echte DB-Kopie (backups/manual/database_*.db, inkl.
+# verschluesselter API-Keys) in einem lokalen Rescue-Branch, der zwar nie
+# gepusht wurde, aber durch die Luecke leicht hätte gepusht werden können.
+# "**" deckt beliebige Unterordner-Tiefe ab.
+backups/**/*.db
+backups/**/*.db.gz
+backups/**/*.sql
+backups/**/*.sql.gz
 # Prompt-Exports SOLLEN versioniert werden!
 # backups/prompts_export/ wird NICHT ignoriert
