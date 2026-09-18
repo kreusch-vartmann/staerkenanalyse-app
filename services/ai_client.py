@@ -144,12 +144,40 @@ def get_available_models() -> dict[str, bool]:
     }
 
 
-def _call_gemini(system_prompt_text: str, user_prompt_text: str, max_output_tokens: int = 8000) -> tuple[str, str]:
+def _call_gemini(
+    system_prompt_text: str,
+    user_prompt_text: str,
+    max_output_tokens: int = 8000,
+    deterministic: bool = False,
+    json_mode: bool = False,
+) -> tuple[str, str]:
+    """Ruft Gemini auf.
+
+    Args:
+        deterministic: Wenn True, wird Gemini so nah wie mit diesem SDK
+            (google-generativeai==0.8.5) möglich an Mistrals Determinismus
+            (temperature=0, random_seed=42) angeglichen. Ein echter `seed`-
+            Parameter existiert in diesem SDK NICHT (Stand 0.8.5) - Google
+            garantiert daher KEINE bit-identische Reproduzierbarkeit über
+            Tage/Modell-Updates hinweg. `temperature=0` + `top_k=1` erzwingen
+            aber greedy (deterministisches) Sampling innerhalb eines Requests
+            und minimieren die Streuung zwischen wiederholten Aufrufen.
+        json_mode: Wenn True, erzwingt echten JSON-Mode über die API
+            (analog zu Mistrals `response_format={"type": "json_object"}`),
+            statt sich nur auf die Text-Anweisung im Prompt zu verlassen.
+            NICHT für generate_text_report_with_ai (freier Fließtext) nutzen.
+    """
     if not ensure_gemini_configured():
         raise RuntimeError("Google Gemini ist nicht konfiguriert")
     fallback_models = GEMINI_FALLBACK_MODELS or ["models/gemini-flash-latest"]
     last_error = None
     generation_config = {"max_output_tokens": max_output_tokens}
+    if deterministic:
+        # Bestmögliche Annäherung an Mistrals temperature=0/random_seed=42
+        # mit diesem SDK (kein echter seed-Parameter verfügbar).
+        generation_config.update({"temperature": 0, "top_p": 1, "top_k": 1, "candidate_count": 1})
+    if json_mode:
+        generation_config["response_mime_type"] = "application/json"
     for model_name in fallback_models:
         try:
             model = GenerativeModel(model_name=model_name, system_instruction=system_prompt_text)
@@ -319,7 +347,13 @@ def generate_report_with_ai(prompt_text, ki_model, max_retries=3, initial_delay=
                 )
                 if not ensure_gemini_configured():
                     raise ValueError("Google Gemini ist nicht konfiguriert")
-                result, _used_model = _call_gemini(system_prompt, prompt_text)
+                # deterministic+json_mode: Angleichung an Mistrals
+                # temperature=0/response_format=json_object (siehe Docstring
+                # von _call_gemini). Ohne dies wich Gemini bei identischem
+                # Prompt/Input spürbar zwischen Wiederholungen ab.
+                result, _used_model = _call_gemini(
+                    system_prompt, prompt_text, deterministic=True, json_mode=True
+                )
                 return result
 
             elif ki_model == "mistral":

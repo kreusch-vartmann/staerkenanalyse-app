@@ -20,6 +20,8 @@ Diese Dateien dienen als **Source of Truth** für Standard‑Prompts und werden 
 | `structured_report.txt` | Strukturierter Report | Klar strukturierter Report‑Prompt |
 | `staerkenanalyse_prompt.txt` | Stärkenanalyse Original | Historischer Ausgangspunkt |
 | `mistralsozverb4.txt` | MistralSozVerb4 | Rekonstruiertes Prompt‑Template (JSON‑Output) |
+| `copilotsozverbv2.txt` | CopilotSozVerbv2 | SK+VK, Polaritäts-Enforcement (bis 2026-09-18 Default, siehe Abschnitt 10) |
+| `reubelriemannv1.txt` | ReubelRiemannV1 | **Aktueller Default** (seit 2026-09-18). SK+VK, Dimensionen fachlich auf die 13 LEB/Ferdinand-Reubel-Beobachtungsdimensionen zurückgeführt (BAKQER-Verfahren), einheitliche Punkte-/Polaritäts-Logik, Halo-Effekt-Vermeidung bei VK. Numerische Nachkorrektur zusätzlich in `services/rating_validation.py`. |
 
 **Quelle der Zuordnung:** `load_default_prompts.py` (PROMPT_FILES).
 
@@ -163,14 +165,20 @@ Diese Regeln können perspektivisch die Prompt‑Qualität verbessern.
 - JSON‑Outputs stabilisieren (Schema‑Checks)
 
 ---
-
-## 10) Prompt‑Library Konsolidierung (Stand 2026-02-13)
+## 10) Prompt‑Library Konsolidierung (Stand 2026-09-18)
 
 **Ziel:** Dubletten reduzieren, Legacy‑Prompts markieren, aktive Prompts klar kennzeichnen.
 
+**Tatsächlicher Default (`is_default=True` in der DB):** `ReubelRiemannV1`
+(`load_default_prompts.py` → `PROMPT_FILES["reubelriemannv1.txt"]`). Frühere
+Versionen dieser Dokumentation empfahlen "Stärkenanalyse Final" bzw. nannten
+"CopilotSozVerbv2" gar nicht - das war nicht mehr synchron mit dem Code.
+
 | Prompt | Status | Empfehlung |
 |---|---|---|
-| Stärkenanalyse Final | ✅ Aktiv | **Bevorzugen** als Default‑Prompt |
+| ReubelRiemannV1 | ✅ **Aktueller Default** | Fachlich auf LEB/Reubel-Beobachtungsdimensionen gestützt, empfohlen |
+| CopilotSozVerbv2 | 🔶 Legacy (war Default bis 2026-09-18) | Durch ReubelRiemannV1 abgelöst; widersprüchliche Polaritäts-/Schwellwertregeln, siehe Analyse vom 2026-09-18 |
+| Stärkenanalyse Final | ✅ Aktiv | Alternative, nicht Default |
 | Strukturierter Report (Mistral) | ✅ Aktiv | Mistral‑optimiert, behalten |
 | Strukturierter Report (JSON) | ✅ Aktiv | Für JSON‑Output verwenden |
 | Strukturierter Report | ✅ Aktiv | Provider‑neutral, fallback |
@@ -180,11 +188,12 @@ Diese Regeln können perspektivisch die Prompt‑Qualität verbessern.
 | MistralSozVerb4 | 🟡 Rekonstruiert | **Testen** und bei Bedarf iterieren |
 
 **Empfohlene Aktionen:**
-1. **Default‑Prompt** explizit festlegen (z. B. “Stärkenanalyse Final”).
+1. ~~Default‑Prompt explizit festlegen~~ → erledigt: `ReubelRiemannV1`.
 2. **Best Performing v1** als Legacy markieren (oder zusammenführen in v2).
 3. **Naming** nach Abschnitt 6.1 standardisieren.
 
 ---
+
 
 ## 11) Schema‑Checks (Prompt‑Qualität)
 

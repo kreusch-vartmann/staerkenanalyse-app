@@ -54,6 +54,14 @@ PROMPT_FILES = {
         "name": "CopilotSozVerbv2",
         "description": "Optimierte Version mit verstärktem Polaritäts-Enforcement, Soft-Damping, "
                         "persönlicheren Texten und reiner Stärkenorientierung",
+    },
+    "reubelriemannv1.txt": {
+        "name": "ReubelRiemannV1",
+        "description": "Fachlich fundiert auf Basis der 13 LEB/Ferdinand-Reubel-Beobachtungsdimensionen "
+                        "(BAKQER-Verfahren) auf die 8 Riemann-Kreuz-Dimensionen abgebildet. "
+                        "Einheitliche, widerspruchsfreie Punkte-/Polaritäts-Logik (ersetzt die "
+                        "sich überschneidenden Regeln von CopilotSozVerbv2), ausführlichere, "
+                        "beobachtungsbasierte Texte, Halo-Effekt-Vermeidung bei VK.",
         "is_default": True,
     },
 }
