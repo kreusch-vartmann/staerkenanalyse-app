@@ -16,7 +16,7 @@ from flask import (Blueprint, Response, flash, jsonify, redirect,
                    render_template, request, url_for)
 from flask_login import login_required, current_user
 
-from extensions import csrf, db
+from extensions import csrf, db, limiter
 from services.ai_client import generate_report_with_ai
 from models import ExplanationBlock, Group, Participant, Prompt, SelfAssessment
 from utils import clean_json_response, get_file_content, sanitize_html, html_to_plaintext, log_activity
@@ -362,8 +362,17 @@ def edit_report(participant_id):
 @login_required
 @permission_required("analysis.edit_reports")
 @participant_access_required
+@limiter.exempt
 def save_report(participant_id):
-    """Speichert bearbeitete Berichtsdaten (KI-Analyse)."""
+    """Speichert bearbeitete Berichtsdaten (KI-Analyse).
+
+    Bewusst von RATELIMIT_DEFAULT ausgenommen - siehe ausführliche
+    Begründung bei blueprints/participants.py:save_observations. Der
+    Report-Editor (staerkenanalyse_bericht_vorlage3.html) autosaved bei
+    jeder Texteingabe in mehreren Quill-Editoren; eine längere
+    Bearbeitungssitzung überschreitet sonst leicht "200 per day" auf
+    diesem einen Endpunkt.
+    """
     participant = db.get_or_404(Participant, participant_id)
     data = request.get_json()
 

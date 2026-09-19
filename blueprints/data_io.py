@@ -242,8 +242,14 @@ def api_get_observations(participant_id):
 @login_required
 @permission_required("data_entry.edit")
 @participant_access_required
+@limiter.exempt
 def save_observations_api(participant_id):
-    """Speichert die Beobachtungen für einen Teilnehmer (API-Endpunkt)."""
+    """Speichert die Beobachtungen für einen Teilnehmer (API-Endpunkt).
+
+    Bewusst von RATELIMIT_DEFAULT ausgenommen - siehe ausführliche
+    Begründung bei blueprints/participants.py:save_observations (gleicher
+    Zweck, per-Debounce-Autosave überschreitet sonst "200 per day").
+    """
     participant = db.get_or_404(Participant, participant_id)
     data = request.get_json()
     observations, error = parse_observations(data)

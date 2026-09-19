@@ -7,7 +7,7 @@ from flask import (Blueprint, flash, jsonify, redirect, render_template,
                    request, url_for)
 from flask_login import login_required, current_user
 
-from extensions import csrf, db
+from extensions import csrf, db, limiter
 from models import Group, Participant, SelfAssessment
 from utils import sanitize_html, log_activity
 from validation import (
@@ -189,8 +189,22 @@ def show_data_entry(participant_id):
 @login_required
 @permission_required("data_entry.edit")
 @participant_access_required
+@limiter.exempt
 def save_observations(participant_id):
-    """Speichert die Beobachtungen für einen Teilnehmer."""
+    """Speichert die Beobachtungen für einen Teilnehmer.
+
+    Bewusst von RATELIMIT_DEFAULT ("200 per day", siehe config.py)
+    ausgenommen - analog zur Begründung bei app.py:/health. Das
+    Beobachtungsfeld im Frontend speichert per Debounce automatisch bei
+    jeder Schreibpause (data_entry.html); bei mehreren Teilnehmern über
+    einen Arbeitstag hinweg werden dadurch leicht deutlich mehr als 200
+    Saves auf DIESEM EINEN Endpunkt ausgelöst (Flask-Limiter zählt
+    default_limits pro Route, nicht app-weit gemeinsam). Ohne Exempt
+    schlägt das Speichern nach Erreichen des Limits mit "200 per 1 day"
+    fehl, obwohl kein Missbrauch vorliegt - der Endpunkt ist ohnehin
+    durch @login_required/@permission_required/@participant_access_required
+    geschützt.
+    """
     participant = db.get_or_404(Participant, participant_id)
     data = request.get_json()
     observations, error = parse_observations(data)
@@ -264,8 +278,13 @@ def show_self_assessment(participant_id):
 @login_required
 @permission_required("participants.edit")
 @participant_access_required
+@limiter.exempt
 def save_self_assessment(participant_id):
-    """Speichert die Selbsteinschätzung für einen Teilnehmer (API-Endpunkt)."""
+    """Speichert die Selbsteinschätzung für einen Teilnehmer (API-Endpunkt).
+
+    Bewusst von RATELIMIT_DEFAULT ausgenommen - siehe save_observations
+    oben (gleiches Autosave-Debounce-Muster im Frontend).
+    """
     participant = db.get_or_404(Participant, participant_id)
     data = request.get_json()
     parsed, error = parse_json(SelfAssessmentPayload, data or {})
