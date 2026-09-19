@@ -162,5 +162,74 @@ def load_default_prompts(clear):
 
 
 def register_command(app):
-    """Registriert den Command in der Flask-App."""
+    """Registriert die Commands in der Flask-App."""
     app.cli.add_command(load_default_prompts)
+    app.cli.add_command(sync_prompt)
+
+
+@click.command("sync-prompt")
+@click.argument("filename")
+@with_appcontext
+def sync_prompt(filename):
+    """Aktualisiert den Inhalt EINES konkret benannten Standard-Prompts.
+
+    Hintergrund: `load-default-prompts` überspringt Prompts, die per Name
+    bereits existieren, ABSICHTLICH (Schutz vor Überschreiben manueller
+    Admin-UI-Bearbeitungen). Das führt aber dazu, dass Änderungen an einer
+    Prompt-Datei im Repo (z.B. prompts/reubelriemannv1.txt) NICHT
+    automatisch in eine bereits laufende Produktions-DB (z.B. Coolify +
+    PostgreSQL) übernommen werden, selbst nach `git push` + Redeploy - der
+    Docker-Entrypoint ruft weiterhin nur `load-default-prompts` auf, das
+    den bestehenden Eintrag stillschweigend überspringt.
+
+    Dieser Befehl aktualisiert GEZIELT nur den einen angegebenen,
+    bekannten Standard-Prompt (Content + Description) - alle anderen
+    Prompts (inkl. eventueller Admin-Anpassungen an ANDEREN Prompts)
+    bleiben unberührt. Legt den Prompt neu an, falls er noch gar nicht
+    existiert (z.B. bei einem frischen Deploy).
+
+    Usage (z.B. via Coolify-Terminal/Exec in den laufenden Container):
+        flask sync-prompt reubelriemannv1.txt
+    """
+    if filename not in PROMPT_FILES:
+        click.echo(f"❌ '{filename}' ist kein bekannter Standard-Prompt.")
+        click.echo(f"   Bekannte Dateien: {', '.join(PROMPT_FILES.keys())}")
+        raise SystemExit(1)
+
+    metadata = PROMPT_FILES[filename]
+    filepath = Path(__file__).parent / "prompts" / filename
+    if not filepath.exists():
+        click.echo(f"❌ Datei nicht gefunden: {filepath}")
+        raise SystemExit(1)
+
+    with open(filepath, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    existing = Prompt.query.filter_by(name=metadata["name"]).first()
+    if existing:
+        if existing.content == content:
+            click.echo(
+                f"ℹ️  '{metadata['name']}' ist bereits aktuell "
+                f"({len(existing.content)} Zeichen) - keine Änderung nötig."
+            )
+            return
+        old_len = len(existing.content)
+        existing.content = content
+        existing.description = metadata["description"]
+        db.session.commit()
+        click.echo(
+            f"✅ Aktualisiert: '{metadata['name']}' "
+            f"({old_len} -> {len(content)} Zeichen)"
+        )
+    else:
+        if metadata.get("is_default"):
+            Prompt.query.update({Prompt.is_default: False}, synchronize_session=False)
+        new_prompt = Prompt(
+            name=metadata["name"],
+            description=metadata["description"],
+            content=content,
+            is_default=metadata.get("is_default", False),
+        )
+        db.session.add(new_prompt)
+        db.session.commit()
+        click.echo(f"✅ Neu angelegt: '{metadata['name']}' ({len(content)} Zeichen)")
