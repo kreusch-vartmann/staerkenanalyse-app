@@ -738,7 +738,13 @@ def run_ki_analysis(participant_id):
     task_descriptions = ""
     if participant.group:
         task_descriptions = get_group_task_descriptions(participant.group)
-    
+
+    # Eigenständiger, IMMER ersetzter Platzhalter - unabhängig davon, ob
+    # das Prompt-Template {{context}} nutzt. Vorher gingen Aufgaben-
+    # beschreibungen bei Prompts mit {{social_observations}} (aber ohne
+    # {{context}}) kommentarlos verloren.
+    final_prompt = final_prompt.replace("{{task_descriptions}}", task_descriptions)
+
     # Falls keine Kontext-Platzhalter vorhanden sind, Kontextblock ergänzen
     context_block = (
         f"ANALYSE-SUBJEKT:\n- Vorname: {first_name}\n- Ganzer Name: {full_name}\n\n"
@@ -759,6 +765,7 @@ def run_ki_analysis(participant_id):
         "{{social_observations}}" not in request.form.get("ki_prompt", "")
         and "{{verbal_observations}}" not in request.form.get("ki_prompt", "")
         and "{{context}}" not in request.form.get("ki_prompt", "")
+        and "{{task_descriptions}}" not in request.form.get("ki_prompt", "")
     ):
         final_prompt = f"{final_prompt}\n\n{context_block}"
 
@@ -898,6 +905,7 @@ def run_single_analysis_api(participant_id):
     prompt_template = parsed.prompt_template
     prompt = (
         prompt_template.replace("{{context}}", context_block)
+        .replace("{{task_descriptions}}", task_descriptions)
         .replace("{{name}}", first_name)
         .replace("{{vorname}}", first_name)
         .replace("{{first_name}}", first_name)
@@ -908,12 +916,21 @@ def run_single_analysis_api(participant_id):
         .replace("{{participant_id}}", str(participant.id))
     )
 
-    if "{{context}}" in prompt_template:
-        prompt = prompt_template.replace("{{context}}", context_block)
-    elif (
-        "{{social_observations}}" not in prompt_template
+    # Fallback: Enthält das Template KEINEN der bekannten Kontext-
+    # Platzhalter, wird der volle Kontextblock ans Ende angehängt (z.B.
+    # ReubelRiemannV1, das bewusst keine Platzhalter nutzt).
+    # WICHTIG: Vorher stand hier zusätzlich ein "if {{context}} in
+    # prompt_template: prompt = prompt_template.replace(...)", das prompt
+    # komplett NEU aus dem unveränderten Original-Template ableitete und
+    # damit ALLE anderen Platzhalter-Ersetzungen aus der Chain oben wieder
+    # verwarf (z.B. blieb dann buchstäblich "{{name}}" im an die KI
+    # gesendeten Text stehen). Die Chain oben ersetzt {{context}} bereits
+    # korrekt - die zweite Ersetzung war überflüssig und ein Bug.
+    if (
+        "{{context}}" not in prompt_template
+        and "{{task_descriptions}}" not in prompt_template
+        and "{{social_observations}}" not in prompt_template
         and "{{verbal_observations}}" not in prompt_template
-        and "{{context}}" not in prompt_template
     ):
         prompt = f"{prompt}\n\n{context_block}"
 
