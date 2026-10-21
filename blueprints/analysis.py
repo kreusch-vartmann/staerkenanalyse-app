@@ -98,7 +98,7 @@ def _prepare_pdf_data(participant):
     vk_keys = ["flexibility", "consulting", "objectivity", "goal_orientation"]
 
     sk_chart = create_radar_chart(sk_ratings, sk_keys, sk_labels, "#5A7D7C")
-    vk_chart = create_radar_chart(vk_ratings, vk_keys, vk_labels, "#2F4F4F")
+    vk_chart = create_radar_chart(vk_ratings, vk_keys, vk_labels, "#5A7D7C")
     return sk_chart, vk_chart
 
 

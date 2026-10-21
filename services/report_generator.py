@@ -195,20 +195,20 @@ class ReportGenerator:
 
             if leitung_label == "fe" and leitung_fe:
                 metadata_lines.append(
-                    f"<p><strong>Leitung FE:</strong> {leitung_fe}</p>"
+                    f"<p><strong>Leitung Fremdeinschätzung:</strong> {leitung_fe}</p>"
                 )
             elif leitung_label == "se" and leitung_se:
                 metadata_lines.append(
-                    f"<p><strong>Leitung SE:</strong> {leitung_se}</p>"
+                    f"<p><strong>Leitung Selbsteinschätzung:</strong> {leitung_se}</p>"
                 )
             else:
                 if leitung_fe:
                     metadata_lines.append(
-                        f"<p><strong>Leitung FE:</strong> {leitung_fe}</p>"
+                        f"<p><strong>Leitung Fremdeinschätzung:</strong> {leitung_fe}</p>"
                     )
                 if leitung_se:
                     metadata_lines.append(
-                        f"<p><strong>Leitung SE:</strong> {leitung_se}</p>"
+                        f"<p><strong>Leitung Selbsteinschätzung:</strong> {leitung_se}</p>"
                     )
 
             if beob1 or beob2:
@@ -1015,7 +1015,7 @@ class ReportGenerator:
             vk_ratings,
             ["flexibility", "consulting", "objectivity", "goal_orientation"],
             ["Flexibilität", "Beratung", "Sachlichkeit", "Ziel-\norientierung"],
-            "#2F4F4F",
+            primary,
         )
 
         # Seite 1
@@ -1025,7 +1025,7 @@ class ReportGenerator:
         page1 = f"""<div class="sb-page">
             {sidebar1}
             <main class="sb-main">
-                <h2 class="sb-subtitle">Fremdeinschätzung (KI-Analyse)</h2>
+                <h2 class="sb-subtitle">Fremdeinschätzung</h2>
                 <section class="sb-section">
                     <h3 class="sb-section-title">Soziale Kompetenzen</h3>
                     <div class="sb-text-content">{ki_texts.get("social_text", "")}</div>
@@ -1093,14 +1093,14 @@ class ReportGenerator:
             sig_path = (
                 (self.project_root / self.signature_fe.image_path).resolve().as_uri()
             )
-            sig_fe_img = f'<img src="{sig_path}" alt="Unterschrift Leitung FE">'
+            sig_fe_img = f'<img src="{sig_path}" alt="Unterschrift Leitung Fremdeinschätzung">'
 
         sig_se_img = ""
         if self.signature_se:
             sig_path = (
                 (self.project_root / self.signature_se.image_path).resolve().as_uri()
             )
-            sig_se_img = f'<img src="{sig_path}" alt="Unterschrift Leitung SE">'
+            sig_se_img = f'<img src="{sig_path}" alt="Unterschrift Leitung Selbsteinschätzung">'
 
         signatures_html = f"""
         <div class="signature-block" style="margin-top: 60pt;">

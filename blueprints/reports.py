@@ -578,7 +578,7 @@ def standalone_fe_preview(participant_id):
 @permission_required("analysis.edit_reports")
 def upload_signature():
     """
-    Uploaded ein Unterschrift-Bild (global, für Leitung FE oder SE).
+    Uploaded ein Unterschrift-Bild (global, für Leitung Fremdeinschätzung oder Selbsteinschätzung).
     Form-Parameter: role ('leitung_fe' oder 'leitung_se'), file
     """
     role = request.form.get("role")
@@ -619,7 +619,7 @@ def upload_signature():
     db.session.add(new_sig)
     db.session.commit()
 
-    role_label = "Leitung FE" if role == "leitung_fe" else "Leitung SE"
+    role_label = "Leitung Fremdeinschätzung" if role == "leitung_fe" else "Leitung Selbsteinschätzung"
     flash(f"Unterschrift für {role_label} hochgeladen.", "success")
     return redirect(request.referrer or url_for("groups.manage_groups"))
 

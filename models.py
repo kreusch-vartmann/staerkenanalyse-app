@@ -405,7 +405,7 @@ class ReportConfiguration(db.Model):
 
 class SignatureImage(db.Model):
     """
-    Global verwaltete Unterschrift-Bilder (JPG/PNG) für Leitung FE und Leitung SE.
+    Global verwaltete Unterschrift-Bilder (JPG/PNG) für Leitung Fremdeinschätzung und Leitung Selbsteinschätzung.
     Pro Rolle (leitung_fe / leitung_se) kann ein aktives Bild existieren.
     """
 

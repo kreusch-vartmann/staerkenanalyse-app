@@ -118,7 +118,7 @@
             <div class="space-y-3 text-sm metadata">
                 <p><strong>Durchführungszeitraum:</strong> <span contenteditable="true" data-key="date" class="editable-field">{% if group.date_from and group.date_to %}{{ group.date_from | datetimeformat }} - {{ group.date_to | datetimeformat }}{% elif group.date_from %}ab {{ group.date_from | datetimeformat }}{% elif group.date_to %}bis {{ group.date_to | datetimeformat }}{% else %}-{% endif %}</span></p>
                 <p><strong>Durchführungsort:</strong> <span contenteditable="true" data-key="location" class="editable-field">{{ group.location }}</span></p>
-                <p><strong>Leitung:</strong> <span contenteditable="true" data-key="leitung" class="editable-field">{{ group.leitung }}</span></p>
+                <p><strong>Leitung Fremdeinschätzung:</strong> <span contenteditable="true" data-key="leitung" class="editable-field">{{ group.leitung }}</span></p>
                 <p><strong>Beobachter 1:</strong> <span contenteditable="true" data-key="beobachter1" class="editable-field">{{ group.beobachter1 }}</span></p>
                 <p><strong>Beobachter 2:</strong> <span contenteditable="true" data-key="beobachter2" class="editable-field">{{ group.beobachter2 }}</span></p>
             </div>
