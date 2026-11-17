@@ -67,7 +67,7 @@ sofern der Prozess bereits die neuen Python-Module geladen hat).
 ## 🧬 Domänenlogik (kritisch)
 
 - **Selbsteinschätzung** = reiner Text (keine Riemannkreuze)
-- **Fremdeinschätzung** = 2 Seiten (Sozial + Verbal, inkl. Radar‑Charts)
+- **Fremdeinschätzung** = je Abschnitt eine eigene Seite: Sozial + Radar‑Chart, Verbal + Radar‑Chart, Zusammenfassung (die Seitenzahl ist nicht fest: längere Texte fließen auf Folgeseiten, Sidebar und „Seite X von Y“ wiederholen sich automatisch)
 - **Kompetenzbereiche**: „Soziale Kompetenzen“ und „Verbale Kompetenzen“
 - **Referenzaufgaben**: Tasks mit `is_example=True` sind funktional identisch zu normalen Aufgaben
 
@@ -77,7 +77,7 @@ sofern der Prozess bereits die neuen Python-Module geladen hat).
 
 - **KI‑Antwort enthält Listen** → `_normalize_ki_data()` muss Listen/Dictionaries in Strings umwandeln (fixiert)
 - **`participant.ki_texts`** ist JSON‑String; immer `json.loads` verwenden
-- **Berichte**: CSS ausschließlich in `services/report_generator.py` ändern (HTML‑Struktur stabil halten)
+- **Berichte**: Alle PDFs (Gesamt, SE, FE) entstehen in `services/report_generator.py`; die Sidebar ist `@page`‑Gestaltung (running elements), kein Flex‑Layout im Seiteninhalt. Vorschau = das echte PDF im iframe. Layout‑Regressionstests: `tests/integration/test_report_pdf_layout.py`
 - **Python-Code-Änderungen brauchen einen vollständigen Server-Neustart**
   (`flask run` lädt `.py`-Änderungen NICHT automatisch nach, anders als Jinja-Templates).
 - **KI-Provider-Clients**: Niemals `MISTRAL_CLIENT`/`genai_client` (Modul-Konstanten)

@@ -4,16 +4,18 @@ Blueprint für Report-Management und PDF-Generierung.
 Funktionen:
 - Report-Konfiguration pro Gruppe (Templates, Logos, Module)
 - PDF-Generierung mit konfigurierbarem Design
-- Preview/HTML-Ansicht
+- Vorschau (das echte PDF im iframe)
 - Logo-Upload und -Verwaltung
 """
 
 import json
 import os
 from datetime import datetime
+from io import BytesIO
 
-from flask import (Blueprint, flash, jsonify, redirect, render_template,
-                   request, send_file, send_from_directory, url_for)
+from flask import (Blueprint, Response, flash, g, jsonify, redirect,
+                   render_template, request, send_file, send_from_directory,
+                   url_for)
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 
@@ -375,13 +377,65 @@ def configure_report(group_id):
     )
 
 
+def _send_report_pdf(generator, mode, filename, error_label, fallback_redirect):
+    """
+    Erzeugt das PDF und liefert es aus.
+
+    Alle Berichts-PDFs laufen hierüber (ReportGenerator, ein Layout für Gesamt-,
+    SE- und FE-Bericht). Mit ?inline=1 wird das PDF zur Anzeige in der
+    Vorschau (iframe) statt als Download ausgeliefert.
+    """
+    inline = request.args.get("inline") == "1"
+    try:
+        pdf_bytes = generator.to_pdf(mode=mode)
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        if inline:
+            return Response(
+                f"{error_label}: {e}", status=500, mimetype="text/plain"
+            )
+        flash(f"{error_label}: {str(e)}", "danger")
+        return fallback_redirect()
+
+    if inline:
+        # Die Vorschau bettet das PDF same-origin per iframe ein
+        g.allow_self_framing = True
+    return send_file(
+        BytesIO(pdf_bytes),
+        mimetype="application/pdf",
+        as_attachment=not inline,
+        download_name=secure_filename(filename),
+    )
+
+
+def _render_preview(group, participant, generator, mode, pdf_url, download_url):
+    """
+    Vorschau = das echte PDF im iframe (statt eines HTML-Nachbaus, der
+    Seitenumbrüche, Sidebar und Seitenzahlen nicht korrekt darstellen kann).
+    Das Layout wird vorab einmal gerendert, damit Warnungen (z. B. Text länger
+    als vorgesehen) direkt angezeigt werden können.
+    """
+    generator.render_document(mode=mode)
+    for warning in generator.render_warnings:
+        flash(warning, "warning")
+    return render_template(
+        "reports/preview.html",
+        group=group,
+        participant=participant,
+        pdf_url=pdf_url,
+        download_url=download_url,
+    )
+
+
 @bp.route("/<int:group_id>/preview/<int:participant_id>")
 @login_required
 @permission_required("analysis.view_reports")
 @group_access_required
 def preview_report_html(group_id, participant_id):
     """
-    Zeige HTML-Vorschau des Reports (vor PDF-Generierung).
+    Zeige Vorschau des Reports (das PDF selbst) vor dem Download.
     """
     group = db.get_or_404(Group, group_id)
     participant = db.get_or_404(Participant, participant_id)
@@ -391,16 +445,24 @@ def preview_report_html(group_id, participant_id):
 
     config = ReportConfiguration.query.filter_by(group_id=group_id).first_or_404()
 
-    # Generiere Report als HTML
     try:
         generator = ReportGenerator(group, participant, config)
-        html = generator.build_html()
-
-        return render_template(
-            "reports/preview.html",
-            group=group,
-            participant=participant,
-            html_content=html,
+        return _render_preview(
+            group,
+            participant,
+            generator,
+            "combined",
+            url_for(
+                "reports.generate_pdf_report",
+                group_id=group_id,
+                participant_id=participant_id,
+                inline=1,
+            ),
+            url_for(
+                "reports.generate_pdf_report",
+                group_id=group_id,
+                participant_id=participant_id,
+            ),
         )
     except Exception as e:
         flash(f"Fehler bei Report-Generierung: {str(e)}", "danger")
@@ -423,33 +485,31 @@ def generate_pdf_report(group_id, participant_id):
 
     config = ReportConfiguration.query.filter_by(group_id=group_id).first_or_404()
 
-    try:
-        # Generiere PDF
-        generator = ReportGenerator(group, participant, config)
-        pdf_bytes = generator.to_pdf()
-
-        # Erstelle Dateinamen
-        filename = f'Staerkenanalyse_{participant.name}_{datetime.now().strftime("%Y%m%d")}.pdf'
-        filename = secure_filename(filename)
-
-        # Sende PDF
-        return send_file(
-            __import__("io").BytesIO(pdf_bytes),
-            mimetype="application/pdf",
-            as_attachment=True,
-            download_name=filename,
-        )
-    except Exception as e:
-        flash(f"Fehler bei PDF-Generierung: {str(e)}", "danger")
-        import traceback
-
-        traceback.print_exc()
-        return redirect(url_for("reports.configure_report", group_id=group_id)), 500
+    generator = ReportGenerator(group, participant, config)
+    filename = f'Staerkenanalyse_{participant.name}_{datetime.now().strftime("%Y%m%d")}.pdf'
+    return _send_report_pdf(
+        generator,
+        "combined",
+        filename,
+        "Fehler bei PDF-Generierung",
+        lambda: redirect(url_for("reports.configure_report", group_id=group_id)),
+    )
 
 
 # =============================================================================
 # Standalone PDF-Routes (Einzeldruck SE / FE)
 # =============================================================================
+
+
+def _standalone_config_or_redirect(participant):
+    """Liefert (config, None) oder (None, redirect-Response)."""
+    config = ReportConfiguration.query.filter_by(group_id=participant.group.id).first()
+    if not config:
+        flash("Bitte zuerst die Report-Konfiguration einrichten.", "warning")
+        return None, redirect(
+            url_for("reports.configure_report", group_id=participant.group.id)
+        )
+    return config, None
 
 
 @bp.route("/standalone/self-assessment/<int:participant_id>/pdf")
@@ -459,31 +519,18 @@ def generate_pdf_report(group_id, participant_id):
 def standalone_se_pdf(participant_id):
     """PDF nur mit Selbsteinschätzung (Sidebar voll, mit Metadaten)."""
     participant = db.get_or_404(Participant, participant_id)
-    group = participant.group
-    config = ReportConfiguration.query.filter_by(group_id=group.id).first()
+    config, redirect_response = _standalone_config_or_redirect(participant)
+    if redirect_response:
+        return redirect_response
 
-    if not config:
-        flash("Bitte zuerst die Report-Konfiguration einrichten.", "warning")
-        return redirect(url_for("reports.configure_report", group_id=group.id))
-
-    try:
-        generator = ReportGenerator(group, participant, config)
-        pdf_bytes = generator.to_pdf(mode="standalone_se")
-        filename = secure_filename(
-            f'SE_{participant.name}_{datetime.now().strftime("%Y%m%d")}.pdf'
-        )
-        return send_file(
-            __import__("io").BytesIO(pdf_bytes),
-            mimetype="application/pdf",
-            as_attachment=True,
-            download_name=filename,
-        )
-    except Exception as e:
-        flash(f"Fehler bei SE-PDF: {str(e)}", "danger")
-        import traceback
-
-        traceback.print_exc()
-        return redirect(url_for("analysis.manage_final_reports"))
+    generator = ReportGenerator(participant.group, participant, config)
+    return _send_report_pdf(
+        generator,
+        "standalone_se",
+        f'SE_{participant.name}_{datetime.now().strftime("%Y%m%d")}.pdf',
+        "Fehler bei SE-PDF",
+        lambda: redirect(url_for("analysis.manage_final_reports")),
+    )
 
 
 @bp.route("/standalone/foreign-assessment/<int:participant_id>/pdf")
@@ -493,31 +540,18 @@ def standalone_se_pdf(participant_id):
 def standalone_fe_pdf(participant_id):
     """PDF nur mit Fremdeinschätzung (Sidebar voll, mit Metadaten)."""
     participant = db.get_or_404(Participant, participant_id)
-    group = participant.group
-    config = ReportConfiguration.query.filter_by(group_id=group.id).first()
+    config, redirect_response = _standalone_config_or_redirect(participant)
+    if redirect_response:
+        return redirect_response
 
-    if not config:
-        flash("Bitte zuerst die Report-Konfiguration einrichten.", "warning")
-        return redirect(url_for("reports.configure_report", group_id=group.id))
-
-    try:
-        generator = ReportGenerator(group, participant, config)
-        pdf_bytes = generator.to_pdf(mode="standalone_fe")
-        filename = secure_filename(
-            f'FE_{participant.name}_{datetime.now().strftime("%Y%m%d")}.pdf'
-        )
-        return send_file(
-            __import__("io").BytesIO(pdf_bytes),
-            mimetype="application/pdf",
-            as_attachment=True,
-            download_name=filename,
-        )
-    except Exception as e:
-        flash(f"Fehler bei FE-PDF: {str(e)}", "danger")
-        import traceback
-
-        traceback.print_exc()
-        return redirect(url_for("analysis.manage_final_reports"))
+    generator = ReportGenerator(participant.group, participant, config)
+    return _send_report_pdf(
+        generator,
+        "standalone_fe",
+        f'FE_{participant.name}_{datetime.now().strftime("%Y%m%d")}.pdf',
+        "Fehler bei FE-PDF",
+        lambda: redirect(url_for("analysis.manage_final_reports")),
+    )
 
 
 @bp.route("/standalone/self-assessment/<int:participant_id>/preview")
@@ -525,19 +559,22 @@ def standalone_fe_pdf(participant_id):
 @permission_required("analysis.view_reports")
 @participant_access_required
 def standalone_se_preview(participant_id):
-    """HTML-Vorschau nur Selbsteinschätzung."""
+    """Vorschau nur Selbsteinschätzung (das PDF selbst)."""
     participant = db.get_or_404(Participant, participant_id)
     group = participant.group
     config = ReportConfiguration.query.filter_by(group_id=group.id).first_or_404()
 
     try:
         generator = ReportGenerator(group, participant, config)
-        html = generator.build_html(mode="standalone_se")
-        return render_template(
-            "reports/preview.html",
-            group=group,
-            participant=participant,
-            html_content=html,
+        return _render_preview(
+            group,
+            participant,
+            generator,
+            "standalone_se",
+            url_for(
+                "reports.standalone_se_pdf", participant_id=participant_id, inline=1
+            ),
+            url_for("reports.standalone_se_pdf", participant_id=participant_id),
         )
     except Exception as e:
         flash(f"Fehler bei SE-Vorschau: {str(e)}", "danger")
@@ -549,19 +586,22 @@ def standalone_se_preview(participant_id):
 @permission_required("analysis.view_reports")
 @participant_access_required
 def standalone_fe_preview(participant_id):
-    """HTML-Vorschau nur Fremdeinschätzung."""
+    """Vorschau nur Fremdeinschätzung (das PDF selbst)."""
     participant = db.get_or_404(Participant, participant_id)
     group = participant.group
     config = ReportConfiguration.query.filter_by(group_id=group.id).first_or_404()
 
     try:
         generator = ReportGenerator(group, participant, config)
-        html = generator.build_html(mode="standalone_fe")
-        return render_template(
-            "reports/preview.html",
-            group=group,
-            participant=participant,
-            html_content=html,
+        return _render_preview(
+            group,
+            participant,
+            generator,
+            "standalone_fe",
+            url_for(
+                "reports.standalone_fe_pdf", participant_id=participant_id, inline=1
+            ),
+            url_for("reports.standalone_fe_pdf", participant_id=participant_id),
         )
     except Exception as e:
         flash(f"Fehler bei FE-Vorschau: {str(e)}", "danger")

@@ -8,57 +8,30 @@
             <p class="text-sm text-gray-600">Teilnehmer: <strong>{{ participant.name }}</strong> | Gruppe: <strong>{{ group.name }}</strong></p>
         </div>
         <div class="flex flex-wrap gap-2">
-            <a href="{{ url_for('reports.generate_pdf_report', group_id=group.id, participant_id=participant.id) }}" 
+            <a href="{{ download_url }}"
                class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
                 📥 Als PDF herunterladen
             </a>
-            <a href="{{ url_for('reports.configure_report', group_id=group.id) }}" 
+            <a href="{{ url_for('reports.configure_report', group_id=group.id) }}"
                class="inline-flex items-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200">
                 ⚙️ Zurück zur Konfiguration
             </a>
         </div>
     </div>
 
-    {# IFRAME isoliert das Report-HTML komplett von Bootstrap/Tailwind aus base.html.
-       Dadurch greifen die Report-eigenen Fonts und CSS korrekt,
-       ohne die Systemschrift der App zu verändern. #}
-    <div>
-        <iframe id="report-preview-frame"
-                srcdoc="{{ html_content|e }}"
-                class="w-full rounded-md border border-gray-300 bg-gray-100"
-                sandbox="allow-same-origin"
-                title="Report-Vorschau"></iframe>
-    </div>
+    {# Die Vorschau ist das echte PDF – Seitenumbrüche, Sidebar und Seitenzahlen
+       entsprechen also exakt dem Download. #}
+    <iframe id="report-preview-frame"
+            src="{{ pdf_url }}"
+            class="w-full rounded-md border border-gray-300 bg-gray-100"
+            style="height: 85vh; min-height: 700px;"
+            title="Report-Vorschau"></iframe>
 
     <div class="mt-4">
-        <a href="{{ url_for('reports.generate_pdf_report', group_id=group.id, participant_id=participant.id) }}" 
+        <a href="{{ download_url }}"
            class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">
             📥 PDF herunterladen
         </a>
     </div>
 </div>
-
-<script nonce="{{ csp_nonce }}">
-    // Automatische Höhenanpassung des iframes an den Inhalt
-    (function() {
-        var iframe = document.getElementById('report-preview-frame');
-        function resizeIframe() {
-            try {
-                var doc = iframe.contentDocument || iframe.contentWindow.document;
-                if (doc && doc.body) {
-                    // Mindesthöhe + tatsächliche Inhaltshöhe
-                    var h = Math.max(900, doc.body.scrollHeight + 60);
-                    iframe.style.height = h + 'px';
-                }
-            } catch(e) {}
-        }
-        iframe.addEventListener('load', function() {
-            resizeIframe();
-            // Nochmal nach kurzer Verzögerung (Fonts laden)
-            setTimeout(resizeIframe, 500);
-            setTimeout(resizeIframe, 1500);
-        });
-    })();
-</script>
-
 {% endblock %}

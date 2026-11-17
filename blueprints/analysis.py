@@ -12,7 +12,7 @@ import pytz
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
-from flask import (Blueprint, Response, flash, jsonify, redirect,
+from flask import (Blueprint, flash, jsonify, redirect,
                    render_template, request, url_for)
 from flask_login import login_required, current_user
 
@@ -30,14 +30,6 @@ from validation import (
     parse_id_list,
     parse_json,
 )
-
-# WeasyPrint wird lazy-loaded (unten in den Funktionen) um die App schneller zu starten
-try:
-    from weasyprint import HTML
-    WEASYPRINT_ERROR = None
-except Exception as e:
-    HTML = None
-    WEASYPRINT_ERROR = str(e)
 
 analysis_bp = Blueprint("analysis", __name__)
 
@@ -75,31 +67,6 @@ def create_radar_chart(ratings_dict, keys, labels, color):
 
     img_base64 = base64.b64encode(buf.read()).decode("utf-8")
     return f"data:image/png;base64,{img_base64}"
-
-
-def _prepare_pdf_data(participant):
-    """Bereitet die Daten und Diagramme für den PDF-Bericht vor."""
-    sk_ratings = participant.get("sk_ratings", {})
-    sk_labels = [
-        "Flexibilität",
-        "Team-\norientierung",
-        "Prozess-\norientierung",
-        "Ergebnis-\norientierung",
-    ]
-    sk_keys = [
-        "flexibility",
-        "team_orientation",
-        "process_orientation",
-        "results_orientation",
-    ]
-
-    vk_ratings = participant.get("vk_ratings", {})
-    vk_labels = ["Flexibilität", "Beratung", "Sachlichkeit", "Ziel-\norientierung"]
-    vk_keys = ["flexibility", "consulting", "objectivity", "goal_orientation"]
-
-    sk_chart = create_radar_chart(sk_ratings, sk_keys, sk_labels, "#5A7D7C")
-    vk_chart = create_radar_chart(vk_ratings, vk_keys, vk_labels, "#5A7D7C")
-    return sk_chart, vk_chart
 
 
 def get_group_task_descriptions(group):
@@ -465,83 +432,18 @@ def save_report(participant_id):
 @participant_access_required
 def bericht_pdf(participant_id):
     """
-    DEPRECATED: Alte PDF-Generierung (vor Report-System).
-    Generiert eine PDF-Version des Berichts serverseitig.
-    
-    **Stattdessen verwenden:**
+    DEPRECATED: Alte URL der PDF-Generierung (vor dem Report-System).
+
+    Es gibt nur noch eine PDF-Pipeline (services/report_generator.py), damit
+    alle Berichte identisch aussehen. Diese Route leitet dorthin weiter;
+    sie bleibt nur für alte Lesezeichen bestehen.
+
+    Stattdessen verwenden:
     - reports.standalone_fe_pdf - Nur Fremdeinschätzung
-    - reports.standalone_se_pdf - Nur Selbsteinschätzung  
+    - reports.standalone_se_pdf - Nur Selbsteinschätzung
     - reports.generate_pdf_report - Vollständiger Abschlussbericht
     """
-    
-    # Prüfe ob WeasyPrint verfügbar ist
-    if HTML is None:
-        flash(
-            "❌ PDF-Generierung nicht verfügbar: WeasyPrint-Abhängigkeiten fehlen. "
-            "Bitte installieren Sie die erforderlichen System-Bibliotheken (Pango, Cairo). "
-            "Siehe Terminal-Output für Details.",
-            "error"
-        )
-        # Redirect zum HTML-Report
-        return redirect(url_for("analysis.final_report", participant_id=participant_id))
-    
-    participant = db.get_or_404(Participant, participant_id)
-    group = participant.group
-
-    # Konvertiere für Template
-    participant_dict = {
-        "id": participant.id,
-        "name": participant.name,
-        "sk_ratings": (
-            json.loads(participant.sk_ratings) if participant.sk_ratings else {}
-        ),
-        "vk_ratings": (
-            json.loads(participant.vk_ratings) if participant.vk_ratings else {}
-        ),
-        "ki_texts": json.loads(participant.ki_texts) if participant.ki_texts else {},
-    }
-
-    group_dict = {
-        "id": group.id if group else None,
-        "name": group.name if group else "",
-        "date_from": group.date_from if group else None,
-        "date_to": group.date_to if group else None,
-        "location": group.location if group else "",
-        "leitung": group.leitung_fremdeinschatzung if group else "",
-        "beobachter1": group.beobachter1 if group else "",
-        "beobachter2": group.beobachter2 if group else "",
-    }
-    german_tz = pytz.timezone("Europe/Berlin")
-    current_date = datetime.now(pytz.utc).astimezone(german_tz).strftime("%d.%m.%Y")
-    current_location = group.location if group and group.location else ""
-
-    sk_chart_image, vk_chart_image = _prepare_pdf_data(participant_dict)
-
-    html_string = render_template(
-        "bericht_pdf_vorlage.html",
-        participant=participant_dict,
-        group=group_dict,
-        current_date=current_date,
-        current_location=current_location,
-        sk_chart_image=sk_chart_image,
-        vk_chart_image=vk_chart_image,
-        _external=True,
-    )
-
-    pdf_bytes = HTML(string=html_string, base_url=request.base_url).write_pdf()
-
-    safe_name = "".join(
-        c
-        for c in participant_dict.get("name", "Unbekannt")
-        if c.isalnum() or c in (" ", "_")
-    ).rstrip()
-    filename = f"Staerkenanalyse_{safe_name.replace(' ', '_')}.pdf"
-
-    return Response(
-        pdf_bytes,
-        mimetype="application/pdf",
-        headers={"Content-disposition": f'attachment; filename="{filename}"'},
-    )
+    return redirect(url_for("reports.standalone_fe_pdf", participant_id=participant_id))
 
 
 # --- ROUTEN FÜR KI-ANALYSE (EINZELN & BATCH) ---

@@ -230,7 +230,7 @@ class ContextGenerator:
 1. Dashboard → "Berichte bearbeiten" (manage_participants.html)
 2. "Bericht ansehen" Button (nur wenn `ki_texts` vorhanden)
 3. → `analysis.edit_report()` → HTML-Bericht editieren
-4. PDF-Export → `analysis.bericht_pdf()` → WeasyPrint → PDF
+4. PDF-Export → `reports.standalone_fe_pdf()` / `reports.generate_pdf_report()` → `ReportGenerator` → WeasyPrint → PDF
 
 ---
 

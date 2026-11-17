@@ -119,15 +119,14 @@ class TestAnalysisRoutes:
         assert "Rate-Limit" in data["message"]
         assert "interner Fehler" not in data["message"]
 
-    @patch('blueprints.analysis.HTML')
-    def test_report_pdf_export(self, mock_html, client, sample_participant):
-        mock_writer = MagicMock()
-        mock_writer.write_pdf.return_value = b"%PDF-1.4"
-        mock_html.return_value = mock_writer
-
+    def test_legacy_report_pdf_redirects_to_unified_pipeline(self, client, sample_participant):
+        """Die alte PDF-URL nutzt keine eigene Vorlage mehr, sondern den ReportGenerator."""
         response = client.get(f'/bericht/{sample_participant.id}/pdf')
-        assert response.status_code == 200
-        assert 'pdf' in response.content_type
+        assert response.status_code == 302
+        assert (
+            f'/reports/standalone/foreign-assessment/{sample_participant.id}/pdf'
+            in response.headers['Location']
+        )
 
     def test_final_report_redirect(self, client, sample_participant):
         response = client.get(f'/final_report/{sample_participant.id}')

@@ -202,14 +202,14 @@ class TestEndToEndImportAnalysisReportFlow:
         db.session.commit()
 
         mock_instance = MagicMock()
-        mock_instance.build_html.return_value = '<html>Preview</html>'
+        mock_instance.render_warnings = []
         mock_instance.to_pdf.return_value = b'%PDF-1.4 test'
         mock_report_generator.return_value = mock_instance
 
-        # Report preview
+        # Report preview (zeigt das PDF selbst im iframe)
         response = client.get(f'/reports/{group.id}/preview/{participant.id}')
         assert response.status_code == 200
-        assert b'Preview' in response.data
+        assert b'inline=1' in response.data
 
         # Report PDF
         response = client.get(f'/reports/{group.id}/generate-pdf/{participant.id}')
@@ -315,7 +315,7 @@ class TestTaskAssignmentAnalysisReportFlow:
         db.session.commit()
 
         mock_instance = MagicMock()
-        mock_instance.build_html.return_value = '<html>Preview</html>'
+        mock_instance.render_warnings = []
         mock_instance.to_pdf.return_value = b'%PDF-1.4 test'
         mock_report_generator.return_value = mock_instance
 

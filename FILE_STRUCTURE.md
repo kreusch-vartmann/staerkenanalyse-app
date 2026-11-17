@@ -375,8 +375,6 @@ Jinja2-HTML-Templates für Frontend-Rendering.
 
 ### Report-System (v0.2.0)
 
-- **bericht_pdf_vorlage.html**: Legacy PDF-Template (wird ersetzt durch reports/).
-
 - **staerkenanalyse_bericht_vorlage3.html**: Legacy Report-Template v3 (wird migriert).
 
 #### Report-Unterordner (`templates/reports/`)
@@ -427,6 +425,10 @@ KI-Prompt-Templates für verschiedene Analyse-Typen.
 ---
 
 ## 🎨 Static Files (`static/`)
+
+### Schriften (`static/fonts/`)
+
+- **Inter-400/500/600/700.ttf**: Report-Schrift (SIL OFL, Lizenz in `OFL-Inter.txt`). Wird von `services/report_generator.py` per `@font-face` lokal eingebunden – kein Abruf bei Google beim PDF-Rendern.
 
 ### Images (`static/images/`)
 

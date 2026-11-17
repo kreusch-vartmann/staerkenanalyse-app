@@ -118,6 +118,9 @@ def set_security_headers(response):
     - Referrer-Policy (Privacy protection)
     """
     nonce = getattr(g, 'csp_nonce', None)
+
+    # Nur die PDF-Vorschau (gleiche Herkunft, per iframe) darf eingebettet werden
+    allow_self_framing = getattr(g, 'allow_self_framing', False)
     
     # Content Security Policy
     # WICHTIG: 'unsafe-inline' OHNE nonce in script-src!
@@ -131,14 +134,14 @@ def set_security_headers(response):
         "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
         "img-src 'self' data: https:",
         "connect-src 'self' https://api.bugfender.com",
-        "frame-ancestors 'none'",
+        "frame-ancestors 'self'" if allow_self_framing else "frame-ancestors 'none'",
         "base-uri 'self'",
         "form-action 'self'",
     ]
     response.headers['Content-Security-Policy'] = "; ".join(csp_directives)
     
     # Additional security headers
-    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN' if allow_self_framing else 'DENY'
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     

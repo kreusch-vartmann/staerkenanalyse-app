@@ -234,6 +234,15 @@ Zusammenfassung).
   stärksten Muster aus SK und VK integriert UND einen konkreten Bezug zur
   Aufgabenstellung herstellt. Keine Dimensionsnamen, keine Zahlen.
 
+**Wortbudget (verbindlich, der Bericht hat pro Abschnitt genau eine
+Seite)**:
+- `social_analysis.interpretation` und `verbal_analysis.interpretation`:
+  je **90–150 Wörter**, niemals mehr als 180.
+- `summary` (`key_strengths`, `assessment_focus` und `development_note`
+  zusammengerechnet): **insgesamt höchstens 150 Wörter**, niemals mehr als
+  200. Die drei Felder bilden zusammen EINEN Absatz mit insgesamt 5–7
+  Sätzen – nicht je Feld 5–7 Sätze.
+
 ---
 
 ## BEISPIELRECHNUNG (verbindliche Referenz für Rechenweg und Textstil)

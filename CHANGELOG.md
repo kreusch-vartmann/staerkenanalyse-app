@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### PDF-Berichte (Fremdeinschätzung, Selbsteinschätzung, Gesamtbericht)
+- Fix: Leerseite und abgeschnittener Text bei längeren Fremdeinschätzungen. Die Sidebar ist jetzt Teil der Seitengestaltung (`@page`, running elements) statt einer Flex-Spalte im Seiteninhalt; Text fließt auf beliebig viele Seiten, Sidebar und „Seite X von Y“ wiederholen sich automatisch.
+- Fremdeinschätzung: je ein Abschnitt pro Seite (Sozial, Verbal, Zusammenfassung); Zusammenfassung als hervorgehobener Kasten; größere Radar-Diagramme; Silbentrennung.
+- Alle PDF-Wege (Gesamt, SE, FE, alte URL `/bericht/<id>/pdf`) nutzen denselben `ReportGenerator`; das alte Template `bericht_pdf_vorlage.html` entfällt.
+- Vorschau zeigt das echte PDF (iframe) statt eines HTML-Nachbaus; Warnung, wenn ein Text mehr Seiten braucht als vorgesehen.
+- Berichtstexte werden bereinigt (HTML) bzw. escaped (Klartext); Klartext-Zeilenumbrüche werden zu Absätzen.
+- Schrift Inter liegt lokal in `static/fonts/`.
+- Editor: Wortzähler je Textfeld; Standard-Prompt `ReubelRiemannV1` mit Wortbudget (`flask sync-prompt reubelriemannv1.txt` für Produktion).
+- Neue Layout-Regressionstests (`tests/integration/test_report_pdf_layout.py`).
+
 ## 1.4.0 — 2026-02-13
 
 ### Phase 3 Complete
